@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watcher4metrics-deploy
+  namespace: ops-sre
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: watcher4metrics-deploy
+  template:
+    metadata:
+      labels:
+        name: watcher4metrics-deploy
+    spec:
+      nodeSelector:
+        project: "jczc"
+      hostAliases:
+        - ip: "139.224.236.74"
+          hostnames:
+            - "api.bokecorp.com"
+      imagePullSecrets:
+        # secret 需要创建
+        - name: alicloud-hub
+      volumes:
+        - name: watcher4metrics-cfg
+          configMap:
+            name: watcher4metrics-cfg
+      containers:
+        - name: watcher4metrics
+          env:
+            - name: WATCHER4METRICS_ENV
+              value: test
+          # 会忽略dockerfile中cmd,而执行args
+          args:
+            - -config
+            - /opt/app/config/watcher4metrics.yml
+          image: boker-hub-registry.cn-shanghai.cr.aliyuncs.com/ops/watcher4metrics:v0.9.0
+          imagePullPolicy: Always
+          ports:
+            # 容器内部端口 targetPort 映射 containerPort
+            # targetPort和containerPort必须一致
+            - containerPort: 8081
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "300Mi"
+            requests:
+              cpu: "500m"
+              memory: "300Mi"
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - mountPath: /opt/app/config
+              name: watcher4metrics-cfg
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: watcher4metrics-cfg
+  namespace: ops-sre
+data:
+  watcher4metrics.yml: |
+    global:
+      auto_reload: true
+    report:
+      batch: 5000
+      remote_write:
+        - url: http://api.bokecorp.com/n9e-v5-server/prometheus/v1/write
+          remote_timeout: 10s
+    http:
+      listen: :8081
+      timeout: 35s
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: watcher4metrics-svc
+  namespace: ops-sre
+spec:
+  type: ClusterIP
+  ports:
+    # 集群内访问端口 clusterIP:port
+    # 仅用于集群内部访问，外部无法访问
+    - port: 80
+      # 容器内部端口
+      targetPort: 8081
+  selector:
+    name: watcher4metrics-deploy

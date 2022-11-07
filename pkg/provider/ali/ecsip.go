@@ -1,0 +1,204 @@
+package ali
+
+import (
+	"context"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
+	"github.com/sirupsen/logrus"
+	"strings"
+	"sync"
+	"watcher4metrics/pkg/common"
+	"watcher4metrics/pkg/provider/ali/parser"
+)
+
+type EcsIP struct {
+	op        *operator
+	namespace string
+	metrics   []*cms.Resource
+	client    *cms.Client
+	ecsipMap  map[string]*ecs.Instance
+
+	m sync.Mutex
+}
+
+func init() {
+	registers[ACS_ECS_DASHBOARD] = new(EcsIP)
+}
+
+func (e *EcsIP) Inject(params ...interface{}) common.MetricsGetter {
+	return &EcsIP{
+		op:        params[0].(*operator),
+		client:    params[1].(*cms.Client),
+		namespace: params[2].(string),
+	}
+}
+
+func (e *EcsIP) GetNamespace() string {
+	return e.namespace
+}
+
+func (e *EcsIP) GetMetrics() error {
+	metrics, err := e.op.getMetrics(
+		e.client,
+		e.namespace,
+		// 只获取属于ip维度的公网指标(vpc)
+		map[string]struct{}{
+			"CPUUtilization":         {},
+			"memory_usedutilization": {},
+			//"Host.diskusage.utilization":           {},
+			"VPC_PublicIP_InternetInRate":          {},
+			"VPC_PublicIP_InternetOutRate":         {},
+			"VPC_PublicIP_InternetOutRate_Percent": {},
+		},
+	)
+	if err != nil {
+		return err
+	}
+	e.metrics = metrics
+	return nil
+}
+
+func (e *EcsIP) Collector() {
+	e.op.getMetricLastData(
+		e.client,
+		e.metrics,
+		5,
+		e.namespace,
+		e.push,
+		nil,
+	)
+}
+
+func (e *EcsIP) getIP(id string) *ecs.Instance {
+	e.m.Lock()
+	defer e.m.Unlock()
+
+	if ip, ok := e.ecsipMap[id]; ok {
+		return ip
+	}
+	return nil
+}
+
+func (e *EcsIP) push(transfer *transferData) {
+	for _, point := range transfer.points {
+		instanceID := point["instanceId"].(string)
+		ip := e.getIP(instanceID)
+		if ip == nil {
+			continue
+		}
+
+		// 根据eipMap获取tags 和 endpoint
+		pubIP := strings.Join(ip.PublicIpAddress.IpAddress, ",")
+		n9e := &common.MetricValue{
+			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
+			Metric:       common.BuildMetric("ecs", transfer.metric),
+			ValueUntyped: point["Average"],
+			Endpoint:     pubIP,
+		}
+
+		var priIP string
+		switch ip.InstanceNetworkType {
+		case "classic":
+			priIP = strings.Join(ip.InnerIpAddress.IpAddress, ",")
+		case "vpc":
+			priIP = strings.Join(ip.VpcAttributes.PrivateIpAddress.IpAddress, ",")
+		}
+
+		tagsMap := map[string]string{
+			"region":        ip.RegionId,
+			"provider":      ProviderName,
+			"iden":          e.op.req.Iden,
+			"namespace":     ACS_ECS_DASHBOARD.toString(),
+			"instance_name": ip.InstanceName,
+			"instance_id":   instanceID,
+			"publish_ip":    pubIP,
+			"private_ip":    priIP,
+			// 指标单位
+			"unit_name": transfer.unit,
+		}
+
+		// 注入ecs的Tags
+		for _, tag := range ip.Tags.Tag {
+			if tag.TagValue != "" {
+				tagsMap[tag.TagKey] = tag.TagValue
+			}
+		}
+
+		n9e.BuildAndShift(tagsMap)
+	}
+}
+
+func (e *EcsIP) AsyncMeta(ctx context.Context) {
+	var (
+		wg          sync.WaitGroup
+		maxPageSize = 100
+		parse       = func(region string, pageNum int, container []ecs.Instance) ([]ecs.Instance, int, error) {
+			bytes, err := e.op.commonRequest(
+				region,
+				// ecs.aliyuncs.com endpoints的ecs前缀
+				"ecs",
+				"2014-05-26",
+				"DescribeInstances",
+				pageNum,
+				maxPageSize,
+				nil,
+			)
+			if err != nil {
+				return nil, 0, err
+			}
+
+			resp := new(ecs.DescribeInstancesResponse)
+			if err := parser.Parser().Unmarshal(bytes, resp); err != nil {
+				return nil, 0, err
+			}
+			return append(container, resp.Instances.Instance...), len(resp.Instances.Instance), nil
+		}
+	)
+
+	if e.ecsipMap == nil {
+		e.ecsipMap = make(map[string]*ecs.Instance)
+	}
+
+	for _, region := range e.op.getRegions() {
+		wg.Add(1)
+		go func(region string) {
+			defer wg.Done()
+			var (
+				pageNum   = 1
+				container []ecs.Instance
+			)
+
+			container, currLen, err := parse(region, pageNum, container)
+			if err != nil {
+				logrus.Errorln("AsyncMeta err ", err, region)
+				return
+			}
+
+			for currLen == maxPageSize {
+				pageNum++
+				container, currLen, err = parse(region, pageNum, container)
+				if err != nil {
+					logrus.Errorln("AsyncMeta paging err ", err)
+					continue
+				}
+			}
+
+			for i := range container {
+				ecs := container[i]
+				if ips := ecs.PublicIpAddress.IpAddress; len(ips) == 0 {
+					continue
+				}
+
+				e.m.Lock()
+				e.ecsipMap[ecs.InstanceId] = &ecs
+				e.m.Unlock()
+			}
+		}(region)
+	}
+
+	wg.Wait()
+	logrus.WithFields(logrus.Fields{
+		"ecsIPLens": len(e.ecsipMap),
+		"iden":      e.op.req.Iden,
+	}).Warnln("async loop success, get all ecsIP instance")
+}
