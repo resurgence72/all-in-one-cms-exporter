@@ -170,7 +170,6 @@ func (o *operator) getMonitorData(
 					transfer := &transferData{
 						points:    resp.Response.DataPoints,
 						metric:    *metric.MetricName,
-						step:      60,
 						unit:      *metric.Unit,
 						region:    cli.GetRegion(),
 						requestID: *resp.Response.RequestId,

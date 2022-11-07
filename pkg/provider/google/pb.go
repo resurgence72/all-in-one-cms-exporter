@@ -16,7 +16,7 @@ type GoogleReq struct {
 	Expr string `json:"_meta_expr"`
 }
 
-type transfer struct {
+type transferData struct {
 	series map[uint64]struct{}
 	points []*monitoringpb.TimeSeries
 	m      sync.Mutex

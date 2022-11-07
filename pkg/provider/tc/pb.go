@@ -8,7 +8,6 @@ import (
 type transferData struct {
 	points []*monitor.DataPoint
 	metric string
-	step   int64
 	unit   string
 	region string
 

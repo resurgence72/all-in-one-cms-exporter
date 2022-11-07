@@ -151,9 +151,8 @@ func (v *VXC) Collector() {
 
 					if point, find := v.findPoint(targetTS, points); find {
 						ts, val := int64(point[0].(float64)), point[1].(float64)
-						transfer := &TransferData{
+						transfer := &transferData{
 							endpoint: pname + "|" + pid,
-							step:     int64(v.req.Dur),
 							metric:   joinMetrics,
 							tagMap: map[string]string{
 								"unit_name":     data.Unit.Name,
@@ -213,7 +212,7 @@ func (v *VXC) getFromAndToTS() (int64, int64) {
 	return from.UnixNano() / 1e6, to.UnixNano() / 1e6
 }
 
-func (v *VXC) push(transfer *TransferData) {
+func (v *VXC) push(transfer *transferData) {
 	n9e := &common.MetricValue{
 		Metric:       common.BuildMetric("vxc", transfer.metric),
 		Endpoint:     transfer.endpoint,

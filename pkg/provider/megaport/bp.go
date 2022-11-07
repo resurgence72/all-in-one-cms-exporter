@@ -4,8 +4,7 @@ import (
 	"watcher4metrics/pkg/common"
 )
 
-type TransferData struct {
-	step     int64
+type transferData struct {
 	metric   string
 	endpoint string
 	tagMap   map[string]string

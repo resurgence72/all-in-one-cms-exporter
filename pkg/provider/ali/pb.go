@@ -23,7 +23,6 @@ type (
 type transferData struct {
 	points Points
 	metric string
-	step   int64
 	unit   string
 
 	requestID string

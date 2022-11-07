@@ -46,7 +46,7 @@ func (e *Gce) Collector() {
 	)
 }
 
-func (e *Gce) push(transfer *transfer) {
+func (e *Gce) push(transfer *transferData) {
 	transfer.m.Lock()
 	defer transfer.m.Unlock()
 

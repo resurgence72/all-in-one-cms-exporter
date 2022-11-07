@@ -50,7 +50,7 @@ func (i *InterConnect) Collector() {
 	)
 }
 
-func (i *InterConnect) push(transfer *transfer) {
+func (i *InterConnect) push(transfer *transferData) {
 	transfer.m.Lock()
 	defer transfer.m.Unlock()
 

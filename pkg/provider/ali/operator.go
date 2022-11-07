@@ -178,15 +178,9 @@ func (o *operator) getMetricLastData(
 			// 3. 将数据转换格式推送至夜莺
 			for requestId, points := range tmpMap {
 				// 4. 异步发往夜莺
-				var step int64
-				if step, err = strconv.ParseInt(resp.Period, 10, 64); err != nil {
-					step = 60
-				}
-
 				transfer := &transferData{
 					points:    points,
 					metric:    metric.MetricName,
-					step:      step,
 					unit:      metric.Unit,
 					requestID: requestId,
 				}

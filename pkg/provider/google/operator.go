@@ -22,7 +22,7 @@ type operator struct {
 
 var defalutProject = "bk-common"
 
-type PushFunc func(*transfer)
+type PushFunc func(*transferData)
 
 func (o *operator) getSeriesSum64(m map[string]string) uint64 {
 	var buf strings.Builder
@@ -96,7 +96,7 @@ func (o *operator) listTimeSeries(
 				points = append(points, point)
 			}
 
-			transfer := &transfer{
+			transfer := &transferData{
 				series: make(map[uint64]struct{}),
 				points: points,
 			}

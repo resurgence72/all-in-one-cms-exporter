@@ -82,7 +82,7 @@ func (l *Lb) Collector() {
 	)
 }
 
-func (l *Lb) push(transfer *transfer) {
+func (l *Lb) push(transfer *transferData) {
 	transfer.m.Lock()
 	defer transfer.m.Unlock()
 
