@@ -8,7 +8,7 @@
 > - Google / google
 > - Megaport / megaport
 >
-> 云厂商自定义 namespace 的 metrics 拉取功能； 拉取后清洗并推送至 n9e transfer rpc
+> 云厂商自定义 namespace 的 metrics 拉取功能； 将数据基于 remote write 推送之后端 TSDB
 
 
 
@@ -18,20 +18,20 @@
 > ```
 > global:
 >   auto_reload: false				# 动态监听配置文件变动
-> 
+>
 > report:
->   n9e_server: http://127.0.0.1:19000  # 上报 n9e transfer 地址
->   batch: 500                     # 分批次每次向夜莺发送Point数量
-> 
-> 
-> notify:
->   watcher_http_server: http://127.0.0.1:8080/api/v1/notify  # metrics nodata事件上报 watcher 地址
->   for: 5m                                                   # nodata 持续多久报警
-> 
+>   batch: 5000
+>   remote_write:
+>     - url: http://172.19.64.103:19000/prometheus/v1/write
+>       remote_timeout: 10s
+>       write_relabel_configs:
+>         - source_labels: ["__name__"]
+>           regex: "^net.+"
+>           action: "keep"
+>
 > http:
 >   listen: :8081
 >   timeout: 35s						# 接口即成了 pprof, timeout 太低会导致 pprof timeout
-> 
 > ```
 
 
