@@ -41,11 +41,13 @@ func (e *EcsIP) GetMetrics() error {
 	metrics, err := e.op.getMetrics(
 		e.client,
 		e.namespace,
-		// 只获取属于ip维度的公网指标(vpc)
 		map[string]struct{}{
-			"CPUUtilization":         {},
-			"memory_usedutilization": {},
-			//"Host.diskusage.utilization":           {},
+			"CPUUtilization":             {},
+			"memory_usedutilization":     {},
+			"Host.diskusage.utilization": {},
+
+			"concurrentConnections": {},
+
 			"VPC_PublicIP_InternetInRate":          {},
 			"VPC_PublicIP_InternetOutRate":         {},
 			"VPC_PublicIP_InternetOutRate_Percent": {},
@@ -92,7 +94,7 @@ func (e *EcsIP) push(transfer *transferData) {
 		n9e := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("ecs", transfer.metric),
-			ValueUntyped: point["Average"],
+			ValueUntyped: point.Value(),
 			Endpoint:     pubIP,
 		}
 

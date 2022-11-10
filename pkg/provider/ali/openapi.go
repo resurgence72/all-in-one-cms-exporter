@@ -81,12 +81,7 @@ func (o *OpenAPI) push(transfer *transferData) {
 			Endpoint:   instanceID,
 		}
 
-		// 适配阿里云的Value和value 不规范处理
-		if value, ok := point["Value"]; ok {
-			n9e.ValueUntyped = value.(float64)
-		} else {
-			n9e.ValueUntyped = point["value"].(float64)
-		}
+		n9e.ValueUntyped = point.Value()
 
 		tagsMap := map[string]string{
 			"provider":     ProviderName,

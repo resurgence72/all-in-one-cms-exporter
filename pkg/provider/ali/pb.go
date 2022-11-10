@@ -19,6 +19,22 @@ type (
 	Points   []Point
 )
 
+func (p Point) Value() interface{} {
+	for _, key := range []string{
+		"Average",
+		"Maximum",
+		"Minimum",
+		"Sum",
+		"Value",
+		"value",
+	} {
+		if v, ok := p[key]; ok {
+			return v
+		}
+	}
+	return -1
+}
+
 // point转换为夜莺结构的中间状态
 type transferData struct {
 	points Points

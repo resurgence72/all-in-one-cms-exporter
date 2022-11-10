@@ -66,7 +66,7 @@ func (w *Waf) push(transfer *transferData) {
 		n9e := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("waf", transfer.metric),
-			ValueUntyped: point["Maximum"],
+			ValueUntyped: point.Value(),
 			Endpoint:     point["domain"].(string),
 		}
 

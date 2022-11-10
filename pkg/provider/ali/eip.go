@@ -75,7 +75,7 @@ func (e *Eip) push(transfer *transferData) {
 		n9e := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("eip", transfer.metric),
-			ValueUntyped: point["Average"],
+			ValueUntyped: point.Value(),
 		}
 
 		n9e.Endpoint = eip.IpAddress

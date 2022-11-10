@@ -76,7 +76,7 @@ func (d *DDos) push(transfer *transferData) {
 		n9e := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("ddos", transfer.metric),
-			ValueUntyped: point["Maximum"],
+			ValueUntyped: point.Value(),
 		}
 
 		n9e.Endpoint = ip

@@ -100,7 +100,7 @@ func (s *Slb) push(transfer *transferData) {
 		n9e := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("slb", transfer.metric),
-			ValueUntyped: point["Average"],
+			ValueUntyped: point.Value(),
 			Endpoint:     slb.Address,
 		}
 
