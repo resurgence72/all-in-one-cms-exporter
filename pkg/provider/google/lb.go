@@ -90,13 +90,9 @@ func (l *Lb) push(transfer *transferData) {
 		metricName := l.op.buildMetric(series.Metric.Type)
 
 		points := series.GetPoints()
-		if points == nil {
+		if len(points) == 0 {
 			return
 		}
-
-		point := points[len(points)-1]
-		ts := point.Interval.EndTime.GetSeconds()
-		value := point.Value.GetInt64Value()
 
 		metricLabels := series.Metric.Labels
 		resourceLabels := series.Resource.Labels
@@ -105,41 +101,50 @@ func (l *Lb) push(transfer *transferData) {
 			return
 		}
 
-		n9e := &common.MetricValue{
-			Metric:       common.BuildMetric("lb", metricName),
-			Endpoint:     ep,
-			Timestamp:    ts,
-			ValueUntyped: value,
-		}
+		for _, point := range points {
+			ts := point.Interval.EndTime.GetSeconds()
+			value := point.Value.GetInt64Value()
 
-		tagsMap := map[string]string{
-			"provider":  ProviderName,
-			"iden":      l.op.req.Iden,
-			"namespace": GOOGLE_LB.toString(),
-		}
-
-		if pid, ok := resourceLabels["project_id"]; ok {
-			tagsMap["project_id"] = pid
-
-			if pname, ok := projectIDToName[pid]; ok {
-				tagsMap["project_mark"] = pname
+			n9e := &common.MetricValue{
+				Metric:       common.BuildMetric("lb", metricName),
+				Endpoint:     ep,
+				Timestamp:    ts,
+				ValueUntyped: value,
 			}
-		}
 
-		if ccode, ok := metricLabels["response_code"]; ok {
-			tagsMap["response_code"] = ccode
-		}
+			tagsMap := map[string]string{
+				"provider":  ProviderName,
+				"iden":      l.op.req.Iden,
+				"namespace": GOOGLE_LB.toString(),
+			}
 
-		if cc, ok := metricLabels["response_code_class"]; ok {
-			tagsMap["response_code_class"] = cc
-		}
+			if pid, ok := resourceLabels["project_id"]; ok {
+				tagsMap["project_id"] = pid
 
-		// 处理命中的 HTTP 代理的大陆
-		if pc, ok := metricLabels["proxy_continent"]; ok {
-			tagsMap["proxy_continent"] = pc
-		}
+				if pname, ok := projectIDToName[pid]; ok {
+					tagsMap["project_mark"] = pname
+				}
+			}
 
-		l.op.pushTo(n9e, tagsMap, transfer.series)
+			if tpn, ok := resourceLabels["target_proxy_name"]; ok {
+				tagsMap["target_proxy_name"] = tpn
+			}
+
+			if ccode, ok := metricLabels["response_code"]; ok {
+				tagsMap["response_code"] = ccode
+			}
+
+			if cc, ok := metricLabels["response_code_class"]; ok {
+				tagsMap["response_code_class"] = cc
+			}
+
+			// 处理命中的 HTTP 代理的大陆
+			if pc, ok := metricLabels["proxy_continent"]; ok {
+				tagsMap["proxy_continent"] = pc
+			}
+
+			l.op.pushTo(n9e, tagsMap, transfer.series)
+		}
 	}
 }
 
