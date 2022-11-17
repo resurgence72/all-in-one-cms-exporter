@@ -114,7 +114,7 @@ func (m *MPPort) doEvent(ctx context.Context) {
 	for _, ns := range strings.Split(m.req.MetricNamespace, ",") {
 		ns := metricsType(ns)
 		if mg, ok := registers[ns]; ok {
-			m.do(ctx, mg.Inject(
+			go m.do(ctx, mg.Inject(
 				m.req,
 				m.token,
 				ns.toString(),

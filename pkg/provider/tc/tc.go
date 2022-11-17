@@ -104,7 +104,7 @@ func (t *TC) doEvent(ctx context.Context) {
 	for _, ns := range strings.Split(t.op.req.MetricNamespace, ",") {
 		ns := metricsType(ns)
 		if mg, ok := registers[ns]; ok {
-			t.do(ctx, mg.Inject(
+			go t.do(ctx, mg.Inject(
 				t.op,
 				t.clientSet,
 				ns.toString(),

@@ -97,7 +97,7 @@ func (a *Ali) doEvent(ctx context.Context) {
 	for _, ns := range strings.Split(a.op.req.MetricNamespace, ",") {
 		ns := metricsType(ns)
 		if mg, ok := registers[ns]; ok {
-			a.do(ctx, mg.Inject(
+			go a.do(ctx, mg.Inject(
 				a.op,
 				a.cli,
 				ns.toString(),
