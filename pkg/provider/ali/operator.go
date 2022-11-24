@@ -37,7 +37,7 @@ func (o *operator) getMetrics(cli *cms.Client, ns string, filter map[string]stru
 	request := cms.CreateDescribeMetricMetaListRequest()
 	request.Scheme = "https"
 	request.Namespace = ns
-	request.PageSize = requests.NewInteger(200)
+	request.PageSize = requests.NewInteger(500)
 	resp, err := retry(request, 5)
 	if err != nil {
 		return nil, err
