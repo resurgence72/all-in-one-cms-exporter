@@ -47,6 +47,7 @@ func (i *InterConnect) Collector() {
 		i.metrics,
 		5,
 		i.push,
+		nil,
 	)
 }
 
@@ -83,7 +84,7 @@ func (i *InterConnect) push(transfer *transferData) {
 			tagsMap[k] = v
 		}
 
-		i.op.pushTo(n9e, tagsMap, transfer.series)
+		i.op.pushTo(n9e, tagsMap)
 	}
 }
 

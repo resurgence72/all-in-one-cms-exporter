@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"github.com/golang/protobuf/ptypes/duration"
 	"strings"
 	"sync"
 	"time"
@@ -20,7 +21,7 @@ type operator struct {
 	req *GoogleReq
 }
 
-var defalutProject = "bk-common"
+var defaultProject = "bk-common"
 
 type PushFunc func(*transferData)
 
@@ -51,6 +52,7 @@ func (o *operator) listTimeSeries(
 	metrics []string,
 	batch int,
 	push PushFunc,
+	groupBy []string,
 ) {
 	var (
 		wg                 sync.WaitGroup
@@ -68,7 +70,7 @@ func (o *operator) listTimeSeries(
 				wg.Done()
 			}()
 			req := &monitoringpb.ListTimeSeriesRequest{
-				Name:   "projects/" + defalutProject,
+				Name:   "projects/" + defaultProject,
 				Filter: fmt.Sprintf(`metric.type="%s"`, metric),
 				Interval: &monitoringpb.TimeInterval{
 					StartTime: &timestamp.Timestamp{
@@ -78,6 +80,18 @@ func (o *operator) listTimeSeries(
 						Seconds: endTime,
 					},
 				},
+			}
+
+			if len(groupBy) > 0 {
+				req.Aggregation = &monitoringpb.Aggregation{
+					AlignmentPeriod: &duration.Duration{
+						// 当前写死
+						Seconds: 60,
+					},
+					PerSeriesAligner:   monitoringpb.Aggregation_ALIGN_SUM,
+					CrossSeriesReducer: monitoringpb.Aggregation_REDUCE_SUM,
+					GroupByFields:      groupBy,
+				}
 			}
 
 			ctx, _ := context.WithTimeout(context.TODO(), 30*time.Second)
@@ -113,17 +127,8 @@ func (o *operator) listTimeSeries(
 func (o *operator) pushTo(
 	n9e *common.MetricValue,
 	tm map[string]string,
-	filter map[uint64]struct{},
 ) {
-	// 构造临时map m 去所hash索引
-	m := tm
-	m["endpoint"] = n9e.Endpoint
-
-	sum := o.getSeriesSum64(m)
-	if _, ok := filter[sum]; !ok {
-		filter[sum] = struct{}{}
-		n9e.BuildAndShift(tm)
-	}
+	n9e.BuildAndShift(tm)
 }
 
 func (o *operator) buildMetric(source string) string {

@@ -79,6 +79,12 @@ func (l *Lb) Collector() {
 		l.metrics,
 		5,
 		l.push,
+		[]string{
+			"resource.url_map_name",
+			"resource.project_id",
+			"metric.response_code",
+			"metric.response_code_class",
+		},
 	)
 }
 
@@ -126,10 +132,6 @@ func (l *Lb) push(transfer *transferData) {
 				}
 			}
 
-			if tpn, ok := resourceLabels["target_proxy_name"]; ok {
-				tagsMap["target_proxy_name"] = tpn
-			}
-
 			if ccode, ok := metricLabels["response_code"]; ok {
 				tagsMap["response_code"] = ccode
 			}
@@ -138,12 +140,7 @@ func (l *Lb) push(transfer *transferData) {
 				tagsMap["response_code_class"] = cc
 			}
 
-			// 处理命中的 HTTP 代理的大陆
-			if pc, ok := metricLabels["proxy_continent"]; ok {
-				tagsMap["proxy_continent"] = pc
-			}
-
-			l.op.pushTo(n9e, tagsMap, transfer.series)
+			l.op.pushTo(n9e, tagsMap)
 		}
 	}
 }

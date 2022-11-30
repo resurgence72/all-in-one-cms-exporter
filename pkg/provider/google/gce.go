@@ -43,6 +43,12 @@ func (e *Gce) Collector() {
 		e.metrics,
 		5,
 		e.push,
+		[]string{
+			"metric.instance_name",
+			"resource.instance_id",
+			"resource.project_id",
+			"resource.zone",
+		},
 	)
 }
 
@@ -105,7 +111,7 @@ func (e *Gce) push(transfer *transferData) {
 			tagsMap["region"] = region
 		}
 
-		e.op.pushTo(n9e, tagsMap, transfer.series)
+		e.op.pushTo(n9e, tagsMap)
 	}
 }
 

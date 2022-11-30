@@ -1,5 +1,5 @@
 global:
-  auto_reload: true
+  auto_reload: false
 
 report:
   batch: 5000
