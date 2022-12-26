@@ -16,12 +16,13 @@ const (
 	ACS_PHYSICAL_CONNECTION metricsType = "acs_physical_connection"
 	ACS_ECS_DASHBOARD       metricsType = "acs_ecs_dashboard"
 	ACS_SLB_DASHBOARD       metricsType = "acs_slb_dashboard"
+	ACS_ALB                 metricsType = "acs_alb"
 	ACS_WAF                 metricsType = "waf"
 	ACS_OPENAPI             metricsType = "acs_openAPI"
 
 	ProviderName = "ali"
 	// 云监控api最新数据要在3min后才同步
-	ALI_CMS_DELAY = 120
+	ALI_CMS_DELAY = 240
 )
 
 var (
