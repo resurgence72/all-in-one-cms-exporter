@@ -16,6 +16,7 @@ const (
 	//QCP_CEIP     metricsType = "qce/ceip_summary"
 	QCP_LB       metricsType = "qce/lb"
 	QCE_CVM      metricsType = "qce/cvm"
+	QCE_WAF      metricsType = "qce/waf"
 	ProviderName             = "tc"
 )
 

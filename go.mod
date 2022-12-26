@@ -27,11 +27,12 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/tebeka/strftime v0.1.5 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/api v1.0.433
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.521
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.566
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm v1.0.478
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor v1.0.401
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag v1.0.521
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/vpc v1.0.410
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/waf v1.0.566
 	github.com/zsais/go-gin-prometheus v0.1.0
 	google.golang.org/api v0.102.0
 	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c

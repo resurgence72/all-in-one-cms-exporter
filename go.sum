@@ -1076,8 +1076,9 @@ github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.401/go.mod 
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.410/go.mod h1:7sCQWVkxcsR38nffDW057DRGk8mUjK1Ing/EFOK8s8Y=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.433/go.mod h1:7sCQWVkxcsR38nffDW057DRGk8mUjK1Ing/EFOK8s8Y=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.478/go.mod h1:7sCQWVkxcsR38nffDW057DRGk8mUjK1Ing/EFOK8s8Y=
-github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.521 h1:9vSkU16rOUeED5R4lb3PS6GKOgoerYVsodNsKDWqxPw=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.521/go.mod h1:7sCQWVkxcsR38nffDW057DRGk8mUjK1Ing/EFOK8s8Y=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.566 h1:ktMjKG+YfBxA0vfI9IA51x/ltv9fEbZH095qU0ROLrg=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.566/go.mod h1:7sCQWVkxcsR38nffDW057DRGk8mUjK1Ing/EFOK8s8Y=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm v1.0.478 h1:/DEgLslvXvhZqo3S7XMXnW9hNozAlAUEJsIJ1lULIlo=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm v1.0.478/go.mod h1:rEuL15XYnPLzriZkgqlz07epVB6VuoQhh0z80Wfe7oU=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor v1.0.401 h1:T6SNbOAT/hbaG+QGmGyeU1+7j2ihFQoX8dZK9qR/U7Q=
@@ -1086,6 +1087,8 @@ github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag v1.0.521 h1:a/fJ+xd
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag v1.0.521/go.mod h1:H4I6ipDZITfFBEt4Bbu9ubVTgjq+GsQvnFvmpZG4qEo=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/vpc v1.0.410 h1:gtb2GrFplu/oxwfI2rInsmmDhckyTBB5S9sn20oG0tY=
 github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/vpc v1.0.410/go.mod h1:zGwQLI57bxsfW2tTyjrVAe7W9d7SaUecdsbeeGsFBOI=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/waf v1.0.566 h1:OCCLN8FxmBxy5zko8XgxYoZsd1HR8Y6ub8Td1Q/sdT4=
+github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/waf v1.0.566/go.mod h1:M5gV4cLXB4jmpx4S2llGkT9cDqtXtY6HSjBJqFC5P98=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20170815181823-89b8d40f7ca8/go.mod h1:ncp9v5uamzpCO7NfCPTXjqaC+bZgJeR0sMTm6dMHP7U=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=

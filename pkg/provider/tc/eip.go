@@ -66,6 +66,7 @@ func (e *Eip) Collector() {
 	e.op.getMonitorData(
 		e.clients,
 		e.metrics,
+		nil,
 		func() InstanceBuilderFunc {
 			return func(region string) []*monitor.Instance {
 				return e.op.buildInstances(
@@ -77,6 +78,7 @@ func (e *Eip) Collector() {
 						}
 						return vs
 					}(),
+					nil,
 				)
 			}
 		}(),
@@ -87,7 +89,6 @@ func (e *Eip) Collector() {
 }
 
 func (e *Eip) push(transfer *transferData) {
-
 	for _, point := range transfer.points {
 		eipId := point.Dimensions[0].Value
 
@@ -183,7 +184,6 @@ func (e *Eip) AsyncMeta(ctx context.Context) {
 
 			container, currLen, err := parse(region, offset, maxPageSize, container)
 			if err != nil {
-				logrus.Errorln("tc loop failed", err)
 				return
 			}
 

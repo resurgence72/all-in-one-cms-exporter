@@ -3,6 +3,7 @@ package tc
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -55,6 +56,12 @@ func (e *EcsIP) GetMetrics() error {
 			"WanInpkg": {},
 			// 外网网卡的平均每秒出流量
 			"AccOuttraffic": {},
+
+			// 内网出流量
+			"LanOuttraffic": {},
+			// 内网入流量
+			"LanIntraffic": {},
+
 			// cpu利用率
 			"CpuUsage": {},
 			// 内存利用率
@@ -74,6 +81,7 @@ func (e *EcsIP) Collector() {
 	e.op.getMonitorData(
 		e.clients,
 		e.metrics,
+		nil,
 		func() InstanceBuilderFunc {
 			return func(region string) []*monitor.Instance {
 				return e.op.buildInstances(
@@ -85,6 +93,7 @@ func (e *EcsIP) Collector() {
 						}
 						return vs
 					}(),
+					nil,
 				)
 			}
 		}(),
@@ -134,6 +143,8 @@ func (e *EcsIP) push(transfer *transferData) {
 				"unit_name":     transfer.unit,
 				"instance_id":   *ecsInstanceId,
 				"instance_name": *ecs.InstanceName,
+				"cpu":           strconv.Itoa(int(*ecs.CPU)),
+				"memory":        strconv.Itoa(int(*ecs.Memory)),
 				// cvm的公网私网ip
 				"publish_ip": n9e.Endpoint,
 				"private_ip": strings.Join(priIPs, ","),
@@ -233,7 +244,6 @@ func (e *EcsIP) AsyncMeta(ctx context.Context) {
 
 			container, currLen, err := parseECS(region, offset, maxPageSize, container)
 			if err != nil {
-				logrus.Errorln("tc loop failed", err)
 				return
 			}
 

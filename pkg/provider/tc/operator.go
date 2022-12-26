@@ -111,6 +111,7 @@ func (o *operator) getMetrics(cli *monitor.Client, ns string, filter map[string]
 func (o *operator) getMonitorData(
 	clients map[string]*monitor.Client,
 	metrics []*monitor.MetricSet,
+	allowRegion map[string]struct{},
 	buildFunc InstanceBuilderFunc,
 	batch int,
 	ns string,
@@ -132,6 +133,12 @@ func (o *operator) getMonitorData(
 	)
 
 	for region, cli := range clients {
+		if len(allowRegion) > 0 {
+			if _, ok := allowRegion[region]; !ok {
+				continue
+			}
+		}
+
 		instances := buildFunc(region)
 		for _, metric := range metrics {
 			sem.Acquire()
@@ -253,16 +260,26 @@ func (o *operator) commonRequest(
 
 // dName 腾讯拉取指标需要指定 monitor.Dimension的 Name
 // dValue 表示每个实例 Name 的唯一 key
-func (o *operator) buildInstances(dName string, dValues []*string) []*monitor.Instance {
+func (o *operator) buildInstances(
+	dName string,
+	dValues []*string,
+	domains map[string]string, // waf 不但需要传入 domain 唯一的dimension，还需要同时传入 edition； 这里去兼容多个 dimension
+) []*monitor.Instance {
 	instances := make([]*monitor.Instance, 0, len(dValues))
 	for _, v := range dValues {
+		var d []*monitor.Dimension
+		for k, v := range domains {
+			d = append(d, &monitor.Dimension{
+				Name:  com.StringPtr(k),
+				Value: com.StringPtr(v),
+			})
+		}
+
 		instances = append(instances, &monitor.Instance{
-			Dimensions: []*monitor.Dimension{
-				{
-					Name:  com.StringPtr(dName),
-					Value: com.StringPtr(*v),
-				},
-			},
+			Dimensions: append(d, &monitor.Dimension{
+				Name:  com.StringPtr(dName),
+				Value: com.StringPtr(*v),
+			}),
 		})
 	}
 	return instances
