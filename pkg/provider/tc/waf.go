@@ -195,6 +195,7 @@ func (w *Waf) push(transfer *transferData) {
 				"instance_id": *waf.DomainId,
 			}
 			n9e.BuildAndShift(tagsMap)
+			continue
 		}
 	}
 }

@@ -67,7 +67,7 @@ func (e *EcsIP) GetMetrics() error {
 			// 内存利用率
 			"MemUsage": {},
 			// 磁盘利用率
-			//"CvmDiskUsage": {},
+			"CvmDiskUsage": {},
 		},
 	)
 	if err != nil {
@@ -155,6 +155,7 @@ func (e *EcsIP) push(transfer *transferData) {
 			}
 
 			n9e.BuildAndShift(tagsMap)
+			continue
 		}
 	}
 }

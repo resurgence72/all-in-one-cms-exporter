@@ -119,6 +119,7 @@ func (e *Eip) push(transfer *transferData) {
 				"status":      *eip.AddressStatus,
 			}
 			n9e.BuildAndShift(tagsMap)
+			continue
 		}
 	}
 }

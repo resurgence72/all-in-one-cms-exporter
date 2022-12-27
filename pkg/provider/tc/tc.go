@@ -18,6 +18,8 @@ const (
 	QCE_CVM      metricsType = "qce/cvm"
 	QCE_WAF      metricsType = "qce/waf"
 	ProviderName             = "tc"
+
+	TC_CMS_DELAY = 60
 )
 
 var registers = make(map[metricsType]common.MetricsGetter)
