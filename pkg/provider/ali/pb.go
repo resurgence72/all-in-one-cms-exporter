@@ -27,6 +27,9 @@ func (p Point) Value() interface{} {
 		"Sum",
 		"Value",
 		"value",
+		"Count",
+		"count",
+		"deviceNum",
 	} {
 		if v, ok := p[key]; ok {
 			return v

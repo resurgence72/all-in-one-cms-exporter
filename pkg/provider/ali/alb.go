@@ -159,9 +159,7 @@ func (a *Alb) push(transfer *transferData) {
 			Metric:       common.BuildMetric("alb", transfer.metric),
 			Endpoint:     alb.LoadBalancerName,
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
-			Step:         transfer.step,
 			ValueUntyped: point.Value(),
-			InstanceID:   instanceID,
 		}
 
 		tagsMap := map[string]string{
@@ -169,7 +167,7 @@ func (a *Alb) push(transfer *transferData) {
 			"iden":          a.op.req.Iden,
 			"namespace":     ACS_SLB_DASHBOARD.toString(),
 			"unit_name":     transfer.unit,
-			"instance_id":   n9e.InstanceID,
+			"instance_id":   instanceID,
 			"instance_name": alb.LoadBalancerName,
 			"status":        alb.LoadBalancerStatus,
 		}
