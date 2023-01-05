@@ -57,9 +57,12 @@ func (e *EcsIP) GetMetrics() error {
 			// 内网带宽
 			"IntranetInRate":  {},
 			"IntranetOutRate": {},
+			// 内网流量
+			"IntranetIn":  {},
+			"IntranetOut": {},
 
 			// 丢包
-			"networkcredit_limit_overflow_errorpackets": {}, // 	实例网络能力超限丢包数（Count）
+			"networkcredit_limit_overflow_errorpackets": {}, // 实例网络能力超限丢包数（Count）
 			"packetInDropRates":                         {}, // 入方向丢包率
 			"packetOutDropRates":                        {}, // 出方向丢包率
 
@@ -103,8 +106,18 @@ func (e *EcsIP) push(transfer *transferData) {
 		}
 
 		// 获取tags 和 endpoint
-		ips := append(ip.PublicIpAddress.IpAddress, ip.EipAddress.IpAddress)
+		var ips []string
+		for i := range ip.PublicIpAddress.IpAddress {
+			if len(ip.PublicIpAddress.IpAddress[i]) > 0 {
+				ips = append(ips, ip.PublicIpAddress.IpAddress[i])
+			}
+		}
+
+		if len(ip.EipAddress.IpAddress) > 0 {
+			ips = append(ips, ip.EipAddress.IpAddress)
+		}
 		sort.Strings(ips)
+
 		pubIP := strings.Join(ips, ",")
 		n9e := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
@@ -128,7 +141,7 @@ func (e *EcsIP) push(transfer *transferData) {
 			"namespace":     ACS_ECS_DASHBOARD.toString(),
 			"instance_name": ip.InstanceName,
 			"instance_id":   ip.InstanceId,
-			"public_ip":     pubIP,
+			"public_ip":    pubIP,
 			"private_ip":    priIP,
 			"cpu":           strconv.Itoa(ip.Cpu),
 			"memory":        strconv.Itoa(ip.Memory / 1024),
