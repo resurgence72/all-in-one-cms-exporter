@@ -146,7 +146,7 @@ func (e *EcsIP) push(transfer *transferData) {
 				"cpu":           strconv.Itoa(int(*ecs.CPU)),
 				"memory":        strconv.Itoa(int(*ecs.Memory)),
 				// cvm的公网私网ip
-				"publish_ip": n9e.Endpoint,
+				"public_ip":  n9e.Endpoint,
 				"private_ip": strings.Join(priIPs, ","),
 			}
 

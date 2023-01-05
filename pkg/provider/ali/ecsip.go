@@ -5,6 +5,8 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/sirupsen/logrus"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"watcher4metrics/pkg/common"
@@ -41,16 +43,27 @@ func (e *EcsIP) GetMetrics() error {
 	metrics, err := e.op.getMetrics(
 		e.client,
 		e.namespace,
+		// 只获取属于ip维度的公网指标(vpc)
 		map[string]struct{}{
 			"CPUUtilization":             {},
 			"memory_usedutilization":     {},
 			"Host.diskusage.utilization": {},
 
-			"concurrentConnections": {},
-
+			"concurrentConnections":                {},
 			"VPC_PublicIP_InternetInRate":          {},
 			"VPC_PublicIP_InternetOutRate":         {},
 			"VPC_PublicIP_InternetOutRate_Percent": {},
+
+			// 内网带宽
+			"IntranetInRate":  {},
+			"IntranetOutRate": {},
+
+			// 丢包
+			"networkcredit_limit_overflow_errorpackets": {}, // 	实例网络能力超限丢包数（Count）
+			"packetInDropRates":                         {}, // 入方向丢包率
+			"packetOutDropRates":                        {}, // 出方向丢包率
+
+			"vm.ProcessCount": {}, // 系统进程总数
 		},
 	)
 	if err != nil {
@@ -89,8 +102,10 @@ func (e *EcsIP) push(transfer *transferData) {
 			continue
 		}
 
-		// 根据eipMap获取tags 和 endpoint
-		pubIP := strings.Join(ip.PublicIpAddress.IpAddress, ",")
+		// 获取tags 和 endpoint
+		ips := append(ip.PublicIpAddress.IpAddress, ip.EipAddress.IpAddress)
+		sort.Strings(ips)
+		pubIP := strings.Join(ips, ",")
 		n9e := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("ecs", transfer.metric),
@@ -112,9 +127,11 @@ func (e *EcsIP) push(transfer *transferData) {
 			"iden":          e.op.req.Iden,
 			"namespace":     ACS_ECS_DASHBOARD.toString(),
 			"instance_name": ip.InstanceName,
-			"instance_id":   instanceID,
-			"publish_ip":    pubIP,
+			"instance_id":   ip.InstanceId,
+			"public_ip":     pubIP,
 			"private_ip":    priIP,
+			"cpu":           strconv.Itoa(ip.Cpu),
+			"memory":        strconv.Itoa(ip.Memory / 1024),
 			// 指标单位
 			"unit_name": transfer.unit,
 		}
@@ -187,9 +204,6 @@ func (e *EcsIP) AsyncMeta(ctx context.Context) {
 
 			for i := range container {
 				ecs := container[i]
-				if ips := ecs.PublicIpAddress.IpAddress; len(ips) == 0 {
-					continue
-				}
 
 				e.m.Lock()
 				e.ecsipMap[ecs.InstanceId] = &ecs

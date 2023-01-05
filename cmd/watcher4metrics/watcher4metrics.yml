@@ -4,13 +4,12 @@ global:
 report:
   batch: 5000
   remote_write:
-#    - url: http://172.19.64.103:19000/prometheus/v1/write
     - url: http://api.bokecorp.com/n9e-v5-server/prometheus/v1/write
       remote_timeout: 10s
-#      write_relabel_configs:
-#        - source_labels: ["__name__"]
-#          regex: "^net_ddos.+"
-#          action: "drop"
+      write_relabel_configs:
+        - source_labels: ["__name__"]
+          regex: "^net_ddos.+"
+          action: "drop"
 
 http:
   listen: :8081
