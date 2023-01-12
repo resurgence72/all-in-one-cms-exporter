@@ -174,7 +174,7 @@ func (w *Waf) push(transfer *transferData) {
 
 		waf := w.getWaf(transfer.region, domain)
 		if waf == nil {
-			fmt.Println("没找到",domain)
+			fmt.Println("没找到", domain)
 			return
 		}
 

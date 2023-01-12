@@ -45,29 +45,29 @@ func (e *EcsIP) GetMetrics() error {
 	metrics, err := e.op.getMetrics(
 		e.clients["ap-shanghai"],
 		e.namespace,
-		map[string]struct{}{
+		[]string{
 			// 外网平均每秒出流量速率
-			"WanOuttraffic": {},
+			"WanOuttraffic",
 			// 外网平均每秒入流量速率
-			"WanIntraffic": {},
+			"WanIntraffic",
 			// 外网网卡网卡的平均每秒出包量
-			"WanOutpkg": {},
+			"WanOutpkg",
 			// 外网网卡网卡的平均每秒入包量
-			"WanInpkg": {},
+			"WanInpkg",
 			// 外网网卡的平均每秒出流量
-			"AccOuttraffic": {},
+			"AccOuttraffic",
 
 			// 内网出流量
-			"LanOuttraffic": {},
+			"LanOuttraffic",
 			// 内网入流量
-			"LanIntraffic": {},
+			"LanIntraffic",
 
 			// cpu利用率
-			"CpuUsage": {},
+			"CpuUsage",
 			// 内存利用率
-			"MemUsage": {},
+			"MemUsage",
 			// 磁盘利用率
-			"CvmDiskUsage": {},
+			"CvmDiskUsage",
 		},
 	)
 	if err != nil {

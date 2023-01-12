@@ -43,30 +43,30 @@ func (e *EcsIP) GetMetrics() error {
 	metrics, err := e.op.getMetrics(
 		e.client,
 		e.namespace,
-		// 只获取属于ip维度的公网指标(vpc)
-		map[string]struct{}{
-			"CPUUtilization":             {},
-			"memory_usedutilization":     {},
-			"Host.diskusage.utilization": {},
+		nil,
+		[]string{
+			"CPUUtilization",
+			"memory_usedutilization",
+			"Host.diskusage.utilization",
 
-			"concurrentConnections":                {},
-			"VPC_PublicIP_InternetInRate":          {},
-			"VPC_PublicIP_InternetOutRate":         {},
-			"VPC_PublicIP_InternetOutRate_Percent": {},
+			"concurrentConnections",
+			"VPC_PublicIP_InternetInRate",
+			"VPC_PublicIP_InternetOutRate",
+			"VPC_PublicIP_InternetOutRate_Percent",
 
 			// 内网带宽
-			"IntranetInRate":  {},
-			"IntranetOutRate": {},
+			"IntranetInRate",
+			"IntranetOutRate",
 			// 内网流量
-			"IntranetIn":  {},
-			"IntranetOut": {},
+			"IntranetIn",
+			"IntranetOut",
 
 			// 丢包
-			"networkcredit_limit_overflow_errorpackets": {}, // 实例网络能力超限丢包数（Count）
-			"packetInDropRates":                         {}, // 入方向丢包率
-			"packetOutDropRates":                        {}, // 出方向丢包率
+			"networkcredit_limit_overflow_errorpackets", // 实例网络能力超限丢包数（Count）
+			"packetInDropRates", // 入方向丢包率
+			"packetOutDropRates", // 出方向丢包率
 
-			"vm.ProcessCount": {}, // 系统进程总数
+			"vm.ProcessCount", // 系统进程总数
 		},
 	)
 	if err != nil {

@@ -34,11 +34,12 @@ func (o *OpenAPI) GetMetrics() error {
 	metrics, err := o.op.getMetrics(
 		o.client,
 		o.namespace,
-		map[string]struct{}{
+		nil,
+		[]string{
 			// API速率配额使用率
-			"QuotaUsage": {},
+			"QuotaUsage",
 			// 调用次数
-			"TotalNumber": {},
+			"TotalNumber",
 		},
 	)
 	if err != nil {

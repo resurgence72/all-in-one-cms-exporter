@@ -1,6 +1,7 @@
 package ali
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
@@ -22,7 +23,12 @@ type operator struct {
 }
 
 // 获取namespace全量metrics
-func (o *operator) getMetrics(cli *cms.Client, ns string, filter map[string]struct{}) ([]*cms.Resource, error) {
+func (o *operator) getMetrics(
+	cli *cms.Client,
+	ns string,
+	labels map[string]string, // 多个产品公用一个ns,这时需要指定labels(metricCategory) 做子类区分
+	filter []string,
+) ([]*cms.Resource, error) {
 	var retry = func(req *cms.DescribeMetricMetaListRequest, times int) (resp *cms.DescribeMetricMetaListResponse, err error) {
 		for i := 0; i < times; i++ {
 			resp, err = cli.DescribeMetricMetaList(req)
@@ -38,18 +44,36 @@ func (o *operator) getMetrics(cli *cms.Client, ns string, filter map[string]stru
 	request.Scheme = "https"
 	request.Namespace = ns
 	request.PageSize = requests.NewInteger(1000)
+
+	if len(labels) > 0 {
+		var lbs []map[string]string
+		for k, v := range labels {
+			lbs = append(lbs, map[string]string{"name": k, "value": v})
+		}
+
+		bs, err := json.Marshal(lbs)
+		if err == nil {
+			request.Labels = string(bs)
+		}
+	}
+
 	resp, err := retry(request, 5)
 	if err != nil {
 		return nil, err
 	}
 
-	metrics := make([]*cms.Resource, 0, len(resp.Resources.Resource))
 	isFilter := filter != nil
+	fm := make(map[string]struct{}, len(filter))
+	for _, f := range filter {
+		fm[f] = struct{}{}
+	}
+
+	metrics := make([]*cms.Resource, 0, len(resp.Resources.Resource))
 	for i := range resp.Resources.Resource {
 		r := &resp.Resources.Resource[i]
 
 		if isFilter {
-			if _, ok := filter[r.MetricName]; !ok {
+			if _, ok := fm[r.MetricName]; !ok {
 				continue
 			}
 		}

@@ -44,6 +44,7 @@ func (e *Eip) GetMetrics() error {
 		e.client,
 		e.namespace,
 		nil,
+		nil,
 	)
 	if err != nil {
 		return err

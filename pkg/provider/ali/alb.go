@@ -37,23 +37,24 @@ func (a *Alb) GetMetrics() error {
 	metrics, err := a.op.getMetrics(
 		a.client,
 		a.namespace,
-		map[string]struct{}{
+		nil,
+		[]string{
 			// 活跃连接数
-			"LoadBalancerActiveConnection": {},
+			"LoadBalancerActiveConnection",
 			// 2xx
-			"LoadBalancerHTTPCode2XX": {},
+			"LoadBalancerHTTPCode2XX",
 			// 3xx
-			"LoadBalancerHTTPCode3XX": {},
+			"LoadBalancerHTTPCode3XX",
 			// 4xx
-			"LoadBalancerHTTPCode4XX": {},
+			"LoadBalancerHTTPCode4XX",
 			// 5xx
-			"LoadBalancerHTTPCode5XX": {},
+			"LoadBalancerHTTPCode5XX",
 			// qps
-			"LoadBalancerQPS": {},
+			"LoadBalancerQPS",
 			// 新建连接数
-			"LoadBalancerNewConnection": {},
+			"LoadBalancerNewConnection",
 			// 不健康的服务器数
-			"LoadBalancerUnHealthyHostCount": {},
+			"LoadBalancerUnHealthyHostCount",
 		},
 	)
 	if err != nil {

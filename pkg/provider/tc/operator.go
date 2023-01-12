@@ -68,7 +68,11 @@ func (o *operator) getRegions() []string {
 }
 
 // 获取namespace全量metrics
-func (o *operator) getMetrics(cli *monitor.Client, ns string, filter map[string]struct{}) ([]*monitor.MetricSet, error) {
+func (o *operator) getMetrics(
+	cli *monitor.Client,
+	ns string,
+	filter []string,
+) ([]*monitor.MetricSet, error) {
 	var (
 		retry = func(req *monitor.DescribeBaseMetricsRequest, times int) (resp *monitor.DescribeBaseMetricsResponse, err error) {
 			for i := 0; i < times; i++ {
@@ -93,12 +97,17 @@ func (o *operator) getMetrics(cli *monitor.Client, ns string, filter map[string]
 		return nil, err
 	}
 
-	metrics := make([]*monitor.MetricSet, 0, len(resp.Response.MetricSet))
 	isFilter := filter != nil
+	fm := make(map[string]struct{}, len(filter))
+	for _, f := range filter {
+		fm[f] = struct{}{}
+	}
+
+	metrics := make([]*monitor.MetricSet, 0, len(resp.Response.MetricSet))
 	for i := range resp.Response.MetricSet {
 		ms := resp.Response.MetricSet[i]
 		if isFilter {
-			if _, ok := filter[*ms.MetricName]; !ok {
+			if _, ok := fm[*ms.MetricName]; !ok {
 				continue
 			}
 		}

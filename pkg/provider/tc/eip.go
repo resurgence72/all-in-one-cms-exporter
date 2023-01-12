@@ -42,17 +42,17 @@ func (e *Eip) GetMetrics() error {
 	metrics, err := e.op.getMetrics(
 		e.clients["ap-shanghai"],
 		e.namespace,
-		map[string]struct{}{
+		[]string{
 			// 弹性公网IP入带宽
-			"VipIntraffic": {},
+			"VipIntraffic",
 			// 弹性公网IP出带宽
-			"VipOuttraffic": {},
+			"VipOuttraffic",
 			// 弹性公网IP入包量
-			"VipInpkg": {},
+			"VipInpkg",
 			// 弹性公网IP出包量
-			"VipOutpkg": {},
+			"VipOutpkg",
 			// 弹性公网IP出流量
-			"AccOuttraffic": {},
+			"AccOuttraffic",
 		},
 	)
 	if err != nil {

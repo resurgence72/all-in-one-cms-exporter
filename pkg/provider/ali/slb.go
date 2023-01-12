@@ -40,35 +40,36 @@ func (s *Slb) GetMetrics() error {
 	metrics, err := s.op.getMetrics(
 		s.client,
 		s.namespace,
-		map[string]struct{}{
+		nil,
+		[]string{
 			// 最大连接数使用率
-			"InstanceMaxConnectionUtilization": {},
+			"InstanceMaxConnectionUtilization",
 			// 新建连接数使用率
-			"InstanceNewConnectionUtilization": {},
+			"InstanceNewConnectionUtilization",
 			// 7层协议实例QPS
-			"InstanceQps": {},
+			"InstanceQps",
 			// QPS使用率
-			"InstanceQpsUtilization": {},
+			"InstanceQpsUtilization",
 			// 7层协议实例4XX状态码
-			"InstanceStatusCode4xx": {},
+			"InstanceStatusCode4xx",
 			// 7层协议实例5XX状态码
-			"InstanceStatusCode5xx": {},
+			"InstanceStatusCode5xx",
 			// 端口并发连接数
-			"MaxConnection": {},
+			"MaxConnection",
 			// TCP新建连接数
-			"NewConnection": {},
+			"NewConnection",
 			// 7层协议端口QPS
-			"Qps": {},
+			"Qps",
 			// 7层协议端口4XX状态码
-			"StatusCode4xx": {},
+			"StatusCode4xx",
 			// 7层协议端口5XX状态码
-			"StatusCode5xx": {},
+			"StatusCode5xx",
 			// 后端异常ECS实例个数
-			"UnhealthyServerCount": {},
+			"UnhealthyServerCount",
 			// 7层协议端口Upstream4XX状态码
-			"UpstreamCode4xx": {},
+			"UpstreamCode4xx",
 			// 7层协议端口Upstream5XX状态码
-			"UpstreamCode5xx": {},
+			"UpstreamCode5xx",
 		},
 	)
 	if err != nil {

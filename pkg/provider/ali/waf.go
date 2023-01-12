@@ -33,13 +33,14 @@ func (w *Waf) GetMetrics() error {
 	metrics, err := w.op.getMetrics(
 		w.client,
 		w.namespace,
-		map[string]struct{}{
-			"4XX_ratio":   {},
-			"5XX_ratio":   {},
-			"acl_rate_5m": {},
-			"cc_rate_5m":  {},
-			"qps":         {},
-			"waf_rate_5m": {},
+		nil,
+		[]string{
+			"4XX_ratio",
+			"5XX_ratio",
+			"acl_rate_5m",
+			"cc_rate_5m",
+			"qps",
+			"waf_rate_5m",
 		},
 	)
 	if err != nil {

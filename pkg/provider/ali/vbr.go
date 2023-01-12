@@ -115,6 +115,7 @@ func (v *Vbr) GetMetrics() error {
 		v.client,
 		v.namespace,
 		nil,
+		nil,
 	)
 	if err != nil {
 		return err

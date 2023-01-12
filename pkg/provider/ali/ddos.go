@@ -43,6 +43,7 @@ func (d *DDos) GetMetrics() error {
 		d.client,
 		d.namespace,
 		nil,
+		nil,
 	)
 	if err != nil {
 		return err
