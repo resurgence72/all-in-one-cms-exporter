@@ -58,6 +58,7 @@ func (w *Waf) Collector() {
 		w.namespace,
 		w.push,
 		nil,
+		nil,
 	)
 }
 

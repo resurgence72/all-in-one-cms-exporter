@@ -87,6 +87,7 @@ func (s *Slb) Collector() {
 		s.namespace,
 		s.push,
 		nil,
+		nil,
 	)
 }
 

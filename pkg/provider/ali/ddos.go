@@ -61,6 +61,7 @@ func (d *DDos) Collector() {
 			namespace,
 			d.push,
 			nil,
+			nil,
 		)
 	}
 }

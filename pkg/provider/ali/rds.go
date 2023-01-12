@@ -59,6 +59,7 @@ func (r *Rds) Collector() {
 		r.namespace,
 		r.push,
 		nil,
+		nil,
 	)
 }
 

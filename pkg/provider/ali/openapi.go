@@ -67,6 +67,7 @@ func (o *OpenAPI) Collector() {
 		o.namespace,
 		o.push,
 		&ds,
+		nil,
 	)
 }
 

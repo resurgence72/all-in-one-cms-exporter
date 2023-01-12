@@ -128,6 +128,7 @@ func (o *operator) getMetricLastData(
 	push PushFunc,
 // Dimensions 维度
 	ds *string,
+	groupBy []string,
 ) {
 	var (
 		retry = func(cli *cms.Client, req *cms.DescribeMetricLastRequest, times int) (resp *cms.DescribeMetricLastResponse, err error) {
@@ -156,6 +157,14 @@ func (o *operator) getMetricLastData(
 			if ds != nil {
 				request.Dimensions = *ds
 			}
+
+			if len(groupBy) > 0 {
+				bs, err := json.Marshal(map[string][]string{"groupby": groupBy})
+				if err == nil {
+					request.Express = string(bs)
+				}
+			}
+
 			resp, err := retry(cli, request, 5)
 
 			if err != nil || !resp.Success {

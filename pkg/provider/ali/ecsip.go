@@ -84,6 +84,7 @@ func (e *EcsIP) Collector() {
 		e.namespace,
 		e.push,
 		nil,
+		nil,
 	)
 }
 

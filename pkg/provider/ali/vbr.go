@@ -132,6 +132,7 @@ func (v *Vbr) Collector() {
 		v.namespace,
 		v.push,
 		nil,
+		nil,
 	)
 }
 

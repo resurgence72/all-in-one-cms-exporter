@@ -76,6 +76,7 @@ func (a *Alb) Collector() {
 		a.namespace,
 		a.push,
 		nil,
+		nil,
 	)
 }
 

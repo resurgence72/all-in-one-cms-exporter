@@ -61,6 +61,7 @@ func (e *Eip) Collector() {
 		e.namespace,
 		e.push,
 		nil,
+		nil,
 	)
 }
 
