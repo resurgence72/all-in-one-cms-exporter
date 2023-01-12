@@ -137,7 +137,12 @@ func (v *Vbr) Collector() {
 
 func (v *Vbr) push(transfer *transferData) {
 	for _, point := range transfer.points {
-		instanceID := point["instanceId"].(string)
+		p, ok := point["InstanceId"]
+		if !ok {
+			continue
+		}
+
+		instanceID := p.(string)
 		vbr, ok := v.vbrMap[instanceID]
 		if !ok {
 			continue

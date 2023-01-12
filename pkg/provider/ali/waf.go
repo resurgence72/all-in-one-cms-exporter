@@ -63,7 +63,11 @@ func (w *Waf) Collector() {
 
 func (w *Waf) push(transfer *transferData) {
 	for _, point := range transfer.points {
-		instanceID := point["instanceId"].(string)
+		p, ok := point["InstanceId"]
+		if !ok {
+			continue
+		}
+
 		n9e := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("waf", transfer.metric),
@@ -76,7 +80,7 @@ func (w *Waf) push(transfer *transferData) {
 			"iden":        w.op.req.Iden,
 			"namespace":   ACS_WAF.toString(),
 			"unit_name":   transfer.unit,
-			"instance_id": instanceID,
+			"instance_id": p.(string),
 		}
 
 		n9e.BuildAndShift(tagsMap)

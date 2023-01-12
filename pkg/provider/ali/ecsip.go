@@ -99,7 +99,12 @@ func (e *EcsIP) getIP(id string) *ecs.Instance {
 
 func (e *EcsIP) push(transfer *transferData) {
 	for _, point := range transfer.points {
-		instanceID := point["instanceId"].(string)
+		p, ok := point["InstanceId"]
+		if !ok {
+			continue
+		}
+
+		instanceID := p.(string)
 		ip := e.getIP(instanceID)
 		if ip == nil {
 			continue

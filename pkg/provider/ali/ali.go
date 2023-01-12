@@ -19,6 +19,7 @@ const (
 	ACS_ALB                 metricsType = "acs_alb"
 	ACS_WAF                 metricsType = "waf"
 	ACS_OPENAPI             metricsType = "acs_openAPI"
+	ACS_RDS_DASHBOARD       metricsType = "acs_rds_dashboard"
 
 	ProviderName = "ali"
 	// 云监控api最新数据要在3min后才同步

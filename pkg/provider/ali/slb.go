@@ -92,7 +92,12 @@ func (s *Slb) Collector() {
 
 func (s *Slb) push(transfer *transferData) {
 	for _, point := range transfer.points {
-		instanceID := point["instanceId"].(string)
+		p, ok := point["InstanceId"]
+		if !ok {
+			continue
+		}
+
+		instanceID := p.(string)
 		slb, ok := s.slbMap[instanceID]
 		if !ok {
 			continue

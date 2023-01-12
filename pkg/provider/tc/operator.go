@@ -64,7 +64,6 @@ func (o *operator) getRegions() []string {
 		regions = append(regions, *region.Region)
 	}
 	return regions
-
 }
 
 // 获取namespace全量metrics

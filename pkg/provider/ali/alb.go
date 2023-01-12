@@ -149,7 +149,12 @@ func (a *Alb) AsyncMeta(ctx context.Context) {
 
 func (a *Alb) push(transfer *transferData) {
 	for _, point := range transfer.points {
-		instanceID := point["loadBalancerId"].(string)
+		p, ok := point["loadBalancerId"]
+		if !ok {
+			continue
+		}
+
+		instanceID := p.(string)
 		alb, ok := a.albMap[instanceID]
 		if !ok {
 			fmt.Println("跳过了" ,instanceID)

@@ -67,8 +67,12 @@ func (d *DDos) Collector() {
 
 func (d *DDos) push(transfer *transferData) {
 	for _, point := range transfer.points {
-		// 根据instanceID 拿到 endpoint ip
-		instanceID := point["InstanceId"].(string)
+		p, ok := point["InstanceId"]
+		if !ok {
+			continue
+		}
+
+		instanceID := p.(string)
 		ip, ok := d.ddosMap[instanceID]
 		if !ok {
 			continue

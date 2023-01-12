@@ -66,7 +66,12 @@ func (e *Eip) Collector() {
 
 func (e *Eip) push(transfer *transferData) {
 	for _, point := range transfer.points {
-		instanceID := point["instanceId"].(string)
+		p, ok := point["InstanceId"]
+		if !ok {
+			continue
+		}
+
+		instanceID := p.(string)
 		eip := e.getEip(instanceID)
 		if eip == nil {
 			continue
