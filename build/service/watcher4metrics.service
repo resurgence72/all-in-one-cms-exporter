@@ -1,0 +1,22 @@
+[Unit]
+Description=watcher4metrics agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+SyslogIdentifier=watcher4metrics
+ExecStart=/data/service/watcher4metrics
+WorkingDirectory=/data/service/
+ExecStart=/data/service/watcher4metrics -config /data/service/watcher4metrics.yml
+
+User=root
+Group=root
+Type=simple
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+RestartSec=1
+StartLimitInterval=0
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: watcher4metrics-deploy
+  namespace: ops-sre
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      name: watcher4metrics-deploy
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8081"
+        prometheus.io/scrape: "true"
+      labels:
+        name: watcher4metrics-deploy
+    spec:
+      imagePullSecrets:
+        # secret 需要创建
+        - name: alicloud-hub
+      volumes:
+        - name: watcher4metrics-cfg
+          configMap:
+            name: watcher4metrics-cfg
+      containers:
+        - name: watcher4metrics
+          args:
+            - -config
+            - /opt/app/config/watcher4metrics.yml
+          image: watcher4metrics:v0.0.1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8081
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "300Mi"
+            requests:
+              cpu: "500m"
+              memory: "300Mi"
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          volumeMounts:
+            - mountPath: /opt/app/config
+              name: watcher4metrics-cfg
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: watcher4metrics-cfg
+  namespace: ops-sre
+data:
+  watcher4metrics.yml: |
+    global:
+      auto_reload: true
+    report:
+      batch: 5000
+      remote_write:
+        - url: http://api.bokecorp.com/n9e-v5-server/prometheus/v1/write
+          remote_timeout: 10s
+    http:
+      listen: :8081
+      timeout: 35s
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: watcher4metrics-svc
+  namespace: ops-sre
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8081
+  selector:
+    name: watcher4metrics-deploy
