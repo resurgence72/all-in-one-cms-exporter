@@ -66,7 +66,7 @@ func (e *Gce) push(transfer *transferData) {
 
 		point := points[len(points)-1]
 		ts := point.Interval.EndTime.GetSeconds()
-		value := point.Value.GetInt64Value()
+		value := l.op.getPointValue(series.ValueType.String(), point)
 
 		metricLabels := series.Metric.Labels
 		resourceLabels := series.Resource.Labels
