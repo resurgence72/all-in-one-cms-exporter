@@ -30,46 +30,11 @@ func (l *Lb) GetNamespace() string {
 }
 
 func (l *Lb) GetMetrics() error {
-	l.metrics = []string{
-		// 从代理将请求发送到后端到代理从后端收到最后一个响应字节为止计算的延迟分布 ms
-		"loadbalancing.googleapis.com/https/backend_latencies",
-		// 作为请求从外部 HTTP(S) 负载平衡器发送到后端的字节数
-		"loadbalancing.googleapis.com/https/backend_request_bytes_count",
-		// 外部 HTTP(S) 负载平衡器后端服务的请求数
-		"loadbalancing.googleapis.com/https/backend_request_count",
-		// 作为响应从后端（或缓存）发送到外部 HTTP(S) 负载平衡器的字节数
-		"loadbalancing.googleapis.com/https/backend_response_bytes_count",
-		// 从代理将请求发送到后端到代理从后端收到最后一个响应字节为止计算的延迟分布 ms
-		//"https/external/regional/backend_latencies",
-		// 作为请求从客户端发送到 HTTP/S 负载均衡器的字节数
-		//"https/external/regional/request_bytes_count",
-		// HTTP/S 负载均衡器服务的请求数
-		//"https/external/regional/request_count",
-		// 作为响应从 HTTP/S 负载平衡器发送到客户端的字节数
-		//"https/external/regional/response_bytes_count",
-		// 从代理收到请求到代理在最后一个响应字节从客户端收到 ACK 计算的延迟分布
-		//"https/external/regional/total_latencies",
-		//为客户端和代理之间的每个连接测量的 RTT 分布
-		"loadbalancing.googleapis.com/https/frontend_tcp_rtt",
-		// 从内部 HTTP(S) 负载平衡器代理向后端发送请求到代理从后端收到最后一个响应字节之间计算的延迟分布
-		//"https/internal/backend_latencies",
-		// 作为请求从客户端发送到内部 HTTP(S) 负载平衡器的字节数
-		//"https/internal/request_bytes_count",
-		// 内部 HTTP(S) 负载平衡器处理的请求数
-		//"https/internal/request_count",
-		// 从内部 HTTP(S) 负载平衡器作为响应发送到客户端的字节数
-		//"https/internal/response_bytes_count",
-		// 从内部 HTTP(S) 负载平衡器代理收到请求到代理在最后一个响应字节从客户端收到 ACK 计算的延迟分布
-		//"https/internal/total_latencies",
-		// 作为请求从客户端发送到外部 HTTP(S) 负载平衡器的字节数
-		"loadbalancing.googleapis.com/https/request_bytes_count",
-		// 外部 HTTP(S) 负载平衡器处理的请求数
-		"loadbalancing.googleapis.com/https/request_count",
-		// 作为响应从外部 HTTP(S) 负载平衡器发送到客户端的字节数
-		"loadbalancing.googleapis.com/https/response_bytes_count",
-		// 从外部 HTTP(S) 负载平衡器代理收到请求到代理在最后一个响应字节从客户端收到 ACK 计算的延迟分布
-		"loadbalancing.googleapis.com/https/total_latencies",
+	metrics, err := l.op.getMetrics(l.client, "loadbalancing.googleapis.com")
+	if err != nil {
+		return err
 	}
+	l.metrics = metrics
 	return nil
 }
 

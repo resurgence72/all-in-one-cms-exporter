@@ -36,7 +36,7 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/waf v1.0.566
 	github.com/zsais/go-gin-prometheus v0.1.0
 	google.golang.org/api v0.102.0
-	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c
+	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
 )

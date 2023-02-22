@@ -27,18 +27,76 @@ type PushFunc func(*transferData)
 
 const (
 	INT64Type        = "INT64"
+	DoubleType       = "DOUBLE"
+	BoolType         = "BOOL"
+	StringType       = "STRING"
 	DistributionType = "DISTRIBUTION"
+
+	GALaunchStage    = "GA"
+	BETALaunchStage  = "BETA"
+	ALPHALaunchStage = "ALPHA"
 )
 
 func (o *operator) getPointValue(valueType string, point *monitoringpb.Point) interface{} {
 	switch valueType {
 	case INT64Type:
 		return point.GetValue().GetInt64Value()
+	case DoubleType:
+		return point.GetValue().GetDoubleValue()
+	case BoolType:
+		if point.GetValue().GetBoolValue() {
+			return 1
+		} else {
+			return 0
+		}
 	case DistributionType:
 		return point.GetValue().GetDistributionValue().Mean
+	case StringType:
+		return 0
 	default:
 		return 0
 	}
+}
+
+func (o *operator) getMetrics(
+	cli *monitoring.MetricClient,
+	metricPrefix string,
+) ([]string, error) {
+	var p string
+	// 遍历一次即可，拿到任意一个project
+	o.projects.Range(func(key, value any) bool {
+		p = key.(string)
+		return false
+	})
+
+	req := &monitoringpb.ListMetricDescriptorsRequest{
+		Name:   p,
+		Filter: fmt.Sprintf(`metric.type=starts_with("%s")`, metricPrefix),
+	}
+
+	ctx, _ := context.WithTimeout(context.TODO(), 30*time.Second)
+	descriptors := cli.ListMetricDescriptors(ctx, req)
+
+	var metrics []string
+	for {
+		descriptor, err := descriptors.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			logrus.Errorln("could not ListMetricDescriptors", err)
+			return nil, err
+		}
+
+		switch descriptor.LaunchStage.String() {
+		// TODO 只考虑GA的metrics
+		case GALaunchStage:
+			metrics = append(metrics, descriptor.Type)
+		default:
+			continue
+		}
+	}
+	return metrics, nil
 }
 
 func (o *operator) getSeriesSum64(m map[string]string) uint64 {

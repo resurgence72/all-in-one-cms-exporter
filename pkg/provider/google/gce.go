@@ -195,23 +195,10 @@ func (e *Gce) GetNamespace() string {
 }
 
 func (e *Gce) GetMetrics() error {
-	e.metrics = []string{
-		// GCE 入网流量
-		"compute.googleapis.com/instance/network/received_bytes_count",
-		// GCE 出网流量
-		"compute.googleapis.com/instance/network/sent_bytes_count",
-		// GCE 入网数据包
-		"compute.googleapis.com/instance/network/received_packets_count",
-		// GCE 出网数据包
-		"compute.googleapis.com/instance/network/sent_packets_count",
-
-		// GCE cpu使用率
-		"compute.googleapis.com/instance/cpu/utilization",
-
-		// GCE mem总大小
-		"compute.googleapis.com/instance/memory/balloon/ram_size",
-		// GCE mem使用大小
-		"compute.googleapis.com/instance/memory/balloon/ram_used",
+	metrics, err := e.op.getMetrics(e.client, "compute.googleapis.com")
+	if err != nil {
+		return err
 	}
+	e.metrics = metrics
 	return nil
 }

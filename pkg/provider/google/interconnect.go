@@ -22,18 +22,11 @@ func (i *InterConnect) Inject(params ...interface{}) common.MetricsGetter {
 }
 
 func (i *InterConnect) GetMetrics() error {
-	i.metrics = []string{
-		// 互联带宽上限
-		"interconnect.googleapis.com/network/attachment/capacity",
-		// 互联接受到的字节数
-		"interconnect.googleapis.com/network/attachment/received_bytes_count",
-		// 互联接收到的数据包
-		"interconnect.googleapis.com/network/attachment/received_packets_count",
-		// 发送的字节数
-		"interconnect.googleapis.com/network/attachment/sent_bytes_count",
-		//发送的数据包
-		"interconnect.googleapis.com/network/attachment/sent_packets_count",
+	metrics, err := i.op.getMetrics(i.client, "interconnect.googleapis.com")
+	if err != nil {
+		return err
 	}
+	i.metrics = metrics
 	return nil
 }
 
