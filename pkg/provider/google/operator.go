@@ -25,6 +25,22 @@ type operator struct {
 
 type PushFunc func(*transferData)
 
+const (
+	INT64Type        = "INT64"
+	DistributionType = "DISTRIBUTION"
+)
+
+func (o *operator) getPointValue(valueType string, point *monitoringpb.Point) interface{} {
+	switch valueType {
+	case INT64Type:
+		return point.GetValue().GetInt64Value()
+	case DistributionType:
+		return point.GetValue().GetDistributionValue().Mean
+	default:
+		return 0
+	}
+}
+
 func (o *operator) getSeriesSum64(m map[string]string) uint64 {
 	var buf strings.Builder
 	for k, v := range m {
