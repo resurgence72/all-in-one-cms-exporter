@@ -64,7 +64,7 @@ func (o *operator) getMetrics(
 ) ([]string, error) {
 	var p string
 	// 遍历一次即可，拿到任意一个project
-	o.projects.Range(func(key, value any) bool {
+	o.projects.Range(func(key, value interface{}) bool {
 		p = key.(string)
 		return false
 	})
