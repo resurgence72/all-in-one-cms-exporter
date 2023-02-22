@@ -27,6 +27,9 @@ type PushFunc func(*transferData)
 
 const (
 	INT64Type        = "INT64"
+	DoubleType       = "DOUBLE"
+	BoolType         = "BOOL"
+	StringType       = "STRING"
 	DistributionType = "DISTRIBUTION"
 )
 
@@ -34,8 +37,18 @@ func (o *operator) getPointValue(valueType string, point *monitoringpb.Point) in
 	switch valueType {
 	case INT64Type:
 		return point.GetValue().GetInt64Value()
+	case DoubleType:
+		return point.GetValue().GetDoubleValue()
+	case BoolType:
+		if point.GetValue().GetBoolValue() {
+			return 1
+		} else {
+			return 0
+		}
 	case DistributionType:
 		return point.GetValue().GetDistributionValue().Mean
+	case StringType:
+		return 0
 	default:
 		return 0
 	}
