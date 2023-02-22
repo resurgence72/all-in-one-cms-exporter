@@ -64,7 +64,7 @@ func (i *InterConnect) push(transfer *transferData) {
 
 		point := points[len(points)-1]
 		ts := point.Interval.EndTime.GetSeconds()
-		value := point.Value.GetInt64Value()
+		value := i.op.getPointValue(series.ValueType.String(), point)
 
 		resourceLabels := series.Resource.Labels
 
