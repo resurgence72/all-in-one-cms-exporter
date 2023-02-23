@@ -13,33 +13,33 @@ import (
 	"watcher4metrics/pkg/provider/ali/parser"
 )
 
-type EcsIP struct {
+type Ecs struct {
 	op        *operator
 	namespace string
 	metrics   []*cms.Resource
 	client    *cms.Client
-	ecsipMap  map[string]*ecs.Instance
+	ecsMap    map[string]*ecs.Instance
 
 	m sync.Mutex
 }
 
 func init() {
-	registers[ACS_ECS_DASHBOARD] = new(EcsIP)
+	registers[ACS_ECS_DASHBOARD] = new(Ecs)
 }
 
-func (e *EcsIP) Inject(params ...interface{}) common.MetricsGetter {
-	return &EcsIP{
+func (e *Ecs) Inject(params ...interface{}) common.MetricsGetter {
+	return &Ecs{
 		op:        params[0].(*operator),
 		client:    params[1].(*cms.Client),
 		namespace: params[2].(string),
 	}
 }
 
-func (e *EcsIP) GetNamespace() string {
+func (e *Ecs) GetNamespace() string {
 	return e.namespace
 }
 
-func (e *EcsIP) GetMetrics() error {
+func (e *Ecs) GetMetrics() error {
 	metrics, err := e.op.getMetrics(
 		e.client,
 		e.namespace,
@@ -53,7 +53,7 @@ func (e *EcsIP) GetMetrics() error {
 	return nil
 }
 
-func (e *EcsIP) Collector() {
+func (e *Ecs) Collector() {
 	e.op.getMetricLastData(
 		e.client,
 		e.metrics,
@@ -65,17 +65,17 @@ func (e *EcsIP) Collector() {
 	)
 }
 
-func (e *EcsIP) getIP(id string) *ecs.Instance {
+func (e *Ecs) getIP(id string) *ecs.Instance {
 	e.m.Lock()
 	defer e.m.Unlock()
 
-	if ip, ok := e.ecsipMap[id]; ok {
+	if ip, ok := e.ecsMap[id]; ok {
 		return ip
 	}
 	return nil
 }
 
-func (e *EcsIP) push(transfer *transferData) {
+func (e *Ecs) push(transfer *transferData) {
 	for _, point := range transfer.points {
 		p, ok := point["instanceId"]
 		if !ok {
@@ -143,7 +143,7 @@ func (e *EcsIP) push(transfer *transferData) {
 	}
 }
 
-func (e *EcsIP) AsyncMeta(ctx context.Context) {
+func (e *Ecs) AsyncMeta(ctx context.Context) {
 	var (
 		wg          sync.WaitGroup
 		maxPageSize = 100
@@ -170,8 +170,8 @@ func (e *EcsIP) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if e.ecsipMap == nil {
-		e.ecsipMap = make(map[string]*ecs.Instance)
+	if e.ecsMap == nil {
+		e.ecsMap = make(map[string]*ecs.Instance)
 	}
 
 	for _, region := range e.op.getRegions() {
@@ -202,7 +202,7 @@ func (e *EcsIP) AsyncMeta(ctx context.Context) {
 				ecs := container[i]
 
 				e.m.Lock()
-				e.ecsipMap[ecs.InstanceId] = &ecs
+				e.ecsMap[ecs.InstanceId] = &ecs
 				e.m.Unlock()
 			}
 		}(region)
@@ -210,7 +210,7 @@ func (e *EcsIP) AsyncMeta(ctx context.Context) {
 
 	wg.Wait()
 	logrus.WithFields(logrus.Fields{
-		"ecsIPLens": len(e.ecsipMap),
-		"iden":      e.op.req.Iden,
-	}).Warnln("async loop success, get all ecsIP instance")
+		"ecsLens": len(e.ecsMap),
+		"iden":    e.op.req.Iden,
+	}).Warnln("async loop success, get all ecs instance")
 }
