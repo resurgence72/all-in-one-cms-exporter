@@ -2,15 +2,16 @@ package tc
 
 import (
 	"context"
-	"github.com/goccy/go-json"
 	"fmt"
+	"sync"
+
+	"watcher4metrics/pkg/common"
+
+	"github.com/goccy/go-json"
 	"github.com/sirupsen/logrus"
 	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
 	waf "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/waf/v20180125"
-	"watcher4metrics/pkg/common"
 )
-
-import "sync"
 
 type Waf struct {
 	op        *operator

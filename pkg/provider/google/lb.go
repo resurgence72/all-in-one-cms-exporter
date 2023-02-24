@@ -1,9 +1,11 @@
 package google
 
 import (
-	monitoring "cloud.google.com/go/monitoring/apiv3"
 	"context"
+
 	"watcher4metrics/pkg/common"
+
+	monitoring "cloud.google.com/go/monitoring/apiv3"
 )
 
 type Lb struct {

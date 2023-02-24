@@ -3,14 +3,15 @@ package v1
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 	"watcher4metrics/config"
 	ebus "watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/provider/ali"
 	"watcher4metrics/pkg/provider/google"
 	"watcher4metrics/pkg/provider/megaport"
 	"watcher4metrics/pkg/provider/tc"
+
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 var reloadCh = make(chan chan error)

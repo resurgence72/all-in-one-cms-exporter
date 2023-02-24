@@ -3,8 +3,9 @@ package google
 import (
 	"sync"
 
-	"cloud.google.com/go/monitoring/apiv3/v2/monitoringpb"
 	"watcher4metrics/pkg/common"
+
+	"cloud.google.com/go/monitoring/apiv3/v2/monitoringpb"
 )
 
 type GoogleReq struct {

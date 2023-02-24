@@ -3,9 +3,11 @@ package ali
 import (
 	"context"
 	"fmt"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"sync"
+
 	"watcher4metrics/pkg/common"
+
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 )
 
 type OpenAPI struct {

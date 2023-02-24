@@ -3,20 +3,23 @@ package remote
 import (
 	"context"
 	"fmt"
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/snappy"
-	wconfig "github.com/prometheus/common/config"
 	"net/url"
 	"sync"
 	"time"
+
 	"watcher4metrics/pkg/metric"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/snappy"
+	wconfig "github.com/prometheus/common/config"
 
 	"github.com/prometheus/prometheus/prompb"
 
-	"github.com/sirupsen/logrus"
 	"watcher4metrics/config"
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/relabel"
+
+	"github.com/sirupsen/logrus"
 
 	wremote "github.com/prometheus/prometheus/storage/remote"
 )

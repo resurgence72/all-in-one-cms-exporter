@@ -2,8 +2,10 @@ package ali
 
 import (
 	"context"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
+
 	"watcher4metrics/pkg/common"
+
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 )
 
 type Waf struct {

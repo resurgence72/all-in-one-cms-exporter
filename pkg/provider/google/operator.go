@@ -4,17 +4,19 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
-	"github.com/golang/protobuf/ptypes/duration"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/golang/protobuf/ptypes/duration"
+
+	"watcher4metrics/pkg/common"
 
 	monitoring "cloud.google.com/go/monitoring/apiv3"
 	"cloud.google.com/go/monitoring/apiv3/v2/monitoringpb"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/iterator"
-	"watcher4metrics/pkg/common"
 )
 
 type operator struct {

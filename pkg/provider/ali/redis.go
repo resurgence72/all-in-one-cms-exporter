@@ -2,13 +2,15 @@ package ali
 
 import (
 	"context"
+	"strconv"
+	"sync"
+
+	"watcher4metrics/pkg/common"
+	"watcher4metrics/pkg/provider/ali/parser"
+
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/r-kvstore"
 	"github.com/sirupsen/logrus"
-	"strconv"
-	"sync"
-	"watcher4metrics/pkg/common"
-	"watcher4metrics/pkg/provider/ali/parser"
 )
 
 type Redis struct {

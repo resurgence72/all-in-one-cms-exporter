@@ -1,13 +1,14 @@
 package parser
 
 import (
-	"github.com/goccy/go-json"
 	"io"
 	"math"
 	"reflect"
 	"strconv"
 	"strings"
 	"unsafe"
+
+	"github.com/goccy/go-json"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/modern-go/reflect2"

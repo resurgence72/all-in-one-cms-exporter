@@ -1,8 +1,9 @@
 package tc
 
 import (
-	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
 	"watcher4metrics/pkg/common"
+
+	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
 )
 
 type transferData struct {

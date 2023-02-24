@@ -4,12 +4,13 @@ import (
 	"context"
 	"time"
 
+	"watcher4metrics/pkg/bus"
+	"watcher4metrics/pkg/common"
+
 	monitoring "cloud.google.com/go/monitoring/apiv3"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/option"
-	"watcher4metrics/pkg/bus"
-	"watcher4metrics/pkg/common"
 )
 
 const (

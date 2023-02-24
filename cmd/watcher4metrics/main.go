@@ -4,13 +4,6 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"github.com/gin-contrib/pprof"
-	"github.com/gin-gonic/gin"
-	rotatelogs "github.com/lestrrat/go-file-rotatelogs"
-	"github.com/oklog/run"
-	"github.com/rifflock/lfshook"
-	"github.com/sirupsen/logrus"
-	ginp "github.com/zsais/go-gin-prometheus"
 	"io"
 	"os"
 	"os/signal"
@@ -18,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
 	"watcher4metrics/config"
 	ebus "watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/common"
@@ -28,6 +22,14 @@ import (
 	"watcher4metrics/pkg/version"
 	"watcher4metrics/web"
 	apiv1 "watcher4metrics/web/api/v1"
+
+	"github.com/gin-contrib/pprof"
+	"github.com/gin-gonic/gin"
+	rotatelogs "github.com/lestrrat/go-file-rotatelogs"
+	"github.com/oklog/run"
+	"github.com/rifflock/lfshook"
+	"github.com/sirupsen/logrus"
+	ginp "github.com/zsais/go-gin-prometheus"
 )
 
 var (

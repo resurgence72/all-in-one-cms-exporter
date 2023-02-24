@@ -2,16 +2,18 @@ package tc
 
 import (
 	"context"
-	"github.com/goccy/go-json"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/goccy/go-json"
+
+	"watcher4metrics/pkg/common"
 
 	"github.com/sirupsen/logrus"
 	cvm "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm/v20170312"
 	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
 	tag "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag/v20180813"
-	"watcher4metrics/pkg/common"
 )
 
 type EcsIP struct {

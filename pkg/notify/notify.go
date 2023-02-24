@@ -3,10 +3,11 @@ package notify
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
-	"gopkg.in/fsnotify.v1"
 	"watcher4metrics/config"
 	"watcher4metrics/web/api/v1"
+
+	"github.com/sirupsen/logrus"
+	"gopkg.in/fsnotify.v1"
 )
 
 func WatchConfigChange(ctx context.Context) error {

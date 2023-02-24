@@ -1,10 +1,14 @@
 package ali
 
 import (
-	"github.com/goccy/go-json"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/goccy/go-json"
+
+	"watcher4metrics/pkg/common"
+	"watcher4metrics/pkg/provider/ali/parser"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials"
@@ -14,8 +18,6 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/vpc"
 	"github.com/sirupsen/logrus"
-	"watcher4metrics/pkg/common"
-	"watcher4metrics/pkg/provider/ali/parser"
 )
 
 type operator struct {
@@ -216,7 +218,7 @@ func (o *operator) getMetricLastData(
 				nextToken = resp.NextToken
 			}
 
-			// 3. 将数据转换格式推送至夜莺
+			// 3. 将数据转换格式推送至rw
 			for requestId, points := range tmpMap {
 				// 4. 异步发往夜莺
 				transfer := &transferData{

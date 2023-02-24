@@ -3,13 +3,15 @@ package common
 import (
 	"context"
 	"fmt"
-	"github.com/prometheus/common/model"
-	"github.com/prometheus/prometheus/model/labels"
-	"github.com/prometheus/prometheus/prompb"
 	"os"
 	"strings"
 	"sync"
+
 	"watcher4metrics/pkg/relabel"
+
+	"github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/prompb"
 )
 
 func GetDefaultEnv(key, defaultValue string) string {

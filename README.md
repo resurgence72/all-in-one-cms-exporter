@@ -1,4 +1,5 @@
 ### All-in-one Cloud CMS exporter
+
 > 无状态服务，实现了如下
 >
 > - 阿里云 / ali
@@ -10,6 +11,7 @@
 > 云厂商namespace 的 监控指标拉取功能；基于 remote write 推送后端 TSDB
 
 #### 为什么要做 All-in-one Cloud CMS exporter
+
 ```text
 因为市面上 cloud exporter 无法满足需求
 
@@ -34,7 +36,7 @@ All-in-one Cloud CMS exporter 解决了哪些问题
 
 #### 配置文件说明
 
-> 配置文件默认在 cmd/watcher4metrics/watcher4metrics.yml  
+> 配置文件默认在 cmd/watcher4metrics/watcher4metrics.yml
 > ```
 > global:
 >   auto_reload: false				# 动态监听配置文件变动

@@ -2,12 +2,14 @@ package ali
 
 import (
 	"context"
+	"sync"
+
+	"watcher4metrics/pkg/common"
+	"watcher4metrics/pkg/provider/ali/parser"
+
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/vpc"
 	"github.com/sirupsen/logrus"
-	"sync"
-	"watcher4metrics/pkg/common"
-	"watcher4metrics/pkg/provider/ali/parser"
 )
 
 type Vbr struct {

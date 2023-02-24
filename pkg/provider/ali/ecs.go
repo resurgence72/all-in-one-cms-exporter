@@ -2,15 +2,17 @@ package ali
 
 import (
 	"context"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
-	"github.com/sirupsen/logrus"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
+
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
+	"github.com/sirupsen/logrus"
 )
 
 type Ecs struct {

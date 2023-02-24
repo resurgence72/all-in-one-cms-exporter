@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"watcher4metrics/config"
 	apiv1 "watcher4metrics/web/api/v1"
+
+	"github.com/gin-gonic/gin"
 )
 
 var server *http.Server

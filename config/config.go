@@ -2,10 +2,12 @@ package config
 
 import (
 	"errors"
-	"github.com/prometheus/common/model"
 	"io/ioutil"
 	"sync"
+
 	"watcher4metrics/pkg/relabel"
+
+	"github.com/prometheus/common/model"
 
 	"gopkg.in/yaml.v3"
 )

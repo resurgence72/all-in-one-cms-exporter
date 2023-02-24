@@ -5,13 +5,14 @@ import (
 	"strings"
 	"time"
 
+	"watcher4metrics/pkg/common"
+
 	"github.com/sirupsen/logrus"
 	api "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/api/v20201106"
 	com "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	tchttp "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/http"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
-	"watcher4metrics/pkg/common"
 )
 
 type operator struct {

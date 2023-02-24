@@ -2,16 +2,18 @@ package megaport
 
 import (
 	"context"
-	"github.com/goccy/go-json"
 	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/goccy/go-json"
+
 	"watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/common"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (

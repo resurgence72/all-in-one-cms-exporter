@@ -7,11 +7,12 @@ import (
 	"sync"
 	"time"
 
+	"watcher4metrics/pkg/common"
+
 	monitoring "cloud.google.com/go/monitoring/apiv3"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
-	"watcher4metrics/pkg/common"
 )
 
 type Gce struct {

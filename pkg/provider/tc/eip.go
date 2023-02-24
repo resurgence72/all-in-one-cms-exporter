@@ -2,12 +2,14 @@ package tc
 
 import (
 	"context"
+	"sync"
+
+	"watcher4metrics/pkg/common"
+
 	"github.com/goccy/go-json"
 	"github.com/sirupsen/logrus"
 	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
 	vpc "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/vpc/v20170312"
-	"sync"
-	"watcher4metrics/pkg/common"
 )
 
 type Eip struct {

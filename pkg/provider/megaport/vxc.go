@@ -2,16 +2,18 @@ package megaport
 
 import (
 	"context"
-	"github.com/goccy/go-json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/goccy/go-json"
+
+	"watcher4metrics/pkg/common"
+
 	"github.com/gorhill/cronexpr"
 	"github.com/sirupsen/logrus"
-	"watcher4metrics/pkg/common"
 )
 
 type VXC struct {

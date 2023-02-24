@@ -3,11 +3,12 @@ package relabel
 import (
 	"crypto/md5"
 	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/pkg/errors"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
-	"regexp"
-	"strings"
 )
 
 var (
@@ -34,7 +35,6 @@ func (re *Regexp) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	*re = r
 	return nil
 }
-
 
 // MustNewRegexp works like NewRegexp, but panics if the regular expression does not compile.
 func MustNewRegexp(s string) Regexp {

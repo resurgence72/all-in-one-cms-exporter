@@ -2,12 +2,14 @@ package tc
 
 import (
 	"context"
+
+	"watcher4metrics/pkg/bus"
+	"watcher4metrics/pkg/common"
+
 	"github.com/sirupsen/logrus"
 	com "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
-	"watcher4metrics/pkg/bus"
-	"watcher4metrics/pkg/common"
 )
 
 const (
