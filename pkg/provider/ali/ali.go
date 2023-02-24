@@ -25,6 +25,8 @@ const (
 	ACS_KVSTORE             common.MetricsType = "acs_kvstore"
 	ACS_SMARTAG             common.MetricsType = "acs_smartag"
 	ACS_KAFKA               common.MetricsType = "acs_kafka"
+	ACS_CLICKHOUSE          common.MetricsType = "acs_clickhouse"
+	ACS_HITSDB              common.MetricsType = "acs_hitsdb"
 
 	ProviderName = "ali"
 	// 云监控api最新数据要在3min后才同步

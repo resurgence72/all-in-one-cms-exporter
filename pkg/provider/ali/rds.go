@@ -154,10 +154,9 @@ func (r *Rds) push(transfer *transferData) {
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("rds", transfer.metric),
 			ValueUntyped: point.Value(),
-			Endpoint:     instanceID,
+			Endpoint:     rds.DBInstanceId,
 		}
 
-		n9e.Endpoint = rds.DBInstanceId
 		tagsMap := map[string]string{
 			"region":          rds.RegionId,
 			"engine":          rds.Engine,
