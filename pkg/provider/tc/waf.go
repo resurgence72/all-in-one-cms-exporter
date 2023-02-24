@@ -57,9 +57,7 @@ func (w *Waf) Collector() {
 		w.clients,
 		w.metrics,
 		// 有些产品只能指定固定region 例如waf 必须指定广州region
-		map[string]struct{}{
-			"ap-guangzhou": {},
-		},
+		[]string{"ap-guangzhou"},
 		func() InstanceBuilderFunc {
 			return func(region string) []*monitor.Instance {
 				return w.op.buildInstances(

@@ -16,7 +16,7 @@ import (
 	tag "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag/v20180813"
 )
 
-type EcsIP struct {
+type Ecs struct {
 	op         *operator
 	clients    map[string]*monitor.Client
 	ecsMap     map[string]map[string]*cvm.Instance
@@ -28,49 +28,26 @@ type EcsIP struct {
 }
 
 func init() {
-	registers[QCE_CVM] = new(EcsIP)
+	registers[QCE_CVM] = new(Ecs)
 }
 
-func (e *EcsIP) Inject(params ...interface{}) common.MetricsGetter {
-	return &EcsIP{
+func (e *Ecs) Inject(params ...interface{}) common.MetricsGetter {
+	return &Ecs{
 		op:        params[0].(*operator),
 		clients:   params[1].(map[string]*monitor.Client),
 		namespace: params[2].(string),
 	}
 }
 
-func (e *EcsIP) GetNamespace() string {
+func (e *Ecs) GetNamespace() string {
 	return e.namespace
 }
 
-func (e *EcsIP) GetMetrics() error {
+func (e *Ecs) GetMetrics() error {
 	metrics, err := e.op.getMetrics(
 		e.clients["ap-shanghai"],
 		e.namespace,
-		[]string{
-			// 外网平均每秒出流量速率
-			"WanOuttraffic",
-			// 外网平均每秒入流量速率
-			"WanIntraffic",
-			// 外网网卡网卡的平均每秒出包量
-			"WanOutpkg",
-			// 外网网卡网卡的平均每秒入包量
-			"WanInpkg",
-			// 外网网卡的平均每秒出流量
-			"AccOuttraffic",
-
-			// 内网出流量
-			"LanOuttraffic",
-			// 内网入流量
-			"LanIntraffic",
-
-			// cpu利用率
-			"CpuUsage",
-			// 内存利用率
-			"MemUsage",
-			// 磁盘利用率
-			"CvmDiskUsage",
-		},
+		nil,
 	)
 	if err != nil {
 		return err
@@ -79,7 +56,7 @@ func (e *EcsIP) GetMetrics() error {
 	return nil
 }
 
-func (e *EcsIP) Collector() {
+func (e *Ecs) Collector() {
 	e.op.getMonitorData(
 		e.clients,
 		e.metrics,
@@ -105,7 +82,7 @@ func (e *EcsIP) Collector() {
 	)
 }
 
-func (e *EcsIP) push(transfer *transferData) {
+func (e *Ecs) push(transfer *transferData) {
 	for _, point := range transfer.points {
 		ecsInstanceId := point.Dimensions[0].Value
 
@@ -162,7 +139,7 @@ func (e *EcsIP) push(transfer *transferData) {
 	}
 }
 
-func (e *EcsIP) AsyncMeta(ctx context.Context) {
+func (e *Ecs) AsyncMeta(ctx context.Context) {
 	var (
 		wg          sync.WaitGroup
 		maxPageSize = 100
@@ -289,7 +266,7 @@ func (e *EcsIP) AsyncMeta(ctx context.Context) {
 	}).Warnln("async loop get all tc ecs success")
 }
 
-func (e *EcsIP) getEcs(region string, ip *string) *cvm.Instance {
+func (e *Ecs) getEcs(region string, ip *string) *cvm.Instance {
 	e.m.RLock()
 	defer e.m.RUnlock()
 	if ecsM, ok := e.ecsMap[region]; ok {

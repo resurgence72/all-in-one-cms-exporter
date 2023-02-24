@@ -44,18 +44,7 @@ func (e *Eip) GetMetrics() error {
 	metrics, err := e.op.getMetrics(
 		e.clients["ap-shanghai"],
 		e.namespace,
-		[]string{
-			// 弹性公网IP入带宽
-			"VipIntraffic",
-			// 弹性公网IP出带宽
-			"VipOuttraffic",
-			// 弹性公网IP入包量
-			"VipInpkg",
-			// 弹性公网IP出包量
-			"VipOutpkg",
-			// 弹性公网IP出流量
-			"AccOuttraffic",
-		},
+		nil,
 	)
 	if err != nil {
 		return err

@@ -120,7 +120,7 @@ func (o *operator) getMetrics(
 func (o *operator) getMonitorData(
 	clients map[string]*monitor.Client,
 	metrics []*monitor.MetricSet,
-	allowRegion map[string]struct{},
+	allowRegion []string,
 	buildFunc InstanceBuilderFunc,
 	batch int,
 	ns string,
@@ -141,9 +141,14 @@ func (o *operator) getMonitorData(
 		sem           = common.Semaphore(batch)
 	)
 
+	regions := make(map[string]struct{})
+	for _, r := range allowRegion {
+		regions[r] = struct{}{}
+	}
+
 	for region, cli := range clients {
-		if len(allowRegion) > 0 {
-			if _, ok := allowRegion[region]; !ok {
+		if len(regions) > 0 {
+			if _, ok := regions[region]; !ok {
 				continue
 			}
 		}
