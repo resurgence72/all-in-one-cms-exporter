@@ -2,7 +2,6 @@ package tc
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"watcher4metrics/pkg/common"
@@ -103,8 +102,7 @@ func (w *Waf) AsyncMeta(context.Context) {
 			}
 			return append(container, resp.Response.Domains...), len(resp.Response.Domains), nil
 		}
-		wafCnt = 0
-		sem    = common.Semaphore(10)
+		sem = common.Semaphore(10)
 	)
 
 	if w.wafMap == nil {
@@ -151,7 +149,6 @@ func (w *Waf) AsyncMeta(context.Context) {
 
 			for i := range container {
 				waf := container[i]
-				wafCnt++
 
 				w.m.Lock()
 				w.wafMap[region][*waf.Domain] = waf
@@ -162,7 +159,7 @@ func (w *Waf) AsyncMeta(context.Context) {
 
 	wg.Wait()
 	logrus.WithFields(logrus.Fields{
-		"wafLens": wafCnt,
+		"wafLens": len(w.wafMap),
 		"iden":    w.op.req.Iden,
 	}).Warnln("async loop get all tc waf success")
 }
@@ -173,7 +170,6 @@ func (w *Waf) push(transfer *transferData) {
 
 		waf := w.getWaf(transfer.region, domain)
 		if waf == nil {
-			fmt.Println("没找到", domain)
 			return
 		}
 

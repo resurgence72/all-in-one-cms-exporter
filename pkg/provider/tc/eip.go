@@ -150,8 +150,7 @@ func (e *Eip) AsyncMeta(ctx context.Context) {
 			}
 			return append(container, resp.Response.AddressSet...), len(resp.Response.AddressSet), nil
 		}
-		eipCnt = 0
-		sem    = common.Semaphore(10)
+		sem = common.Semaphore(10)
 	)
 
 	if e.eipMap == nil {
@@ -199,7 +198,6 @@ func (e *Eip) AsyncMeta(ctx context.Context) {
 
 			for i := range container {
 				eip := container[i]
-				eipCnt++
 
 				e.m.Lock()
 				// 只有 BIND eip才是有数据的
@@ -211,7 +209,7 @@ func (e *Eip) AsyncMeta(ctx context.Context) {
 
 	wg.Wait()
 	logrus.WithFields(logrus.Fields{
-		"eipLens": eipCnt,
+		"eipLens": len(e.eipMap),
 		"iden":    e.op.req.Iden,
 	}).Warnln("async loop get all tc eip success")
 }

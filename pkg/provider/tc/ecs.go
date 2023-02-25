@@ -115,15 +115,16 @@ func (e *Ecs) push(transfer *transferData) {
 
 			// 设置Tags TagsMap
 			tagsMap := map[string]string{
-				"iden":          e.op.req.Iden,
-				"provider":      ProviderName,
-				"region":        transfer.region,
-				"namespace":     e.namespace,
-				"unit_name":     transfer.unit,
-				"instance_id":   *ecsInstanceId,
-				"instance_name": *ecs.InstanceName,
-				"cpu":           strconv.Itoa(int(*ecs.CPU)),
-				"memory":        strconv.Itoa(int(*ecs.Memory)),
+				"iden":            e.op.req.Iden,
+				"provider":        ProviderName,
+				"region":          transfer.region,
+				"namespace":       e.namespace,
+				"unit_name":       transfer.unit,
+				"instance_id":     *ecsInstanceId,
+				"instance_name":   *ecs.InstanceName,
+				"instance_status": *ecs.InstanceState,
+				"cpu":             strconv.Itoa(int(*ecs.CPU)),
+				"memory":          strconv.Itoa(int(*ecs.Memory)),
 				// cvm的公网私网ip
 				"public_ip":  n9e.Endpoint,
 				"private_ip": strings.Join(priIPs, ","),
@@ -190,8 +191,7 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 			return nil
 		}
 
-		ecsCnt = 0
-		sem    = common.Semaphore(10)
+		sem = common.Semaphore(10)
 	)
 
 	if e.ecsMap == nil {
@@ -246,12 +246,7 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 
 			for i := range container {
 				ecs := container[i]
-				ecsCnt++
 
-				// 只保存running状态
-				if *ecs.InstanceState != "RUNNING" {
-					continue
-				}
 				e.m.Lock()
 				e.ecsMap[region][*ecs.InstanceId] = ecs
 				e.m.Unlock()
@@ -261,7 +256,7 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 
 	wg.Wait()
 	logrus.WithFields(logrus.Fields{
-		"ecsLens": ecsCnt,
+		"ecsLens": len(e.ecsMap),
 		"iden":    e.op.req.Iden,
 	}).Warnln("async loop get all tc ecs success")
 }
