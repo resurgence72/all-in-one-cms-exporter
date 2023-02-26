@@ -7,20 +7,14 @@ import (
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/rds"
 	"github.com/sirupsen/logrus"
 )
 
 type Rds struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	client    *cms.Client
+	meta
 	// 保存eip的实例id对应的eip对象
 	rdsMap map[string]*rds.DBInstance
-
-	m sync.RWMutex
 }
 
 func init() {
@@ -28,11 +22,7 @@ func init() {
 }
 
 func (r *Rds) Inject(params ...interface{}) common.MetricsGetter {
-	return &Rds{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &Rds{meta: newMeta(params)}
 }
 
 func (r *Rds) GetMetrics() error {

@@ -17,28 +17,18 @@ import (
 )
 
 type Ecs struct {
-	op      *operator
-	clients map[string]*monitor.Client
-	ecsMap  map[string]map[string]*cvm.Instance
+	meta
+
+	ecsMap map[string]map[string]*cvm.Instance
 	//projectMap map[uint64]string
 	projectMap sync.Map
-	namespace  string
-	metrics    []*monitor.MetricSet
-
-	m sync.RWMutex
 }
 
 func init() {
 	registers[QCE_CVM] = new(Ecs)
 }
 
-func (e *Ecs) Inject(params ...interface{}) common.MetricsGetter {
-	return &Ecs{
-		op:        params[0].(*operator),
-		clients:   params[1].(map[string]*monitor.Client),
-		namespace: params[2].(string),
-	}
-}
+func (e *Ecs) Inject(params ...interface{}) common.MetricsGetter { return &Ecs{meta: newMeta(params)} }
 
 func (e *Ecs) GetNamespace() string {
 	return e.namespace

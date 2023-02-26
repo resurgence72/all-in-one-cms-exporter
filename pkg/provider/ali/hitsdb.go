@@ -7,20 +7,15 @@ import (
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/hitsdb"
 	"github.com/sirupsen/logrus"
 )
 
 type HiTSDB struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	client    *cms.Client
+	meta
+
 	// 保存eip的实例id对应的eip对象
 	tsdbMap map[string]*hitsdb.LindormInstanceSummary
-
-	m sync.RWMutex
 }
 
 func init() {
@@ -28,11 +23,7 @@ func init() {
 }
 
 func (h *HiTSDB) Inject(params ...interface{}) common.MetricsGetter {
-	return &HiTSDB{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &HiTSDB{meta: newMeta(params)}
 }
 
 func (h *HiTSDB) GetMetrics() error {

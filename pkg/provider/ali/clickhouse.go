@@ -2,23 +2,17 @@ package ali
 
 import (
 	"context"
-	"sync"
 
 	"watcher4metrics/pkg/common"
 
 	ck "github.com/aliyun/alibaba-cloud-sdk-go/services/clickhouse"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 )
 
 type ClickHouse struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	client    *cms.Client
+	meta
+
 	// 保存eip的实例id对应的eip对象
 	ckMap map[string]*ck.DBCluster
-
-	m sync.RWMutex
 }
 
 func init() {
@@ -26,11 +20,7 @@ func init() {
 }
 
 func (c *ClickHouse) Inject(params ...interface{}) common.MetricsGetter {
-	return &ClickHouse{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &ClickHouse{meta: newMeta(params)}
 }
 
 func (c *ClickHouse) GetMetrics() error {

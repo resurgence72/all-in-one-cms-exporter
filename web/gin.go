@@ -9,6 +9,7 @@ import (
 	apiv1 "watcher4metrics/web/api/v1"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 var server *http.Server
@@ -17,7 +18,6 @@ func StartGin(r *gin.Engine) error {
 	apiv1.Routers(r)
 	conf := config.Get().Http
 	timeout := conf.Timeout
-	//fmt.Println(conf.Timeout)
 
 	// 使用 http包一下 gin， 获取err
 	s := &http.Server{
@@ -30,6 +30,7 @@ func StartGin(r *gin.Engine) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 	server = s
+	logrus.Warnln("http server is ready")
 	return s.ListenAndServe()
 }
 

@@ -9,19 +9,14 @@ import (
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ddoscoo"
 	"github.com/sirupsen/logrus"
 )
 
 type DDos struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	client    *cms.Client
-	ddosMap   map[string]string
+	meta
 
-	m sync.Mutex
+	ddosMap map[string]string
 }
 
 func init() {
@@ -29,11 +24,7 @@ func init() {
 }
 
 func (d *DDos) Inject(params ...interface{}) common.MetricsGetter {
-	return &DDos{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &DDos{meta: newMeta(params)}
 }
 
 func (d *DDos) GetNamespace() string {

@@ -211,7 +211,7 @@ func main() {
 	}
 
 	{
-		//n9e client
+		// remote write client
 		g.Add(func() error {
 			remote.NewRemoteWritesClient(ctxAll)
 			return nil

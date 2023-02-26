@@ -4,28 +4,17 @@ import (
 	"context"
 
 	"watcher4metrics/pkg/common"
-
-	monitoring "cloud.google.com/go/monitoring/apiv3"
 )
 
 type Lb struct {
-	op        *operator
-	client    *monitoring.MetricClient
-	namespace string
-	metrics   []string
+	meta
 }
 
 func init() {
 	registers[GOOGLE_LB] = new(Lb)
 }
 
-func (l *Lb) Inject(params ...interface{}) common.MetricsGetter {
-	return &Lb{
-		op:        params[0].(*operator),
-		client:    params[1].(*monitoring.MetricClient),
-		namespace: params[2].(string),
-	}
-}
+func (l *Lb) Inject(params ...interface{}) common.MetricsGetter { return &Lb{meta: newMeta(params)} }
 
 func (l *Lb) GetNamespace() string {
 	return l.namespace

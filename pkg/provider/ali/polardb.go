@@ -8,19 +8,14 @@ import (
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/polardb"
 	"github.com/sirupsen/logrus"
 )
 
 type PolarDB struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	client    *cms.Client
-	pdbMap    map[string]*polardb.DBCluster
+	meta
 
-	m sync.RWMutex
+	pdbMap map[string]*polardb.DBCluster
 }
 
 func init() {
@@ -28,11 +23,7 @@ func init() {
 }
 
 func (p *PolarDB) Inject(params ...interface{}) common.MetricsGetter {
-	return &PolarDB{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &PolarDB{meta: newMeta(params)}
 }
 
 func (p *PolarDB) GetMetrics() error {

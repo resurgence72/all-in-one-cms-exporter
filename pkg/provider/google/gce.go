@@ -9,34 +9,23 @@ import (
 
 	"watcher4metrics/pkg/common"
 
-	monitoring "cloud.google.com/go/monitoring/apiv3"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
 )
 
 type Gce struct {
-	op        *operator
-	client    *monitoring.MetricClient
-	namespace string
-	metrics   []string
+	meta
+
 	// 映射 instance_id 和 ip
 	gceMap map[uint64]string
-
-	m sync.Mutex
 }
 
 func init() {
 	registers[GOOGLE_GCE] = new(Gce)
 }
 
-func (e *Gce) Inject(params ...interface{}) common.MetricsGetter {
-	return &Gce{
-		op:        params[0].(*operator),
-		client:    params[1].(*monitoring.MetricClient),
-		namespace: params[2].(string),
-	}
-}
+func (e *Gce) Inject(params ...interface{}) common.MetricsGetter { return &Gce{meta: newMeta(params)} }
 
 func (e *Gce) Collector() {
 	e.op.listTimeSeries(

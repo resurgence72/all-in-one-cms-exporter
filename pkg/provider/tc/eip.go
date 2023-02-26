@@ -13,27 +13,16 @@ import (
 )
 
 type Eip struct {
-	op      *operator
-	clients map[string]*monitor.Client
-	// eipMap 存储当前eip对应的公网ip
-	eipMap    map[string]map[string]*vpc.Address
-	namespace string
-	metrics   []*monitor.MetricSet
+	meta
 
-	m sync.RWMutex
+	eipMap map[string]map[string]*vpc.Address
 }
 
 func init() {
 	registers[QCP_LB] = new(Eip)
 }
 
-func (e *Eip) Inject(params ...interface{}) common.MetricsGetter {
-	return &Eip{
-		op:        params[0].(*operator),
-		clients:   params[1].(map[string]*monitor.Client),
-		namespace: params[2].(string),
-	}
-}
+func (e *Eip) Inject(params ...interface{}) common.MetricsGetter { return &Eip{meta: newMeta(params)} }
 
 func (e *Eip) GetNamespace() string {
 	return e.namespace

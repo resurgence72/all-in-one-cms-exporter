@@ -9,18 +9,13 @@ import (
 	"watcher4metrics/pkg/provider/ali/parser"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/alb"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/sirupsen/logrus"
 )
 
 type Alb struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	albMap    map[string]*alb.LoadBalancer
-	client    *cms.Client
+	meta
 
-	m sync.Mutex
+	albMap map[string]*alb.LoadBalancer
 }
 
 func init() {
@@ -28,11 +23,7 @@ func init() {
 }
 
 func (a *Alb) Inject(params ...interface{}) common.MetricsGetter {
-	return &Alb{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &Alb{meta: newMeta(params)}
 }
 
 func (a *Alb) GetMetrics() error {

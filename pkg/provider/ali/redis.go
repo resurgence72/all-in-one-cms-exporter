@@ -8,19 +8,14 @@ import (
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/r-kvstore"
 	"github.com/sirupsen/logrus"
 )
 
 type Redis struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	client    *cms.Client
-	redisMap  map[string]*r_kvstore.KVStoreInstanceInDescribeInstances
+	meta
 
-	m sync.RWMutex
+	redisMap map[string]*r_kvstore.KVStoreInstanceInDescribeInstances
 }
 
 func init() {
@@ -28,11 +23,7 @@ func init() {
 }
 
 func (r *Redis) Inject(params ...interface{}) common.MetricsGetter {
-	return &Redis{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &Redis{meta: newMeta(params)}
 }
 
 func (r *Redis) GetMetrics() error {

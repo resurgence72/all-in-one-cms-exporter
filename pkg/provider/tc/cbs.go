@@ -14,22 +14,12 @@ import (
 )
 
 type Cbs struct {
-	op        *operator
-	clients   map[string]*monitor.Client
-	cbsMap    map[string]map[string]*cbs.Disk
-	namespace string
-	metrics   []*monitor.MetricSet
+	meta
 
-	m sync.RWMutex
+	cbsMap map[string]map[string]*cbs.Disk
 }
 
-func (c *Cbs) Inject(params ...interface{}) common.MetricsGetter {
-	return &Cbs{
-		op:        params[0].(*operator),
-		clients:   params[1].(map[string]*monitor.Client),
-		namespace: params[2].(string),
-	}
-}
+func (c *Cbs) Inject(params ...interface{}) common.MetricsGetter { return &Cbs{meta: newMeta(params)} }
 
 func (c *Cbs) GetMetrics() error {
 	metrics, err := c.op.getMetrics(

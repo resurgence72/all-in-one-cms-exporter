@@ -7,19 +7,14 @@ import (
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/vpc"
 	"github.com/sirupsen/logrus"
 )
 
 type Vbr struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	vbrMap    map[string]*vpc.VirtualBorderRouterType
-	client    *cms.Client
+	meta
 
-	m sync.Mutex
+	vbrMap map[string]*vpc.VirtualBorderRouterType
 }
 
 func init() {
@@ -27,11 +22,7 @@ func init() {
 }
 
 func (v *Vbr) Inject(params ...interface{}) common.MetricsGetter {
-	return &Vbr{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &Vbr{meta: newMeta(params)}
 }
 
 func (v *Vbr) GetNamespace() string {

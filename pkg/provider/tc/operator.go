@@ -3,6 +3,7 @@ package tc
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"watcher4metrics/pkg/common"
@@ -14,6 +15,23 @@ import (
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
 )
+
+type meta struct {
+	op        *operator
+	clients   map[string]*monitor.Client
+	namespace string
+	metrics   []*monitor.MetricSet
+
+	m sync.RWMutex
+}
+
+func newMeta(params ...interface{}) meta {
+	return meta{
+		op:        params[0].(*operator),
+		clients:   params[1].(map[string]*monitor.Client),
+		namespace: params[2].(string),
+	}
+}
 
 type operator struct {
 	req *TCReq

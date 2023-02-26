@@ -7,21 +7,16 @@ import (
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/vpc"
 	"github.com/sirupsen/logrus"
 )
 
 // metrics 4 eip 维度对象
 type Eip struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	client    *cms.Client
+	meta
+
 	// 保存eip的实例id对应的eip对象
 	eipMap map[string]*vpc.EipAddress
-
-	m sync.RWMutex
 }
 
 func init() {
@@ -29,11 +24,7 @@ func init() {
 }
 
 func (e *Eip) Inject(params ...interface{}) common.MetricsGetter {
-	return &Eip{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &Eip{meta: newMeta(params)}
 }
 
 func (e *Eip) GetNamespace() string {

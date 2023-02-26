@@ -3,12 +3,13 @@ package ali
 import (
 	"strconv"
 	"strings"
+	"sync"
 	"time"
-
-	"github.com/goccy/go-json"
 
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
+
+	"github.com/goccy/go-json"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials"
@@ -19,6 +20,23 @@ import (
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/vpc"
 	"github.com/sirupsen/logrus"
 )
+
+type meta struct {
+	op        *operator
+	namespace string
+	metrics   []*cms.Resource
+	client    *cms.Client
+
+	m sync.RWMutex
+}
+
+func newMeta(params ...interface{}) meta {
+	return meta{
+		op:        params[0].(*operator),
+		client:    params[1].(*cms.Client),
+		namespace: params[2].(string),
+	}
+}
 
 type operator struct {
 	req *AliReq

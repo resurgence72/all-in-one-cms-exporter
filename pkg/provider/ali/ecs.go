@@ -10,19 +10,14 @@ import (
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/ecs"
 	"github.com/sirupsen/logrus"
 )
 
 type Ecs struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	client    *cms.Client
-	ecsMap    map[string]*ecs.Instance
+	meta
 
-	m sync.Mutex
+	ecsMap map[string]*ecs.Instance
 }
 
 func init() {
@@ -30,11 +25,7 @@ func init() {
 }
 
 func (e *Ecs) Inject(params ...interface{}) common.MetricsGetter {
-	return &Ecs{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &Ecs{meta: newMeta(params)}
 }
 
 func (e *Ecs) GetNamespace() string {

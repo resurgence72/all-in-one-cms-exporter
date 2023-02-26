@@ -7,19 +7,14 @@ import (
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
 
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/slb"
 	"github.com/sirupsen/logrus"
 )
 
 type Slb struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	slbMap    map[string]*slb.LoadBalancer
-	client    *cms.Client
+	meta
 
-	m sync.Mutex
+	slbMap map[string]*slb.LoadBalancer
 }
 
 func init() {
@@ -27,11 +22,7 @@ func init() {
 }
 
 func (s *Slb) Inject(params ...interface{}) common.MetricsGetter {
-	return &Slb{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &Slb{meta: newMeta(params)}
 }
 
 func (s *Slb) GetNamespace() string {

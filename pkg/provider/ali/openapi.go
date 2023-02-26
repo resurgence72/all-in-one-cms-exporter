@@ -3,20 +3,12 @@ package ali
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"watcher4metrics/pkg/common"
-
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 )
 
 type OpenAPI struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	client    *cms.Client
-
-	m sync.Mutex
+	meta
 }
 
 var uidMap = map[string]string{
@@ -25,11 +17,7 @@ var uidMap = map[string]string{
 }
 
 func (o *OpenAPI) Inject(params ...interface{}) common.MetricsGetter {
-	return &OpenAPI{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &OpenAPI{meta: newMeta(params)}
 }
 
 func (o *OpenAPI) GetMetrics() error {

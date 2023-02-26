@@ -13,26 +13,16 @@ import (
 )
 
 type Waf struct {
-	op        *operator
-	clients   map[string]*monitor.Client
-	wafMap    map[string]map[string]*waf.DomainInfo
-	namespace string
-	metrics   []*monitor.MetricSet
+	meta
 
-	m sync.RWMutex
+	wafMap map[string]map[string]*waf.DomainInfo
 }
 
 func init() {
 	registers[QCE_WAF] = new(Waf)
 }
 
-func (w *Waf) Inject(params ...interface{}) common.MetricsGetter {
-	return &Waf{
-		op:        params[0].(*operator),
-		clients:   params[1].(map[string]*monitor.Client),
-		namespace: params[2].(string),
-	}
-}
+func (w *Waf) Inject(params ...interface{}) common.MetricsGetter { return &Waf{meta: newMeta(params)} }
 
 func (w *Waf) GetMetrics() error {
 	metrics, err := w.op.getMetrics(

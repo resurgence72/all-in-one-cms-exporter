@@ -9,26 +9,17 @@ import (
 	"watcher4metrics/pkg/provider/ali/parser"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/alikafka"
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/sirupsen/logrus"
 )
 
 type Kafka struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	client    *cms.Client
-	kafkaMap  map[string]*alikafka.InstanceVO
+	meta
 
-	m sync.RWMutex
+	kafkaMap map[string]*alikafka.InstanceVO
 }
 
 func (k *Kafka) Inject(params ...interface{}) common.MetricsGetter {
-	return &Kafka{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &Kafka{meta: newMeta(params)}
 }
 
 func (k *Kafka) GetMetrics() error {

@@ -4,23 +4,14 @@ import (
 	"context"
 
 	"watcher4metrics/pkg/common"
-
-	monitoring "cloud.google.com/go/monitoring/apiv3"
 )
 
 type InterConnect struct {
-	op        *operator
-	client    *monitoring.MetricClient
-	namespace string
-	metrics   []string
+	meta
 }
 
 func (i *InterConnect) Inject(params ...interface{}) common.MetricsGetter {
-	return &InterConnect{
-		op:        params[0].(*operator),
-		client:    params[1].(*monitoring.MetricClient),
-		namespace: params[2].(string),
-	}
+	return &InterConnect{meta: newMeta(params)}
 }
 
 func (i *InterConnect) GetMetrics() error {

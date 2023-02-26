@@ -4,15 +4,10 @@ import (
 	"context"
 
 	"watcher4metrics/pkg/common"
-
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 )
 
 type Waf struct {
-	op        *operator
-	namespace string
-	metrics   []*cms.Resource
-	client    *cms.Client
+	meta
 }
 
 func init() {
@@ -20,11 +15,7 @@ func init() {
 }
 
 func (w *Waf) Inject(params ...interface{}) common.MetricsGetter {
-	return &Waf{
-		op:        params[0].(*operator),
-		client:    params[1].(*cms.Client),
-		namespace: params[2].(string),
-	}
+	return &Waf{meta: newMeta(params)}
 }
 
 func (w *Waf) GetNamespace() string {
