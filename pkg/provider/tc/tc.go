@@ -16,10 +16,10 @@ const (
 	ProviderName = "tc"
 	TC_CMS_DELAY = 60
 
-	//QCP_CEIP     common.MetricsType = "qce/ceip_summary"
-	QCP_LB  common.MetricsType = "qce/lb"
-	QCE_CVM common.MetricsType = "qce/cvm"
-	QCE_WAF common.MetricsType = "qce/waf"
+	QCP_LB            common.MetricsType = "QCE/LB"
+	QCE_CVM           common.MetricsType = "QCE/CVM"
+	QCE_WAF           common.MetricsType = "QCE/WAF"
+	QCE_BLOCK_STORAGE common.MetricsType = "QCE/BLOCK_STORAGE"
 )
 
 var registers = make(map[common.MetricsType]common.MetricsGetter)

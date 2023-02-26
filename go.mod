@@ -28,7 +28,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/tebeka/strftime v0.1.5 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/api v1.0.433
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.566
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.602
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm v1.0.478
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor v1.0.401
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag v1.0.521
@@ -40,6 +40,8 @@ require (
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
 )
+
+require github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cbs v1.0.602
 
 require (
 	cloud.google.com/go/compute v1.12.1 // indirect
