@@ -2,12 +2,15 @@ package tc
 
 import (
 	"context"
+	"strconv"
+	"sync"
+
+	"watcher4metrics/pkg/common"
+
 	"github.com/goccy/go-json"
 	"github.com/sirupsen/logrus"
 	cbs "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cbs/v20170312"
 	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
-	"sync"
-	"watcher4metrics/pkg/common"
 )
 
 type Cbs struct {
@@ -46,8 +49,29 @@ func (c *Cbs) GetNamespace() string {
 }
 
 func (c *Cbs) Collector() {
-	//TODO implement me
-	panic("implement me")
+	c.op.getMonitorData(
+		c.clients,
+		c.metrics,
+		nil,
+		func() InstanceBuilderFunc {
+			return func(region string) []*monitor.Instance {
+				return c.op.buildInstances(
+					"diskId",
+					func() []*string {
+						var vs []*string
+						for _, disk := range c.cbsMap[region] {
+							vs = append(vs, disk.DiskId)
+						}
+						return vs
+					}(),
+					nil,
+				)
+			}
+		}(),
+		10,
+		c.namespace,
+		c.push,
+	)
 }
 
 func (c *Cbs) AsyncMeta(ctx context.Context) {
@@ -133,4 +157,67 @@ func (c *Cbs) AsyncMeta(ctx context.Context) {
 		"cbsLens": len(c.cbsMap),
 		"iden":    c.op.req.Iden,
 	}).Warnln("async loop get all tc cbs success")
+}
+
+func (c *Cbs) push(transfer *transferData) {
+	for _, point := range transfer.points {
+		dID := point.Dimensions[0].Value
+
+		disk := c.getCbs(transfer.region, dID)
+		if disk == nil {
+			return
+		}
+
+		for i, ts := range point.Timestamps {
+			n9e := &common.MetricValue{
+				Timestamp:    int64(*ts),
+				Metric:       common.BuildMetric("cbs", transfer.metric),
+				ValueUntyped: *point.Values[i],
+				Endpoint:     *disk.DiskId,
+			}
+
+			tagsMap := map[string]string{
+				"iden":      c.op.req.Iden,
+				"provider":  ProviderName,
+				"region":    transfer.region,
+				"namespace": c.namespace,
+				"unit_name": transfer.unit,
+
+				"disk_id":    *disk.DiskId,
+				"disk_name":  *disk.DiskName,
+				"disk_size":  strconv.FormatUint(*disk.DiskSize, 10),
+				"disk_usage": *disk.DiskUsage,
+				"disk_type":  *disk.DiskType,
+				"disk_state": *disk.DiskState,
+
+				"instance_id":   *disk.InstanceId,
+				"instance_type": *disk.InstanceType,
+
+				"snapshot_count": strconv.FormatInt(*disk.SnapshotCount, 10),
+				"snapshot_size":  strconv.FormatUint(*disk.SnapshotSize, 10),
+			}
+
+			for _, tag := range disk.Tags {
+				if *tag.Value != "" {
+					tagsMap[*tag.Key] = *tag.Value
+				}
+			}
+
+			n9e.BuildAndShift(tagsMap)
+			continue
+		}
+
+	}
+}
+
+func (c *Cbs) getCbs(region string, dID *string) *cbs.Disk {
+	c.m.RLock()
+	defer c.m.RUnlock()
+
+	if diskM, ok := c.cbsMap[region]; ok {
+		if disk, ok := diskM[*dID]; ok {
+			return disk
+		}
+	}
+	return nil
 }

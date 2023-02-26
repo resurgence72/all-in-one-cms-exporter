@@ -17,10 +17,11 @@ import (
 )
 
 type Ecs struct {
-	op         *operator
-	clients    map[string]*monitor.Client
-	ecsMap     map[string]map[string]*cvm.Instance
-	projectMap map[uint64]string
+	op      *operator
+	clients map[string]*monitor.Client
+	ecsMap  map[string]map[string]*cvm.Instance
+	//projectMap map[uint64]string
+	projectMap sync.Map
 	namespace  string
 	metrics    []*monitor.MetricSet
 
@@ -130,8 +131,8 @@ func (e *Ecs) push(transfer *transferData) {
 				"private_ip": strings.Join(priIPs, ","),
 			}
 
-			if pn, ok := e.projectMap[uint64(*ecs.Placement.ProjectId)]; ok {
-				tagsMap["project_mark"] = pn
+			if pn, ok := e.projectMap.Load(uint64(*ecs.Placement.ProjectId)); ok {
+				tagsMap["project_mark"] = pn.(string)
 			}
 
 			n9e.BuildAndShift(tagsMap)
@@ -186,7 +187,7 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 			}
 
 			for _, pro := range resp.Response.Projects {
-				e.projectMap[*pro.ProjectId] = *pro.ProjectName
+				e.projectMap.Store(*pro.ProjectId, *pro.ProjectName)
 			}
 			return nil
 		}
@@ -196,9 +197,6 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 
 	if e.ecsMap == nil {
 		e.ecsMap = make(map[string]map[string]*cvm.Instance)
-	}
-	if e.projectMap == nil {
-		e.projectMap = make(map[uint64]string)
 	}
 
 	// 获取所有projectMap
