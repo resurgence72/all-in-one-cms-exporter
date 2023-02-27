@@ -163,7 +163,6 @@ func (v *VXC) Collector() {
 							ts:  ts,
 							val: val,
 						}
-						// 发送至夜莺
 						go v.push(transfer)
 						continue
 					}

@@ -38,7 +38,7 @@ func (p Point) Value() interface{} {
 	return -1
 }
 
-// point转换为夜莺结构的中间状态
+// point转换为rw结构的中间状态
 type transferData struct {
 	points Points
 	metric string

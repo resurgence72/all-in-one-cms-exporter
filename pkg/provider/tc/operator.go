@@ -213,7 +213,7 @@ func (o *operator) getMonitorData(
 						requestID: *resp.Response.RequestId,
 					}
 
-					// push 夜莺
+					// remote write
 					go push(transfer)
 				}
 				time.Sleep(time.Duration(200) * time.Millisecond)

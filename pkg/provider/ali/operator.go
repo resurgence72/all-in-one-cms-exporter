@@ -238,7 +238,6 @@ func (o *operator) getMetricLastData(
 
 			// 3. 将数据转换格式推送至rw
 			for requestId, points := range tmpMap {
-				// 4. 异步发往夜莺
 				transfer := &transferData{
 					points:    points,
 					metric:    metric.MetricName,

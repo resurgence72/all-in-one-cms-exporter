@@ -39,7 +39,7 @@ type MetricsGetter interface {
 	AsyncMeta(context.Context)
 }
 
-// 夜莺上报结构
+// 上报结构
 type MetricValue struct {
 	Metric       string            `json:"metric" description:"指标"`
 	Endpoint     string            `json:"endpoint" description:"通常是ip"`
