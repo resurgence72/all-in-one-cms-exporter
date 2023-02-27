@@ -105,7 +105,7 @@ func (o *operator) getMetrics(
 // 获取ali每次请求的startTime 和 EndTime
 func (o *operator) getRangeTime() (string, string) {
 	endTime := time.Now()
-	startTime := endTime.Add(-1 * time.Duration(o.req.Dur+ALI_CMS_DELAY) * time.Second)
+	startTime := endTime.Add(-1 * time.Duration(ALI_CMS_DELAY) * time.Second)
 
 	format := "2006-01-02 15:04:05"
 	return startTime.Format(format), endTime.Format(format)
