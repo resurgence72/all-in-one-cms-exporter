@@ -1,8 +1,40 @@
 package ali
 
 import (
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
+	"sync"
 	"watcher4metrics/pkg/common"
 )
+
+type meta struct {
+	op        *operator
+	namespace string
+	metrics   []*cms.Resource
+	client    *cms.Client
+
+	m sync.RWMutex
+}
+
+func newMeta(params ...interface{}) meta {
+	return meta{
+		op:        params[0].(*operator),
+		client:    params[1].(*cms.Client),
+		namespace: params[2].(string),
+	}
+}
+
+type metricsDataPuller interface {
+	pull(
+		cli *cms.Client,
+		metrics []*cms.Resource,
+		batch int,
+		ns string,
+		push PushFunc,
+		ds *string, // Dimensions 维度
+		groupBy []string,
+		period int,
+	)
+}
 
 type AliReq struct {
 	MetricNamespace string `json:"metric_namespace"`
@@ -11,6 +43,14 @@ type AliReq struct {
 	As              string `json:"as"`
 
 	Dur int `json:"_meta_duration,string"`
+}
+
+func (a *AliReq) Decode() *AliReq {
+	a.As = common.DecodeBase64(a.As)
+	a.Ak = common.DecodeBase64(a.Ak)
+
+	//a.Dur = 60
+	return a
 }
 
 type (
@@ -22,13 +62,13 @@ type (
 func (p Point) Value() interface{} {
 	for _, key := range []string{
 		"Average",
-		"Maximum",
-		"Minimum",
-		"Sum",
 		"Value",
 		"value",
 		"Count",
 		"count",
+		"Sum",
+		"Maximum",
+		"Minimum",
 		"deviceNum",
 	} {
 		if v, ok := p[key]; ok {
@@ -45,12 +85,4 @@ type transferData struct {
 	unit   string
 
 	requestID string
-}
-
-func (a *AliReq) Decode() *AliReq {
-	a.As = common.DecodeBase64(a.As)
-	a.Ak = common.DecodeBase64(a.Ak)
-
-	//a.Dur = 60
-	return a
 }

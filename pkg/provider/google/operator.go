@@ -19,22 +19,6 @@ import (
 	"google.golang.org/api/iterator"
 )
 
-type meta struct {
-	op        *operator
-	client    *monitoring.MetricClient
-	namespace string
-	metrics   []string
-	m         sync.Mutex
-}
-
-func newMeta(params ...interface{}) meta {
-	return meta{
-		op:        params[0].(*operator),
-		client:    params[1].(*monitoring.MetricClient),
-		namespace: params[2].(string),
-	}
-}
-
 type operator struct {
 	req *GoogleReq
 

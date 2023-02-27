@@ -210,7 +210,7 @@ func (v *VXC) getFromAndToTS() (int64, int64) {
 	from := to.Add(-15*time.Minute - 30*time.Second)
 	//to := time.Now()
 	//from := to.Add(-20 * time.Minute)
-	return from.UnixNano() / 1e6, to.UnixNano() / 1e6
+	return from.UnixMilli(), to.UnixMilli()
 }
 
 func (v *VXC) push(transfer *transferData) {

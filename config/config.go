@@ -13,10 +13,20 @@ import (
 )
 
 type Watcher4metricsConfig struct {
-	Global *GlobalConfig `yaml:"global"`
-	Redis  *RedisConfig  `yaml:"redis"`
-	Report *ReportConfig `yaml:"report"`
-	Http   *HTTPConfig   `yaml:"http"`
+	Global   *GlobalConfig `yaml:"global"`
+	Redis    *RedisConfig  `yaml:"redis"`
+	Report   *ReportConfig `yaml:"report"`
+	Provider *Provider     `yaml:"provider"`
+	Http     *HTTPConfig   `yaml:"http"`
+}
+
+type Provider struct {
+	Ali *AliProvider `yaml:"ali"`
+	//Tc *TcProvider `yaml:"tc"`
+}
+
+type AliProvider struct {
+	BatchGetEnabled bool `yaml:"batch_get_enabled"`
 }
 
 type ReportConfig struct {
@@ -114,6 +124,22 @@ func (h *HTTPConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	*h = *hc
+	return nil
+}
+
+func (p *Provider) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	pc := &Provider{}
+	type plain Provider
+
+	if err := unmarshal((*plain)(pc)); err != nil {
+		return err
+	}
+
+	if pc.Ali == nil {
+		pc.Ali = &AliProvider{BatchGetEnabled: false}
+	}
+
+	*p = *pc
 	return nil
 }
 
