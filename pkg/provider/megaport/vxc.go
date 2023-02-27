@@ -3,7 +3,7 @@ package megaport
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -252,7 +252,7 @@ func (v *VXC) reqWithRetry(method, url string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logrus.Errorln("readall failed ", err)
 		return nil, err

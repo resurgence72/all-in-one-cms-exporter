@@ -2,13 +2,12 @@ package config
 
 import (
 	"errors"
-	"io/ioutil"
+	"os"
 	"sync"
 
 	"watcher4metrics/pkg/relabel"
 
 	"github.com/prometheus/common/model"
-
 	"gopkg.in/yaml.v3"
 )
 
@@ -93,7 +92,7 @@ func GetFileName() string {
 }
 
 func LoadFile(fileName string) (*Watcher4metricsConfig, error) {
-	bytes, err := ioutil.ReadFile(fileName)
+	bytes, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err
 	}
