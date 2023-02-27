@@ -110,7 +110,7 @@ func Load(bytes []byte) (*Watcher4metricsConfig, error) {
 	return cfg, nil
 }
 
-func (h *HTTPConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (h *HTTPConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	hc := &HTTPConfig{}
 	type plain HTTPConfig
 
@@ -126,7 +126,7 @@ func (h *HTTPConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (p *Provider) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (p *Provider) UnmarshalYAML(unmarshal func(any) error) error {
 	pc := &Provider{}
 	type plain Provider
 
@@ -142,7 +142,7 @@ func (p *Provider) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (g *GlobalConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (g *GlobalConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	gc := &GlobalConfig{}
 	type plain GlobalConfig
 
@@ -154,7 +154,7 @@ func (g *GlobalConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (r *ReportConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (r *ReportConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	rc := &ReportConfig{}
 	type plain ReportConfig
 
@@ -170,7 +170,7 @@ func (r *ReportConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (r *RemoteWrite) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (r *RemoteWrite) UnmarshalYAML(unmarshal func(any) error) error {
 	rw := &RemoteWrite{}
 	type plain RemoteWrite
 

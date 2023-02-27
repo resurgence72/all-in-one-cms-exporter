@@ -28,7 +28,7 @@ type Provider interface {
 
 type MetricsGetter interface {
 	// 为 metricsGetter 对象注入值
-	Inject(...interface{}) MetricsGetter
+	Inject(...any) MetricsGetter
 	// 获取当前 namespace下的所有metrics指标
 	GetMetrics() error
 	// 获取当前的 namespace
@@ -44,7 +44,7 @@ type MetricValue struct {
 	Metric       string            `json:"metric" description:"指标"`
 	Endpoint     string            `json:"endpoint" description:"通常是ip"`
 	Timestamp    int64             `json:"timestamp" description:"时间戳秒"`
-	ValueUntyped interface{}       `json:"value" description:"metric指标"`
+	ValueUntyped any       `json:"value" description:"metric指标"`
 	TagsMap      map[string]string `json:"tagsMap" description:"tags的map结构"` // {"a":1, "b"=2, "c="3} 保留2种格式，方便后端组件使用
 }
 

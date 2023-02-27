@@ -10,7 +10,7 @@ type InterConnect struct {
 	meta
 }
 
-func (i *InterConnect) Inject(params ...interface{}) common.MetricsGetter {
+func (i *InterConnect) Inject(params ...any) common.MetricsGetter {
 	return &InterConnect{meta: newMeta(params...)}
 }
 

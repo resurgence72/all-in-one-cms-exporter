@@ -22,7 +22,7 @@ func init() {
 	registers[QCP_LB] = new(Eip)
 }
 
-func (e *Eip) Inject(params ...interface{}) common.MetricsGetter {
+func (e *Eip) Inject(params ...any) common.MetricsGetter {
 	return &Eip{meta: newMeta(params...)}
 }
 

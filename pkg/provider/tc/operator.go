@@ -211,7 +211,7 @@ func (o *operator) commonRequest(
 	apiName string,
 	offset int,
 	limit int,
-	queryParams map[string]interface{},
+	queryParams map[string]any,
 ) ([]byte, error) {
 	var retry = func(cli *com.Client, req *tchttp.CommonRequest, times int) (resp *tchttp.CommonResponse, err error) {
 		for i := 0; i < times; i++ {
@@ -245,7 +245,7 @@ func (o *operator) commonRequest(
 		apiName,
 	)
 
-	params := map[string]interface{}{
+	params := map[string]any{
 		"Offset": offset,
 		"Limit":  limit,
 	}

@@ -14,7 +14,7 @@ func init() {
 	registers[ACS_WAF] = new(Waf)
 }
 
-func (w *Waf) Inject(params ...interface{}) common.MetricsGetter {
+func (w *Waf) Inject(params ...any) common.MetricsGetter {
 	return &Waf{meta: newMeta(params...)}
 }
 

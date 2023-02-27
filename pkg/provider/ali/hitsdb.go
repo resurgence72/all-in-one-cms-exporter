@@ -22,7 +22,7 @@ func init() {
 	registers[ACS_HITSDB] = new(HiTSDB)
 }
 
-func (h *HiTSDB) Inject(params ...interface{}) common.MetricsGetter {
+func (h *HiTSDB) Inject(params ...any) common.MetricsGetter {
 	return &HiTSDB{meta: newMeta(params...)}
 }
 

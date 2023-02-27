@@ -18,7 +18,7 @@ type Kafka struct {
 	kafkaMap map[string]*alikafka.InstanceVO
 }
 
-func (k *Kafka) Inject(params ...interface{}) common.MetricsGetter {
+func (k *Kafka) Inject(params ...any) common.MetricsGetter {
 	return &Kafka{meta: newMeta(params...)}
 }
 

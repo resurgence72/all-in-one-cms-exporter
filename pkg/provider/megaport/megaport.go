@@ -26,13 +26,13 @@ const (
 var registers = make(map[common.MetricsType]common.MetricsGetter)
 
 type MPPort struct {
-	sub   chan interface{}
+	sub   chan any
 	token string
 
 	req *MPReq
 }
 
-func New(sub chan interface{}) *MPPort {
+func New(sub chan any) *MPPort {
 	return &MPPort{sub: sub}
 }
 
@@ -60,7 +60,7 @@ func (m *MPPort) setCli(req *MPReq) error {
 	}
 
 	tmp := &struct {
-		Data map[string]interface{} `json:"data"`
+		Data map[string]any `json:"data"`
 	}{}
 
 	err = json.Unmarshal(body, tmp)

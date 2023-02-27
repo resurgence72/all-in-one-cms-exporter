@@ -21,7 +21,7 @@ func init() {
 	registers[ACS_RDS_DASHBOARD] = new(Rds)
 }
 
-func (r *Rds) Inject(params ...interface{}) common.MetricsGetter {
+func (r *Rds) Inject(params ...any) common.MetricsGetter {
 	return &Rds{meta: newMeta(params...)}
 }
 

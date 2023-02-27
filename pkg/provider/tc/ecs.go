@@ -28,7 +28,7 @@ func init() {
 	registers[QCE_CVM] = new(Ecs)
 }
 
-func (e *Ecs) Inject(params ...interface{}) common.MetricsGetter {
+func (e *Ecs) Inject(params ...any) common.MetricsGetter {
 	return &Ecs{meta: newMeta(params...)}
 }
 
@@ -167,7 +167,7 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 				"DescribeProjects",
 				0,
 				1000,
-				map[string]interface{}{"AllList": 1},
+				map[string]any{"AllList": 1},
 			)
 			if err != nil {
 				return err

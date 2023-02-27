@@ -22,7 +22,7 @@ func init() {
 	registers[ACS_ALB] = new(Alb)
 }
 
-func (a *Alb) Inject(params ...interface{}) common.MetricsGetter {
+func (a *Alb) Inject(params ...any) common.MetricsGetter {
 	return &Alb{meta: newMeta(params...)}
 }
 

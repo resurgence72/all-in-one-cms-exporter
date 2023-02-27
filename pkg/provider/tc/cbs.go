@@ -23,7 +23,7 @@ func init() {
 	registers[QCE_BLOCK_STORAGE] = new(Cbs)
 }
 
-func (c *Cbs) Inject(params ...interface{}) common.MetricsGetter {
+func (c *Cbs) Inject(params ...any) common.MetricsGetter {
 	return &Cbs{meta: newMeta(params...)}
 }
 

@@ -13,14 +13,14 @@ var (
 
 type (
 	// 订阅者为一个管道
-	subscriber chan interface{}
+	subscriber chan any
 	// topic是一个过滤器
 	topicFunc func(s Stream) bool
 )
 
 type Stream struct {
 	Topic string
-	Data  interface{}
+	Data  any
 }
 
 type Bus struct {
@@ -44,8 +44,8 @@ func Get() *Bus {
 }
 
 // 添加订阅者，指定topicFunc
-func (b *Bus) SubscriberTopic(topic topicFunc) chan interface{} {
-	ch := make(chan interface{}, b.buffer)
+func (b *Bus) SubscriberTopic(topic topicFunc) chan any {
+	ch := make(chan any, b.buffer)
 
 	b.m.Lock()
 	defer b.m.Unlock()
@@ -54,7 +54,7 @@ func (b *Bus) SubscriberTopic(topic topicFunc) chan interface{} {
 }
 
 // 添加订阅者，不指定topic,订阅全部
-func (b *Bus) Subscribe() chan interface{} {
+func (b *Bus) Subscribe() chan any {
 	return b.SubscriberTopic(nil)
 }
 
@@ -72,7 +72,7 @@ func (b *Bus) Publish(s Stream) {
 }
 
 // 退出订阅
-func (b *Bus) Evict(sub chan interface{}) {
+func (b *Bus) Evict(sub chan any) {
 	b.m.Lock()
 	defer b.m.Unlock()
 

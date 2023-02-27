@@ -25,7 +25,7 @@ func init() {
 	registers[GOOGLE_GCE] = new(Gce)
 }
 
-func (e *Gce) Inject(params ...interface{}) common.MetricsGetter {
+func (e *Gce) Inject(params ...any) common.MetricsGetter {
 	return &Gce{meta: newMeta(params...)}
 }
 
@@ -164,7 +164,7 @@ func (e *Gce) AsyncMeta(ctx context.Context) {
 		}
 	}
 
-	e.op.projects.Range(func(k, v interface{}) bool {
+	e.op.projects.Range(func(k, v any) bool {
 		pid := k.(string)
 
 		for _, zone := range e.op.getZones() {

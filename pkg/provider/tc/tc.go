@@ -25,11 +25,11 @@ var registers = make(map[common.MetricsType]common.MetricsGetter)
 
 type TC struct {
 	clientSet map[string]*monitor.Client
-	sub       chan interface{}
+	sub       chan any
 	op        *operator
 }
 
-func New(sub chan interface{}) *TC {
+func New(sub chan any) *TC {
 	return &TC{sub: sub}
 }
 

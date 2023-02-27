@@ -25,7 +25,7 @@ var registers = make(map[common.MetricsType]common.MetricsGetter)
 
 type Google struct {
 	iden string
-	sub  chan interface{}
+	sub  chan any
 	op   *operator
 }
 
@@ -106,6 +106,6 @@ func (g *Google) do(ctx context.Context, mg common.MetricsGetter) {
 	mg.Collector()
 }
 
-func New(sub chan interface{}) *Google {
+func New(sub chan any) *Google {
 	return &Google{sub: sub}
 }

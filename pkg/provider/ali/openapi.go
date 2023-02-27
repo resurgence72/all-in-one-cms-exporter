@@ -16,7 +16,7 @@ var uidMap = map[string]string{
 	"baixiang": "1851451288891972",
 }
 
-func (o *OpenAPI) Inject(params ...interface{}) common.MetricsGetter {
+func (o *OpenAPI) Inject(params ...any) common.MetricsGetter {
 	return &OpenAPI{meta: newMeta(params...)}
 }
 

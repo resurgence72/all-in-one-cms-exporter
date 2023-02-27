@@ -38,12 +38,12 @@ var (
 )
 
 type Ali struct {
-	sub chan interface{}
+	sub chan any
 	cli *cms.Client
 	op  *operator
 }
 
-func New(sub chan interface{}) *Ali {
+func New(sub chan any) *Ali {
 	return &Ali{sub: sub}
 }
 

@@ -17,7 +17,7 @@ type meta struct {
 	m         sync.Mutex
 }
 
-func newMeta(params ...interface{}) meta {
+func newMeta(params ...any) meta {
 	return meta{
 		op:        params[0].(*operator),
 		client:    params[1].(*monitoring.MetricClient),

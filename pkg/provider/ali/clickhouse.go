@@ -19,7 +19,7 @@ func init() {
 	registers[ACS_CLICKHOUSE] = new(ClickHouse)
 }
 
-func (c *ClickHouse) Inject(params ...interface{}) common.MetricsGetter {
+func (c *ClickHouse) Inject(params ...any) common.MetricsGetter {
 	return &ClickHouse{meta: newMeta(params...)}
 }
 

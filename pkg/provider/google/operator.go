@@ -39,7 +39,7 @@ const (
 	ALPHALaunchStage = "ALPHA"
 )
 
-func (o *operator) getPointValue(valueType string, point *monitoringpb.Point) interface{} {
+func (o *operator) getPointValue(valueType string, point *monitoringpb.Point) any {
 	switch valueType {
 	case INT64Type:
 		return point.GetValue().GetInt64Value()
@@ -66,7 +66,7 @@ func (o *operator) getMetrics(
 ) ([]string, error) {
 	var p string
 	// 遍历一次即可，拿到任意一个project
-	o.projects.Range(func(key, value interface{}) bool {
+	o.projects.Range(func(key, value any) bool {
 		p = key.(string)
 		return false
 	})
@@ -138,7 +138,7 @@ func (o *operator) listTimeSeries(
 		startTime, endTime = o.getRangeTime()
 	)
 
-	o.projects.Range(func(k, v interface{}) bool {
+	o.projects.Range(func(k, v any) bool {
 		pid := k.(string)
 
 		for _, metric := range metrics {

@@ -22,7 +22,7 @@ func init() {
 	registers[ACS_KVSTORE] = new(Redis)
 }
 
-func (r *Redis) Inject(params ...interface{}) common.MetricsGetter {
+func (r *Redis) Inject(params ...any) common.MetricsGetter {
 	return &Redis{meta: newMeta(params...)}
 }
 

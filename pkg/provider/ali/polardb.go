@@ -22,7 +22,7 @@ func init() {
 	registers[ACS_POLARDB] = new(PolarDB)
 }
 
-func (p *PolarDB) Inject(params ...interface{}) common.MetricsGetter {
+func (p *PolarDB) Inject(params ...any) common.MetricsGetter {
 	return &PolarDB{meta: newMeta(params...)}
 }
 

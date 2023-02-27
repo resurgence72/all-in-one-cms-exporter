@@ -31,7 +31,7 @@ func Drain(resp *http.Response) {
 	_ = resp.Body.Close()
 }
 
-func ToFloat64(val interface{}) (float64, error) {
+func ToFloat64(val any) (float64, error) {
 	switch v := val.(type) {
 	case string:
 		if f, err := strconv.ParseFloat(v, 64); err == nil {

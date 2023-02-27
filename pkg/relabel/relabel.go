@@ -23,7 +23,7 @@ var (
 )
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (re *Regexp) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (re *Regexp) UnmarshalYAML(unmarshal func(any) error) error {
 	var s string
 	if err := unmarshal(&s); err != nil {
 		return err
@@ -100,7 +100,7 @@ const (
 	LabelKeep Action = "labelkeep"
 )
 
-func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *Config) UnmarshalYAML(unmarshal func(any) error) error {
 	*c = DefaultRelabelConfig
 	type plain Config
 	if err := unmarshal((*plain)(c)); err != nil {

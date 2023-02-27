@@ -29,7 +29,7 @@ func init() {
 	registers[MEGEPORT_VXC] = new(VXC)
 }
 
-func (v *VXC) Inject(params ...interface{}) common.MetricsGetter {
+func (v *VXC) Inject(params ...any) common.MetricsGetter {
 	return &VXC{
 		req:       params[0].(*MPReq),
 		token:     params[1].(string),
@@ -110,7 +110,7 @@ func (v *VXC) Collector() {
 					Data []struct {
 						Type    string          `json:"type"`
 						SubType string          `json:"subtype"`
-						Samples [][]interface{} `json:"samples"`
+						Samples [][]any `json:"samples"`
 						Unit    struct {
 							Name     string `json:"name"`
 							FullName string `json:"fullName"`
@@ -181,7 +181,7 @@ func (v *VXC) Collector() {
 	}
 }
 
-func (v *VXC) findPoint(targetTS int64, points [][]interface{}) ([]interface{}, bool) {
+func (v *VXC) findPoint(targetTS int64, points [][]any) ([]any, bool) {
 	for i := range points {
 		tsFloat, ok := points[i][0].(float64)
 		// 断言检测，防止panic

@@ -17,7 +17,7 @@ type meta struct {
 	m sync.RWMutex
 }
 
-func newMeta(params ...interface{}) meta {
+func newMeta(params ...any) meta {
 	return meta{
 		op:        params[0].(*operator),
 		clients:   params[1].(map[string]*monitor.Client),

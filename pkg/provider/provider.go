@@ -17,7 +17,7 @@ type Manager struct {
 }
 
 func New(bus *ebus.Bus) *Manager {
-	newSub := func(key string) chan interface{} {
+	newSub := func(key string) chan any {
 		return bus.SubscriberTopic(func(s ebus.Stream) bool {
 			if strings.EqualFold(s.Topic, key) {
 				return true

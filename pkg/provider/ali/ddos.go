@@ -23,7 +23,7 @@ func init() {
 	registers[ACS_DDOS_IP] = new(DDos)
 }
 
-func (d *DDos) Inject(params ...interface{}) common.MetricsGetter {
+func (d *DDos) Inject(params ...any) common.MetricsGetter {
 	return &DDos{meta: newMeta(params...)}
 }
 

@@ -21,7 +21,7 @@ func init() {
 	registers[ACS_PHYSICAL_CONNECTION] = new(Vbr)
 }
 
-func (v *Vbr) Inject(params ...interface{}) common.MetricsGetter {
+func (v *Vbr) Inject(params ...any) common.MetricsGetter {
 	return &Vbr{meta: newMeta(params...)}
 }
 

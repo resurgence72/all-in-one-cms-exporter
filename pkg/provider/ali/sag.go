@@ -22,7 +22,7 @@ func init() {
 	registers[ACS_SMARTAG] = new(SAG)
 }
 
-func (s *SAG) Inject(params ...interface{}) common.MetricsGetter {
+func (s *SAG) Inject(params ...any) common.MetricsGetter {
 	return &SAG{meta: newMeta(params...)}
 }
 

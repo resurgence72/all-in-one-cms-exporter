@@ -15,7 +15,7 @@ type meta struct {
 	m sync.RWMutex
 }
 
-func newMeta(params ...interface{}) meta {
+func newMeta(params ...any) meta {
 	return meta{
 		op:        params[0].(*operator),
 		client:    params[1].(*cms.Client),
@@ -55,11 +55,11 @@ func (a *AliReq) Decode() *AliReq {
 
 type (
 	PushFunc func(*transferData)
-	Point    map[string]interface{}
+	Point    map[string]any
 	Points   []Point
 )
 
-func (p Point) Value() interface{} {
+func (p Point) Value() any {
 	for _, key := range []string{
 		"Average",
 		"Value",
