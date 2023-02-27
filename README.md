@@ -50,6 +50,12 @@ All-in-one Cloud CMS exporter 解决了哪些问题
 >         - source_labels: ["__name__"]
 >           regex: "^net.+"
 >           action: "keep"
+> provider:
+>   ali: # 当前仅支持 ali 定制化配置
+>     # 阿里云是否使用 batchGet 拉取方式;默认采用 DescribeMetricLastData
+>     # BatchGet 付费模式实时拉取，不支持提前聚合
+>     # DescribeMetricLastData 定量免费额度拉取，延时5min
+>     batch_get_enabled: false
 >
 > http:
 >   listen: :8081
