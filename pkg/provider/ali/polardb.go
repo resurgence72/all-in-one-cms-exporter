@@ -141,14 +141,14 @@ func (p *PolarDB) push(transfer *transferData) {
 			continue
 		}
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("polardb", transfer.metric),
 			ValueUntyped: point.Value(),
 			Endpoint:     instanceID,
 		}
 
-		n9e.Endpoint = pdb.DBClusterId
+		series.Endpoint = pdb.DBClusterId
 		tagsMap := map[string]string{
 			"region":         pdb.RegionId,
 			"engine":         pdb.Engine,
@@ -166,7 +166,7 @@ func (p *PolarDB) push(transfer *transferData) {
 			// 指标单位
 			"unit_name": transfer.unit,
 		}
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 
 }

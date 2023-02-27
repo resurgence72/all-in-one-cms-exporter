@@ -67,7 +67,7 @@ func (l *Lb) push(transfer *transferData) {
 			ts := point.Interval.EndTime.GetSeconds()
 			value := l.op.getPointValue(series.ValueType.String(), point)
 
-			n9e := &common.MetricValue{
+			series := &common.MetricValue{
 				Metric:       common.BuildMetric("lb", metricName),
 				Endpoint:     ep,
 				Timestamp:    ts,
@@ -96,7 +96,7 @@ func (l *Lb) push(transfer *transferData) {
 				tagsMap["response_code_class"] = cc
 			}
 
-			l.op.pushTo(n9e, tagsMap)
+			series.BuildAndShift(tagsMap)
 		}
 	}
 }

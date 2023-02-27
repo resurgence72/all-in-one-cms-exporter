@@ -63,7 +63,7 @@ func (e *Gce) push(transfer *transferData) {
 		metricLabels := series.Metric.Labels
 		resourceLabels := series.Resource.Labels
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Metric:       common.BuildMetric("gce", metricName),
 			Timestamp:    ts,
 			ValueUntyped: value,
@@ -76,7 +76,7 @@ func (e *Gce) push(transfer *transferData) {
 		}
 		if in, ok := metricLabels["instance_name"]; ok {
 			tagsMap["instance_name"] = in
-			n9e.Endpoint = in
+			series.Endpoint = in
 		}
 
 		if ii, ok := resourceLabels["instance_id"]; ok {
@@ -103,7 +103,7 @@ func (e *Gce) push(transfer *transferData) {
 			tagsMap["region"] = region
 		}
 
-		e.op.pushTo(n9e, tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }
 

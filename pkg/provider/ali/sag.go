@@ -69,13 +69,13 @@ func (s *SAG) push(transfer *transferData) {
 			continue
 		}
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("sag", transfer.metric),
 			ValueUntyped: point.Value(),
 		}
 
-		n9e.Endpoint = instanceID
+		series.Endpoint = instanceID
 
 		tagsMap := map[string]string{
 			"instance_id":         instanceID,
@@ -96,7 +96,7 @@ func (s *SAG) push(transfer *transferData) {
 			"unit_name": transfer.unit,
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }
 

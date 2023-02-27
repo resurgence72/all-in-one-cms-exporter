@@ -142,7 +142,7 @@ func (v *Vbr) push(transfer *transferData) {
 			continue
 		}
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("vbr", transfer.metric),
 			ValueUntyped: point.Value(),
@@ -161,6 +161,6 @@ func (v *Vbr) push(transfer *transferData) {
 			"local_gateway_ip": vbr.LocalGatewayIp,
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }

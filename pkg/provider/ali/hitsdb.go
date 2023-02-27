@@ -141,7 +141,7 @@ func (h *HiTSDB) push(transfer *transferData) {
 			continue
 		}
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("hitsdb", transfer.metric),
 			ValueUntyped: point.Value(),
@@ -170,6 +170,6 @@ func (h *HiTSDB) push(transfer *transferData) {
 			}
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }

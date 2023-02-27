@@ -140,7 +140,7 @@ func (r *Rds) push(transfer *transferData) {
 			continue
 		}
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("rds", transfer.metric),
 			ValueUntyped: point.Value(),
@@ -164,7 +164,7 @@ func (r *Rds) push(transfer *transferData) {
 			"unit_name": transfer.unit,
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }
 

@@ -59,7 +59,7 @@ func (c *ClickHouse) push(transfer *transferData) {
 	for _, point := range transfer.points {
 		logicName := point["logic_name"].(string)
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("clickhouse", transfer.metric),
 			ValueUntyped: point.Value(),
@@ -73,6 +73,6 @@ func (c *ClickHouse) push(transfer *transferData) {
 			"unit_name": transfer.unit,
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }

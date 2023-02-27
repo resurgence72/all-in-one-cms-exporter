@@ -98,7 +98,7 @@ func NewRemoteWritesClient(ctx context.Context) {
 				report.report()
 			}
 			return
-		case nPoint := <-common.GetN9eCh():
+		case nPoint := <-common.SeriesCh():
 			// 攒够 batch的数量再发送
 			report.batchContainer = append(report.batchContainer, nPoint)
 			if len(report.batchContainer) == report.batchSize {

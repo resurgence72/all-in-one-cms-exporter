@@ -55,7 +55,7 @@ func (w *Waf) push(transfer *transferData) {
 			continue
 		}
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("waf", transfer.metric),
 			ValueUntyped: point.Value(),
@@ -63,11 +63,11 @@ func (w *Waf) push(transfer *transferData) {
 		}
 
 		if r, ok := point["domain"]; ok && len(r.(string)) > 0 {
-			n9e.Endpoint = r.(string)
+			series.Endpoint = r.(string)
 		} else if r, ok := point["resource"]; ok && len(r.(string)) > 0 {
-			n9e.Endpoint = r.(string)
+			series.Endpoint = r.(string)
 		} else {
-			n9e.Endpoint = p.(string)
+			series.Endpoint = p.(string)
 		}
 
 		tagsMap := map[string]string{
@@ -78,7 +78,7 @@ func (w *Waf) push(transfer *transferData) {
 			"instance_id": p.(string),
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }
 

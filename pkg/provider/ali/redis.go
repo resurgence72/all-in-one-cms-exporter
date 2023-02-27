@@ -150,14 +150,14 @@ func (r *Redis) push(transfer *transferData) {
 			continue
 		}
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("redis", transfer.metric),
 			ValueUntyped: point.Value(),
 			Endpoint:     instanceID,
 		}
 
-		n9e.Endpoint = redis.InstanceId
+		series.Endpoint = redis.InstanceId
 		tagsMap := map[string]string{
 			"region":            redis.RegionId,
 			"engine_version":    redis.EngineVersion,
@@ -179,6 +179,6 @@ func (r *Redis) push(transfer *transferData) {
 			"unit_name": transfer.unit,
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }

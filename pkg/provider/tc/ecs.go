@@ -86,7 +86,7 @@ func (e *Ecs) push(transfer *transferData) {
 		}
 
 		for i, ts := range point.Timestamps {
-			n9e := &common.MetricValue{
+			series := &common.MetricValue{
 				Timestamp:    int64(*ts),
 				Metric:       common.BuildMetric("ecs", transfer.metric),
 				ValueUntyped: *point.Values[i],
@@ -104,7 +104,7 @@ func (e *Ecs) push(transfer *transferData) {
 			}
 
 			// 设置endpoint
-			n9e.Endpoint = strings.Join(pubIPs, ",")
+			series.Endpoint = strings.Join(pubIPs, ",")
 
 			// 设置Tags TagsMap
 			tagsMap := map[string]string{
@@ -119,7 +119,7 @@ func (e *Ecs) push(transfer *transferData) {
 				"cpu":             strconv.Itoa(int(*ecs.CPU)),
 				"memory":          strconv.Itoa(int(*ecs.Memory)),
 				// cvm的公网私网ip
-				"public_ip":  n9e.Endpoint,
+				"public_ip":  series.Endpoint,
 				"private_ip": strings.Join(priIPs, ","),
 			}
 
@@ -127,7 +127,7 @@ func (e *Ecs) push(transfer *transferData) {
 				tagsMap["project_mark"] = pn.(string)
 			}
 
-			n9e.BuildAndShift(tagsMap)
+			series.BuildAndShift(tagsMap)
 			continue
 		}
 	}

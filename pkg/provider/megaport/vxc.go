@@ -214,7 +214,7 @@ func (v *VXC) getFromAndToTS() (int64, int64) {
 }
 
 func (v *VXC) push(transfer *transferData) {
-	n9e := &common.MetricValue{
+	series := &common.MetricValue{
 		Metric:       common.BuildMetric("vxc", transfer.metric),
 		Endpoint:     transfer.endpoint,
 		Timestamp:    transfer.ts,
@@ -225,7 +225,7 @@ func (v *VXC) push(transfer *transferData) {
 	transfer.tagMap["provider"] = ProviderName
 	transfer.tagMap["namespace"] = v.namespace
 
-	n9e.BuildAndShift(transfer.tagMap)
+	series.BuildAndShift(transfer.tagMap)
 }
 
 func (v *VXC) reqWithRetry(method, url string) ([]byte, error) {

@@ -81,14 +81,14 @@ func (e *Eip) push(transfer *transferData) {
 		}
 
 		for i, ts := range point.Timestamps {
-			n9e := &common.MetricValue{
+			series := &common.MetricValue{
 				Timestamp:    int64(*ts),
 				Metric:       common.BuildMetric("eip", transfer.metric),
 				ValueUntyped: *point.Values[i],
 			}
 
 			// 存在eip, 赋值tag 及 ip
-			n9e.Endpoint = *eip.AddressIp
+			series.Endpoint = *eip.AddressIp
 
 			// 设置Tags TagsMap
 			tagsMap := map[string]string{
@@ -100,7 +100,7 @@ func (e *Eip) push(transfer *transferData) {
 				"instance_id": *eip.InstanceId,
 				"status":      *eip.AddressStatus,
 			}
-			n9e.BuildAndShift(tagsMap)
+			series.BuildAndShift(tagsMap)
 			continue
 		}
 	}

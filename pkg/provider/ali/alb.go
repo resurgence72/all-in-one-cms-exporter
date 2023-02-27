@@ -138,7 +138,7 @@ func (a *Alb) push(transfer *transferData) {
 			continue
 		}
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Metric:       common.BuildMetric("alb", transfer.metric),
 			Endpoint:     alb.LoadBalancerName,
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
@@ -161,6 +161,6 @@ func (a *Alb) push(transfer *transferData) {
 			}
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }

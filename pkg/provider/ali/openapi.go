@@ -25,12 +25,7 @@ func (o *OpenAPI) GetMetrics() error {
 		o.client,
 		o.namespace,
 		nil,
-		[]string{
-			// API速率配额使用率
-			"QuotaUsage",
-			// 调用次数
-			"TotalNumber",
-		},
+		nil,
 	)
 	if err != nil {
 		return err
@@ -57,7 +52,7 @@ func (o *OpenAPI) Collector() {
 		o.namespace,
 		o.push,
 		&ds,
-		nil,
+		[]string{"productName", "API"},
 	)
 }
 
@@ -67,13 +62,13 @@ func (o *OpenAPI) push(transfer *transferData) {
 		api := point["API"].(string)
 
 		instanceID := fmt.Sprintf("%s_%s", pn, api)
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Timestamp: int64(point["timestamp"].(float64)) / 1e3,
 			Metric:    common.BuildMetric("openapi", transfer.metric),
 			Endpoint:  instanceID,
 		}
 
-		n9e.ValueUntyped = point.Value()
+		series.ValueUntyped = point.Value()
 
 		tagsMap := map[string]string{
 			"provider":     ProviderName,
@@ -85,7 +80,7 @@ func (o *OpenAPI) push(transfer *transferData) {
 			"instance_id":  instanceID,
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }
 

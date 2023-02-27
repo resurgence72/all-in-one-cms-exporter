@@ -134,7 +134,7 @@ func (k *Kafka) push(transfer *transferData) {
 			continue
 		}
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Metric:       common.BuildMetric("alikafka", transfer.metric),
 			Endpoint:     kfk.Name,
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
@@ -170,7 +170,7 @@ func (k *Kafka) push(transfer *transferData) {
 			}
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }
 

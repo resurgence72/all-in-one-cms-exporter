@@ -179,7 +179,7 @@ func (o *operator) getMonitorData(
 					return
 				}
 				request := monitor.NewGetMonitorDataRequest()
-				request.Period = com.Uint64Ptr(60)
+				request.Period = com.Uint64Ptr(uint64(o.req.Dur))
 				request.StartTime, request.EndTime = o.getRangeTime()
 				// tc 指定Namespace需要强制大写，否则报错
 				request.Namespace = com.StringPtr(ns)

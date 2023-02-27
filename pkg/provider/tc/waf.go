@@ -166,7 +166,7 @@ func (w *Waf) push(transfer *transferData) {
 		}
 
 		for i, ts := range point.Timestamps {
-			n9e := &common.MetricValue{
+			series := &common.MetricValue{
 				Timestamp:    int64(*ts),
 				Metric:       common.BuildMetric("clb_waf", transfer.metric),
 				ValueUntyped: *point.Values[i],
@@ -181,7 +181,7 @@ func (w *Waf) push(transfer *transferData) {
 				"unit_name":   transfer.unit,
 				"instance_id": *waf.DomainId,
 			}
-			n9e.BuildAndShift(tagsMap)
+			series.BuildAndShift(tagsMap)
 			continue
 		}
 	}

@@ -54,7 +54,7 @@ func (i *InterConnect) push(transfer *transferData) {
 
 		resourceLabels := series.Resource.Labels
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Metric:       common.BuildMetric("interconnect", metricName),
 			Endpoint:     resourceLabels["attachment"],
 			Timestamp:    ts,
@@ -70,7 +70,7 @@ func (i *InterConnect) push(transfer *transferData) {
 			tagsMap[k] = v
 		}
 
-		i.op.pushTo(n9e, tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }
 

@@ -179,6 +179,7 @@ func (o *operator) getMetricLastData(
 			request.Scheme = "https"
 			request.Namespace = ns
 			request.MetricName = metric.MetricName
+			request.Period = strconv.Itoa(o.req.Dur)
 			request.StartTime, request.EndTime = o.getRangeTime()
 			request.Length = "1500"
 			if ds != nil {

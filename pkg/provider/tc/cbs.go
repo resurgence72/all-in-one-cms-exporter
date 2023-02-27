@@ -165,7 +165,7 @@ func (c *Cbs) push(transfer *transferData) {
 		}
 
 		for i, ts := range point.Timestamps {
-			n9e := &common.MetricValue{
+			series := &common.MetricValue{
 				Timestamp:    int64(*ts),
 				Metric:       common.BuildMetric("cbs", transfer.metric),
 				ValueUntyped: *point.Values[i],
@@ -199,7 +199,7 @@ func (c *Cbs) push(transfer *transferData) {
 				}
 			}
 
-			n9e.BuildAndShift(tagsMap)
+			series.BuildAndShift(tagsMap)
 			continue
 		}
 

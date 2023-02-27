@@ -71,13 +71,13 @@ func (e *Eip) push(transfer *transferData) {
 		}
 
 		// 根据eipMap获取tags 和 endpoint
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("eip", transfer.metric),
 			ValueUntyped: point.Value(),
 		}
 
-		n9e.Endpoint = eip.IpAddress
+		series.Endpoint = eip.IpAddress
 		tagsMap := map[string]string{
 			"region": eip.RegionId,
 			// eip付费类型
@@ -111,7 +111,7 @@ func (e *Eip) push(transfer *transferData) {
 			}
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }
 

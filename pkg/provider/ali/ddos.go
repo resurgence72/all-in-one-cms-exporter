@@ -72,13 +72,13 @@ func (d *DDos) push(transfer *transferData) {
 			continue
 		}
 
-		n9e := &common.MetricValue{
+		series := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("ddos", transfer.metric),
 			ValueUntyped: point.Value(),
 		}
 
-		n9e.Endpoint = ip
+		series.Endpoint = ip
 
 		tagsMap := map[string]string{
 			"instance_id": instanceID,
@@ -95,7 +95,7 @@ func (d *DDos) push(transfer *transferData) {
 			tagsMap["domain"] = point["domain"].(string)
 		}
 
-		n9e.BuildAndShift(tagsMap)
+		series.BuildAndShift(tagsMap)
 	}
 }
 

@@ -120,10 +120,10 @@ func NewCloseOnce() *CloseOnce {
 	return cOnce
 }
 
-// 核心n9e chan 连接 provider和 consumer
+// 核心series chan 连接 provider和 consumer
 var remoteCh = make(chan *MetricValue, 2048)
 
-func GetN9eCh() chan *MetricValue {
+func SeriesCh() chan *MetricValue {
 	return remoteCh
 }
 
