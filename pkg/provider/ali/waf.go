@@ -15,7 +15,7 @@ func init() {
 }
 
 func (w *Waf) Inject(params ...interface{}) common.MetricsGetter {
-	return &Waf{meta: newMeta(params)}
+	return &Waf{meta: newMeta(params...)}
 }
 
 func (w *Waf) GetNamespace() string {

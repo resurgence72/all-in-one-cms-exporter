@@ -23,7 +23,7 @@ func init() {
 }
 
 func (s *SAG) Inject(params ...interface{}) common.MetricsGetter {
-	return &SAG{meta: newMeta(params)}
+	return &SAG{meta: newMeta(params...)}
 }
 
 func (s *SAG) GetMetrics() error {

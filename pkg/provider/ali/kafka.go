@@ -19,7 +19,7 @@ type Kafka struct {
 }
 
 func (k *Kafka) Inject(params ...interface{}) common.MetricsGetter {
-	return &Kafka{meta: newMeta(params)}
+	return &Kafka{meta: newMeta(params...)}
 }
 
 func (k *Kafka) GetMetrics() error {

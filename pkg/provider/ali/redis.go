@@ -23,7 +23,7 @@ func init() {
 }
 
 func (r *Redis) Inject(params ...interface{}) common.MetricsGetter {
-	return &Redis{meta: newMeta(params)}
+	return &Redis{meta: newMeta(params...)}
 }
 
 func (r *Redis) GetMetrics() error {

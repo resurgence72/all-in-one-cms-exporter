@@ -23,7 +23,7 @@ func init() {
 }
 
 func (p *PolarDB) Inject(params ...interface{}) common.MetricsGetter {
-	return &PolarDB{meta: newMeta(params)}
+	return &PolarDB{meta: newMeta(params...)}
 }
 
 func (p *PolarDB) GetMetrics() error {

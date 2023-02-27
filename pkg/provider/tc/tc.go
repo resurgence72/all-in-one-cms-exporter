@@ -2,7 +2,6 @@ package tc
 
 import (
 	"context"
-
 	"watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/common"
 

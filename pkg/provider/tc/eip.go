@@ -22,7 +22,9 @@ func init() {
 	registers[QCP_LB] = new(Eip)
 }
 
-func (e *Eip) Inject(params ...interface{}) common.MetricsGetter { return &Eip{meta: newMeta(params)} }
+func (e *Eip) Inject(params ...interface{}) common.MetricsGetter {
+	return &Eip{meta: newMeta(params...)}
+}
 
 func (e *Eip) GetNamespace() string {
 	return e.namespace

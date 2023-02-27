@@ -2,7 +2,6 @@ package tc
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -183,7 +182,7 @@ func (o *operator) getMonitorData(
 				request.Period = com.Uint64Ptr(60)
 				request.StartTime, request.EndTime = o.getRangeTime()
 				// tc 指定Namespace需要强制大写，否则报错
-				request.Namespace = com.StringPtr(strings.ToUpper(ns))
+				request.Namespace = com.StringPtr(ns)
 				request.MetricName = metric.MetricName
 
 				pageSize := len(instances)/apiInstancesN + 1

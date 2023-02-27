@@ -22,7 +22,7 @@ func init() {
 }
 
 func (v *Vbr) Inject(params ...interface{}) common.MetricsGetter {
-	return &Vbr{meta: newMeta(params)}
+	return &Vbr{meta: newMeta(params...)}
 }
 
 func (v *Vbr) GetNamespace() string {

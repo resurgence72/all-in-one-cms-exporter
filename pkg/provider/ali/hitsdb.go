@@ -23,7 +23,7 @@ func init() {
 }
 
 func (h *HiTSDB) Inject(params ...interface{}) common.MetricsGetter {
-	return &HiTSDB{meta: newMeta(params)}
+	return &HiTSDB{meta: newMeta(params...)}
 }
 
 func (h *HiTSDB) GetMetrics() error {

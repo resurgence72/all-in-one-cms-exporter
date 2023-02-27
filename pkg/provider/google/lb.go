@@ -14,7 +14,7 @@ func init() {
 	registers[GOOGLE_LB] = new(Lb)
 }
 
-func (l *Lb) Inject(params ...interface{}) common.MetricsGetter { return &Lb{meta: newMeta(params)} }
+func (l *Lb) Inject(params ...interface{}) common.MetricsGetter { return &Lb{meta: newMeta(params...)} }
 
 func (l *Lb) GetNamespace() string {
 	return l.namespace

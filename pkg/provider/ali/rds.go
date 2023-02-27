@@ -22,7 +22,7 @@ func init() {
 }
 
 func (r *Rds) Inject(params ...interface{}) common.MetricsGetter {
-	return &Rds{meta: newMeta(params)}
+	return &Rds{meta: newMeta(params...)}
 }
 
 func (r *Rds) GetMetrics() error {

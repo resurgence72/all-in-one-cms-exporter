@@ -11,7 +11,7 @@ type InterConnect struct {
 }
 
 func (i *InterConnect) Inject(params ...interface{}) common.MetricsGetter {
-	return &InterConnect{meta: newMeta(params)}
+	return &InterConnect{meta: newMeta(params...)}
 }
 
 func (i *InterConnect) GetMetrics() error {

@@ -24,7 +24,7 @@ func init() {
 }
 
 func (d *DDos) Inject(params ...interface{}) common.MetricsGetter {
-	return &DDos{meta: newMeta(params)}
+	return &DDos{meta: newMeta(params...)}
 }
 
 func (d *DDos) GetNamespace() string {

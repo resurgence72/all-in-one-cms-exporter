@@ -22,7 +22,7 @@ func init() {
 }
 
 func (s *Slb) Inject(params ...interface{}) common.MetricsGetter {
-	return &Slb{meta: newMeta(params)}
+	return &Slb{meta: newMeta(params...)}
 }
 
 func (s *Slb) GetNamespace() string {

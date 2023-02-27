@@ -23,7 +23,7 @@ func init() {
 }
 
 func (a *Alb) Inject(params ...interface{}) common.MetricsGetter {
-	return &Alb{meta: newMeta(params)}
+	return &Alb{meta: newMeta(params...)}
 }
 
 func (a *Alb) GetMetrics() error {

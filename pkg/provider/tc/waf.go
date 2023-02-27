@@ -22,7 +22,9 @@ func init() {
 	registers[QCE_WAF] = new(Waf)
 }
 
-func (w *Waf) Inject(params ...interface{}) common.MetricsGetter { return &Waf{meta: newMeta(params)} }
+func (w *Waf) Inject(params ...interface{}) common.MetricsGetter {
+	return &Waf{meta: newMeta(params...)}
+}
 
 func (w *Waf) GetMetrics() error {
 	metrics, err := w.op.getMetrics(

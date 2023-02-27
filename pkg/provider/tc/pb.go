@@ -1,6 +1,7 @@
 package tc
 
 import (
+	"strings"
 	"watcher4metrics/pkg/common"
 
 	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
@@ -27,6 +28,7 @@ type TCReq struct {
 func (t *TCReq) Decode() *TCReq {
 	t.Sid = common.DecodeBase64(t.Sid)
 	t.Skey = common.DecodeBase64(t.Skey)
+	t.MetricNamespace = strings.ToUpper(t.MetricNamespace)
 
 	//t.Dur = 60
 	return t

@@ -19,7 +19,13 @@ type Cbs struct {
 	cbsMap map[string]map[string]*cbs.Disk
 }
 
-func (c *Cbs) Inject(params ...interface{}) common.MetricsGetter { return &Cbs{meta: newMeta(params)} }
+func init() {
+	registers[QCE_BLOCK_STORAGE] = new(Cbs)
+}
+
+func (c *Cbs) Inject(params ...interface{}) common.MetricsGetter {
+	return &Cbs{meta: newMeta(params...)}
+}
 
 func (c *Cbs) GetMetrics() error {
 	metrics, err := c.op.getMetrics(

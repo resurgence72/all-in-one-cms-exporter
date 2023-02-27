@@ -28,7 +28,9 @@ func init() {
 	registers[QCE_CVM] = new(Ecs)
 }
 
-func (e *Ecs) Inject(params ...interface{}) common.MetricsGetter { return &Ecs{meta: newMeta(params)} }
+func (e *Ecs) Inject(params ...interface{}) common.MetricsGetter {
+	return &Ecs{meta: newMeta(params...)}
+}
 
 func (e *Ecs) GetNamespace() string {
 	return e.namespace

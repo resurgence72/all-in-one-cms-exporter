@@ -24,7 +24,7 @@ func init() {
 }
 
 func (e *Eip) Inject(params ...interface{}) common.MetricsGetter {
-	return &Eip{meta: newMeta(params)}
+	return &Eip{meta: newMeta(params...)}
 }
 
 func (e *Eip) GetNamespace() string {

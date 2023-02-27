@@ -17,7 +17,7 @@ var uidMap = map[string]string{
 }
 
 func (o *OpenAPI) Inject(params ...interface{}) common.MetricsGetter {
-	return &OpenAPI{meta: newMeta(params)}
+	return &OpenAPI{meta: newMeta(params...)}
 }
 
 func (o *OpenAPI) GetMetrics() error {

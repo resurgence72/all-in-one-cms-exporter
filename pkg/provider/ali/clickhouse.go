@@ -20,7 +20,7 @@ func init() {
 }
 
 func (c *ClickHouse) Inject(params ...interface{}) common.MetricsGetter {
-	return &ClickHouse{meta: newMeta(params)}
+	return &ClickHouse{meta: newMeta(params...)}
 }
 
 func (c *ClickHouse) GetMetrics() error {

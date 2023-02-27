@@ -29,8 +29,8 @@ const (
 	ACS_HITSDB              common.MetricsType = "acs_hitsdb"
 
 	ProviderName = "ali"
-	// 云监控api最新数据要在3min后才同步
-	ALI_CMS_DELAY = 240
+	// 延迟5min,保证大多数产品不断点
+	ALI_CMS_DELAY = 500
 )
 
 var (

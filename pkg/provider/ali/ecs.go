@@ -25,7 +25,7 @@ func init() {
 }
 
 func (e *Ecs) Inject(params ...interface{}) common.MetricsGetter {
-	return &Ecs{meta: newMeta(params)}
+	return &Ecs{meta: newMeta(params...)}
 }
 
 func (e *Ecs) GetNamespace() string {

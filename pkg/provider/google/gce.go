@@ -25,7 +25,9 @@ func init() {
 	registers[GOOGLE_GCE] = new(Gce)
 }
 
-func (e *Gce) Inject(params ...interface{}) common.MetricsGetter { return &Gce{meta: newMeta(params)} }
+func (e *Gce) Inject(params ...interface{}) common.MetricsGetter {
+	return &Gce{meta: newMeta(params...)}
+}
 
 func (e *Gce) Collector() {
 	e.op.listTimeSeries(
