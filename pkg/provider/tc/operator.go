@@ -44,7 +44,7 @@ type InstanceBuilderFunc func(string) []*monitor.Instance
 // 获取起止时间
 func (o *operator) getRangeTime() (*string, *string) {
 	endTime := time.Now().UTC()
-	startTime := endTime.Add(-1 * time.Duration(o.req.Dur+TC_CMS_DELAY) * time.Second).UTC()
+	startTime := endTime.Add(-1 * time.Duration(TC_CMS_DELAY) * time.Second).UTC()
 
 	sFormat, eFormat := startTime.Format(time.RFC3339), endTime.Format(time.RFC3339)
 	return &sFormat, &eFormat
