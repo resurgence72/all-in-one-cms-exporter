@@ -111,18 +111,33 @@ func (e *Ecs) push(transfer *transferData) {
 		}
 
 		tagsMap := map[string]string{
-			"region":        ip.RegionId,
-			"provider":      ProviderName,
-			"iden":          e.op.req.Iden,
-			"namespace":     e.namespace,
-			"instance_name": ip.InstanceName,
-			"instance_id":   ip.InstanceId,
-			"public_ip":     pubIP,
-			"private_ip":    priIP,
-			"cpu":           strconv.Itoa(ip.Cpu),
-			"memory":        strconv.Itoa(ip.Memory / 1024),
+			"region":                 ip.RegionId,
+			"instance_name":          ip.InstanceName,
+			"instance_id":            ip.InstanceId,
+			"instance_status":        ip.Status,
+			"instance_network_type":  ip.InstanceNetworkType,
+			"instance_type":          ip.InstanceType,
+			"os_name":                ip.OSName,
+			"os_type":                ip.OSType,
+			"image_id":               ip.ImageId,
+			"gpu_spec":               ip.GPUSpec,
+			"gpu_amount":             strconv.Itoa(ip.GPUAmount),
+			"hostname":               ip.Hostname,
+			"internet_max_bw_out":    strconv.Itoa(ip.InternetMaxBandwidthOut),
+			"internet_max_bw_in":     strconv.Itoa(ip.InternetMaxBandwidthIn),
+			"local_storage_capacity": strconv.FormatInt(ip.LocalStorageCapacity, 10),
+			"local_storage_amount":   strconv.Itoa(ip.LocalStorageAmount),
+
+			"public_ip":  pubIP,
+			"private_ip": priIP,
+			"cpu":        strconv.Itoa(ip.Cpu),
+			"memory":     strconv.Itoa(ip.Memory / 1024),
+
 			// 指标单位
 			"unit_name": transfer.unit,
+			"provider":  ProviderName,
+			"iden":      e.op.req.Iden,
+			"namespace": e.namespace,
 		}
 
 		// 注入ecs的Tags
