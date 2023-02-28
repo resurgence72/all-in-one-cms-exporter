@@ -64,7 +64,6 @@ func (e *Eip) Collector() {
 				)
 			}
 		}(),
-		10,
 		e.namespace,
 		e.push,
 	)
@@ -141,7 +140,7 @@ func (e *Eip) AsyncMeta(ctx context.Context) {
 			}
 			return append(container, resp.Response.AddressSet...), len(resp.Response.AddressSet), nil
 		}
-		sem = common.Semaphore(10)
+		sem = common.NewSemaphore(10)
 	)
 
 	if e.eipMap == nil {

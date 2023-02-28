@@ -69,7 +69,6 @@ func (e *Ecs) Collector() {
 				)
 			}
 		}(),
-		10,
 		e.namespace,
 		e.push,
 	)
@@ -184,7 +183,7 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 			return nil
 		}
 
-		sem = common.Semaphore(10)
+		sem = common.NewSemaphore(10)
 	)
 
 	if e.ecsMap == nil {

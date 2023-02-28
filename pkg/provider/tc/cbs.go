@@ -64,7 +64,6 @@ func (c *Cbs) Collector() {
 				)
 			}
 		}(),
-		10,
 		c.namespace,
 		c.push,
 	)
@@ -94,7 +93,7 @@ func (c *Cbs) AsyncMeta(ctx context.Context) {
 			}
 			return append(container, resp.Response.DiskSet...), len(resp.Response.DiskSet), nil
 		}
-		sem = common.Semaphore(10)
+		sem = common.NewSemaphore(10)
 	)
 
 	if c.cbsMap == nil {

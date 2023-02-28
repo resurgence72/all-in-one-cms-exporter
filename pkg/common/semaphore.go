@@ -1,21 +1,21 @@
 package common
 
-type semaphore struct {
+type Semaphore struct {
 	pool chan struct{}
 	size int
 }
 
-func Semaphore(size int) *semaphore {
-	return &semaphore{
+func NewSemaphore(size int) *Semaphore {
+	return &Semaphore{
 		pool: make(chan struct{}, size),
 		size: size,
 	}
 }
 
-func (s *semaphore) Acquire() {
+func (s *Semaphore) Acquire() {
 	s.pool <- struct{}{}
 }
 
-func (s *semaphore) Release() {
+func (s *Semaphore) Release() {
 	<-s.pool
 }

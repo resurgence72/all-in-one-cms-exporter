@@ -16,6 +16,8 @@ import (
 
 type operator struct {
 	req *TCReq
+
+	sem *common.Semaphore
 }
 
 type PushFunc func(*transferData)
@@ -121,7 +123,6 @@ func (o *operator) getMonitorData(
 	metrics []*monitor.MetricSet,
 	allowRegion []string,
 	buildFunc InstanceBuilderFunc,
-	batch int,
 	ns string,
 	push PushFunc,
 ) {
@@ -137,7 +138,6 @@ func (o *operator) getMonitorData(
 			return nil, err
 		}
 		apiInstancesN = 200
-		sem           = common.Semaphore(batch)
 	)
 
 	regions := make(map[string]struct{})
@@ -154,9 +154,9 @@ func (o *operator) getMonitorData(
 
 		instances := buildFunc(region)
 		for _, metric := range metrics {
-			sem.Acquire()
+			o.sem.Acquire()
 			go func(cli *monitor.Client, metric *monitor.MetricSet, instances []*monitor.Instance) {
-				defer sem.Release()
+				defer o.sem.Release()
 				if len(instances) == 0 {
 					return
 				}

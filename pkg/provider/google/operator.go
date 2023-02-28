@@ -134,7 +134,7 @@ func (o *operator) listTimeSeries(
 ) {
 	var (
 		wg                 sync.WaitGroup
-		sem                = common.Semaphore(batch)
+		sem                = common.NewSemaphore(batch)
 		startTime, endTime = o.getRangeTime()
 	)
 

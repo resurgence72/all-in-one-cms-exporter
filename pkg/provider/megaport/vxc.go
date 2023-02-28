@@ -78,7 +78,7 @@ func (v *VXC) AsyncMeta(ctx context.Context) {
 
 func (v *VXC) Collector() {
 	// 采集metrics
-	sem := common.Semaphore(10)
+	sem := common.NewSemaphore(10)
 
 	from, to := v.getFromAndToTS()
 	// 只需要前推10min的那个点
@@ -108,8 +108,8 @@ func (v *VXC) Collector() {
 
 				tmp := struct {
 					Data []struct {
-						Type    string          `json:"type"`
-						SubType string          `json:"subtype"`
+						Type    string  `json:"type"`
+						SubType string  `json:"subtype"`
 						Samples [][]any `json:"samples"`
 						Unit    struct {
 							Name     string `json:"name"`

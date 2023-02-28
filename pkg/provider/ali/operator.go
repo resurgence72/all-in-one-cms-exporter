@@ -39,7 +39,7 @@ func (b *batchGetOperator) pull( // TODO 待真实账号测试 beta
 	period int,
 ) {
 	var (
-		sem       = common.Semaphore(batch)
+		sem       = common.NewSemaphore(batch)
 		endTime   = time.Now()
 		startTime = endTime.Add(time.Duration(-period) * time.Second)
 	)
@@ -272,7 +272,7 @@ func (o *operator) pull(
 			}
 			return nil, err
 		}
-		sem     = common.Semaphore(batch)
+		sem     = common.NewSemaphore(batch)
 		endTime = time.Now().Format("2006-01-02 15:04:05")
 	)
 	for _, metric := range metrics {

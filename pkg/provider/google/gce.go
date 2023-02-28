@@ -121,7 +121,7 @@ func (e *Gce) AsyncMeta(ctx context.Context) {
 
 	var (
 		wg  sync.WaitGroup
-		sem = common.Semaphore(200)
+		sem = common.NewSemaphore(200)
 	)
 
 	if e.gceMap == nil {

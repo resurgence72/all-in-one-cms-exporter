@@ -64,7 +64,6 @@ func (w *Waf) Collector() {
 				)
 			}
 		}(),
-		10,
 		w.namespace,
 		w.push,
 	)
@@ -94,7 +93,7 @@ func (w *Waf) AsyncMeta(context.Context) {
 			}
 			return append(container, resp.Response.Domains...), len(resp.Response.Domains), nil
 		}
-		sem = common.Semaphore(10)
+		sem = common.NewSemaphore(10)
 	)
 
 	if w.wafMap == nil {
