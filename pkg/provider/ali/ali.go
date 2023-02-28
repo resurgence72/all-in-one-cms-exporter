@@ -63,7 +63,7 @@ func (a *Ali) setCli(req *AliReq) error {
 	client.SetReadTimeout(time.Duration(30) * time.Second)
 
 	a.cli = client
-	a.op = &operator{req: req}
+	a.op = &operator{req: req, sem: common.NewSemaphore(50)}
 	return nil
 }
 

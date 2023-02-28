@@ -48,7 +48,6 @@ func (h *HiTSDB) Collector() {
 	h.op.getMetricLastData(
 		h.client,
 		h.metrics,
-		5,
 		h.namespace,
 		h.push,
 		nil,

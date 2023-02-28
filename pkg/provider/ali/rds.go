@@ -47,7 +47,6 @@ func (r *Rds) Collector() {
 	r.op.getMetricLastData(
 		r.client,
 		r.metrics,
-		5,
 		r.namespace,
 		r.push,
 		nil,

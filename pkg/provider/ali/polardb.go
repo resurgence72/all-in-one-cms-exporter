@@ -48,7 +48,6 @@ func (p *PolarDB) Collector() {
 	p.op.getMetricLastData(
 		p.client,
 		p.metrics,
-		5,
 		p.namespace,
 		p.push,
 		nil,

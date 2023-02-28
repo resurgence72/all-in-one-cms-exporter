@@ -48,7 +48,6 @@ func (o *OpenAPI) Collector() {
 	o.op.getMetricLastData(
 		o.client,
 		o.metrics,
-		5,
 		o.namespace,
 		o.push,
 		&ds,

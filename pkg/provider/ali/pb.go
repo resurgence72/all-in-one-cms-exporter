@@ -27,7 +27,6 @@ type metricsDataPuller interface {
 	pull(
 		cli *cms.Client,
 		metrics []*cms.Resource,
-		batch int,
 		ns string,
 		push PushFunc,
 		ds *string, // Dimensions 维度

@@ -50,7 +50,6 @@ func (d *DDos) Collector() {
 		d.op.getMetricLastData(
 			d.client,
 			d.metrics,
-			5,
 			namespace,
 			d.push,
 			nil,

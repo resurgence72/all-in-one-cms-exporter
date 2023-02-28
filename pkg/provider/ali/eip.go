@@ -49,7 +49,6 @@ func (e *Eip) Collector() {
 	e.op.getMetricLastData(
 		e.client,
 		e.metrics,
-		5,
 		e.namespace,
 		e.push,
 		nil,

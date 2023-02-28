@@ -47,7 +47,6 @@ func (s *Slb) Collector() {
 	s.op.getMetricLastData(
 		s.client,
 		s.metrics,
-		5,
 		s.namespace,
 		s.push,
 		nil,

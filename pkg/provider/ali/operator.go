@@ -26,12 +26,13 @@ import (
 
 type batchGetOperator struct {
 	openapiCfg *openapi.Config
+
+	sem *common.Semaphore
 }
 
 func (b *batchGetOperator) pull( // TODO 待真实账号测试 beta
 	_ *cms.Client,
 	metrics []*cms.Resource,
-	batch int,
 	ns string,
 	push PushFunc,
 	_ *string,
@@ -39,15 +40,14 @@ func (b *batchGetOperator) pull( // TODO 待真实账号测试 beta
 	period int,
 ) {
 	var (
-		sem       = common.NewSemaphore(batch)
 		endTime   = time.Now()
 		startTime = endTime.Add(time.Duration(-period) * time.Second)
 	)
 
 	for _, metric := range metrics {
-		sem.Acquire()
+		b.sem.Acquire()
 		go func(metric *cms.Resource) {
-			defer sem.Release()
+			defer b.sem.Release()
 			// 首次获取 cursor
 			cli, err := cms_export20211101.NewClient(b.openapiCfg)
 			if err != nil {
@@ -147,6 +147,8 @@ func (b *batchGetOperator) pull( // TODO 待真实账号测试 beta
 
 type operator struct {
 	req *AliReq
+
+	sem *common.Semaphore
 }
 
 // 获取namespace全量metrics
@@ -209,15 +211,6 @@ func (o *operator) getMetrics(
 	return metrics, nil
 }
 
-// 获取ali每次请求的startTime 和 EndTime
-//func (o *operator) getRangeTime() (string, string) {
-//	endTime := time.Now()
-//	startTime := endTime.Add(-1 * time.Duration(ALI_CMS_DELAY) * time.Second)
-//
-//	format := "2006-01-02 15:04:05"
-//	return startTime.Format(format), endTime.Format(format)
-//}
-
 // 获取全量region
 func (o *operator) getRegions() []string {
 	defaultRegions := []string{"cn-shanghai"}
@@ -254,7 +247,6 @@ func (o *operator) wait() {
 func (o *operator) pull(
 	cli *cms.Client,
 	metrics []*cms.Resource,
-	batch int,
 	ns string,
 	push PushFunc,
 	ds *string,
@@ -272,13 +264,12 @@ func (o *operator) pull(
 			}
 			return nil, err
 		}
-		sem     = common.NewSemaphore(batch)
 		endTime = time.Now().Format("2006-01-02 15:04:05")
 	)
 	for _, metric := range metrics {
-		sem.Acquire()
+		o.sem.Acquire()
 		go func(metric *cms.Resource) {
-			defer sem.Release()
+			defer o.sem.Release()
 			request := cms.CreateDescribeMetricLastRequest()
 			request.Scheme = "https"
 			request.Namespace = ns
@@ -360,7 +351,6 @@ func (o *operator) pull(
 func (o *operator) getMetricLastData(
 	cli *cms.Client,
 	metrics []*cms.Resource,
-	batch int,
 	ns string,
 	push PushFunc,
 	ds *string, // Dimensions 维度
@@ -371,14 +361,16 @@ func (o *operator) getMetricLastData(
 		puller = &batchGetOperator{openapiCfg: &openapi.Config{
 			AccessKeyId:     tea.String(o.req.Ak),
 			AccessKeySecret: tea.String(o.req.As),
-		}}
+		},
+			sem: o.sem,
+		}
 	} else {
 		puller = o
 	}
 
 	o.wait()
 	// 具体的指标采集动作
-	puller.pull(cli, metrics, batch, ns, push, ds, groupBy, o.req.Dur)
+	puller.pull(cli, metrics, ns, push, ds, groupBy, o.req.Dur)
 }
 
 func (o *operator) commonRequest(

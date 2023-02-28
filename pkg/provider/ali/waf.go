@@ -40,7 +40,6 @@ func (w *Waf) Collector() {
 	w.op.getMetricLastData(
 		w.client,
 		w.metrics,
-		5,
 		w.namespace,
 		w.push,
 		nil,

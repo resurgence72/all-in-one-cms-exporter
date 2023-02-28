@@ -44,7 +44,6 @@ func (k *Kafka) Collector() {
 	k.op.getMetricLastData(
 		k.client,
 		k.metrics,
-		5,
 		k.namespace,
 		k.push,
 		nil,

@@ -48,7 +48,6 @@ func (a *Alb) Collector() {
 	a.op.getMetricLastData(
 		a.client,
 		a.metrics,
-		5,
 		a.namespace,
 		a.push,
 		nil,

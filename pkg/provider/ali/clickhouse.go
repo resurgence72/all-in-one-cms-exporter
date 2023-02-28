@@ -45,7 +45,6 @@ func (c *ClickHouse) Collector() {
 	c.op.getMetricLastData(
 		c.client,
 		c.metrics,
-		5,
 		c.namespace,
 		c.push,
 		nil,

@@ -121,7 +121,6 @@ func (v *Vbr) Collector() {
 	v.op.getMetricLastData(
 		v.client,
 		v.metrics,
-		5,
 		v.namespace,
 		v.push,
 		nil,
