@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"strings"
-
 	ebus "watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali"
@@ -27,11 +26,11 @@ func New(bus *ebus.Bus) *Manager {
 	}
 
 	return &Manager{providerMap: map[string]common.Provider{
-		"ali":      ali.New(newSub("ali")),
-		"tc":       tc.New(newSub("tc")),
-		"megaport": megaport.New(newSub("megaport")),
-		"google":   google.New(newSub("google")),
-		//"aws":  aws.New(newSub("aws")),
+		common.AlibabaCloudProvider:  ali.New(newSub(common.AlibabaCloudProvider)),
+		common.TencentCloudProvider:  tc.New(newSub(common.TencentCloudProvider)),
+		common.MegaPortCloudProvider: megaport.New(newSub(common.MegaPortCloudProvider)),
+		common.GoogleCloudProvider:   google.New(newSub(common.GoogleCloudProvider)),
+		//common.AWSCloudProvider:  aws.New(newSub(common.AWSCloudProvider)),
 	}}
 }
 

@@ -2,11 +2,10 @@ package aws
 
 import (
 	"context"
-
-	"watcher4metrics/config"
+	"watcher4metrics/pkg/common"
 )
 
-const providerName = "aws"
+const providerName = common.AWSCloudProvider
 
 type AWS struct {
 	iden string
@@ -17,8 +16,6 @@ func New() *AWS {
 }
 
 func (a *AWS) InitProducer() error {
-	conf := config.Get().Collector.AWS
-	a.iden = conf.Iden
 	return nil
 }
 

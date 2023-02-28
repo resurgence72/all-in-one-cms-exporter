@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	ProviderName = "google"
+	ProviderName = common.GoogleCloudProvider
 
 	GOOGLE_LB           common.MetricsType = "loadbalancing"
 	GOOGLE_GCE          common.MetricsType = "gce"

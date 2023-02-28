@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	ProviderName = "tc"
+	ProviderName = common.TencentCloudProvider
 	TC_CMS_DELAY = 60
 
 	QCP_LB            common.MetricsType = "QCE/LB"

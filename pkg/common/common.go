@@ -14,6 +14,14 @@ import (
 	"github.com/prometheus/prometheus/prompb"
 )
 
+const (
+	AlibabaCloudProvider  = "ali"
+	TencentCloudProvider  = "tc"
+	GoogleCloudProvider   = "google"
+	MegaPortCloudProvider = "megaport"
+	AWSCloudProvider      = "aws"
+)
+
 func GetDefaultEnv(key, defaultValue string) string {
 	if val, ok := os.LookupEnv(key); ok && val != "" {
 		return val
@@ -44,7 +52,7 @@ type MetricValue struct {
 	Metric       string            `json:"metric" description:"指标"`
 	Endpoint     string            `json:"endpoint" description:"通常是ip"`
 	Timestamp    int64             `json:"timestamp" description:"时间戳秒"`
-	ValueUntyped any       `json:"value" description:"metric指标"`
+	ValueUntyped any               `json:"value" description:"metric指标"`
 	TagsMap      map[string]string `json:"tagsMap" description:"tags的map结构"` // {"a":1, "b"=2, "c="3} 保留2种格式，方便后端组件使用
 }
 

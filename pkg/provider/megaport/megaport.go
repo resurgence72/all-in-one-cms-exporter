@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	ProviderName = "megaport"
+	ProviderName = common.MegaPortCloudProvider
 	DOMAIN       = "https://api.megaport.com"
 
 	MEGEPORT_VXC common.MetricsType = "VXC"

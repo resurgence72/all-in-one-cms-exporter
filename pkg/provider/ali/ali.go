@@ -28,9 +28,7 @@ const (
 	ACS_CLICKHOUSE          common.MetricsType = "acs_clickhouse"
 	ACS_HITSDB              common.MetricsType = "acs_hitsdb"
 
-	ProviderName = "ali"
-	// 延迟5min,保证大多数产品不断点
-	ALI_CMS_DELAY = 500
+	ProviderName = common.AlibabaCloudProvider
 )
 
 var (
