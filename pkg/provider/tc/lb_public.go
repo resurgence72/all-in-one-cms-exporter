@@ -32,7 +32,7 @@ func (l *LbPublic) GetMetrics() error {
 	metrics, err := l.op.getMetrics(
 		l.clients["ap-shanghai"],
 		l.namespace,
-		[]string{"TotalReq"},
+		nil,
 	)
 	if err != nil {
 		return err
