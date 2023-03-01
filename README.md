@@ -32,6 +32,7 @@ All-in-one Cloud CMS exporter 解决了哪些问题
 4. freamwork形式方便二次开发，interface形式自定义不同ns源数据处理逻辑；
 5. pull 模型调整为 push， 改善巨量指标下 prometheus pull 拉取时长过长问题；
 6. 实现 remote_write 协议，原生支持 prometheus stack; 实现 relabel 支持 remote_write 多TSDB;
+7. 自监控，暴露/metrics接口，提供云厂商粒度的tps指标；
 ```
 
 #### 配置文件说明
@@ -65,6 +66,14 @@ All-in-one Cloud CMS exporter 解决了哪些问题
 
 #### 项目运行说明
 
-> 项目通过 Cycle(自研为开源) 组件调度运行，单独部署无效果；
+> 项目通过 Cycle(自研未开源) 组件调度运行，单独部署无效果；
 >
 > 或 向指定 url path 发送任务驱动 post 请求也可以模拟 Cycle 调度；各云厂商需要传入的参数不同，源码有体现
+
+
+#### 一些问题
+> 1. 各云不支持自定义配置的原因： 市面太多 exporter 配置太太太繁杂，这里在代码层留口子，源数据label基本都加上了；关键信息由调度器传入，例如 ak, sk 等；最重要的一点 period 
+> 也由调度器控制，多久调一次，period就为多久；
+> 2. ak, sk base64编码传过来后，各云会拉所有region；
+> 3. 为什么不用 pull 而用 push: 厂商多，产品多，账号多，metric多，实例多；不适合 pull; 如果用pull, 会超时，会有单点问题，不好做分片；当前将调度与执行拆开并解耦；
+> 4. 不需要担心高基数问题，label虽多单笛卡尔积固定，没有 active labels;
