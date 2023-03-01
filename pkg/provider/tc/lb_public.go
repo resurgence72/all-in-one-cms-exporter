@@ -1,0 +1,223 @@
+package tc
+
+import (
+	"context"
+	"github.com/goccy/go-json"
+	"github.com/sirupsen/logrus"
+	clb "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/clb/v20180317"
+	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
+	"strconv"
+	"strings"
+	"sync"
+	"watcher4metrics/pkg/common"
+)
+
+type LbPublic struct {
+	meta
+
+	lbpMap map[string]map[string]*clb.LoadBalancer
+}
+
+func init() {
+	registers[QCE_LB_PUBLIC] = new(LbPublic)
+}
+
+func (l *LbPublic) Inject(params ...any) common.MetricsGetter {
+	return &LbPublic{meta: newMeta(params...)}
+}
+
+func (l *LbPublic) GetMetrics() error {
+	metrics, err := l.op.getMetrics(
+		l.clients["ap-shanghai"],
+		l.namespace,
+		[]string{"TotalReq"},
+	)
+	if err != nil {
+		return err
+	}
+	l.metrics = metrics
+	return nil
+}
+
+func (l *LbPublic) GetNamespace() string {
+	return l.namespace
+}
+
+func (l *LbPublic) Collector() {
+	l.op.getMonitorData(
+		l.clients,
+		l.metrics,
+		nil,
+		func() InstanceBuilderFunc {
+			return func(region string) []*monitor.Instance {
+				return l.op.buildInstances(
+					"vip",
+					func() []*string {
+						var vs []*string
+						for _, lb := range l.lbpMap[region] {
+							vs = append(vs, transferVIPs(lb.LoadBalancerVips))
+						}
+						return vs
+					}(),
+					nil,
+				)
+			}
+		}(),
+		l.namespace,
+		l.push,
+	)
+}
+
+func transferVIPs(vs []*string) *string {
+	vips := make([]string, 0, len(vs))
+	for _, vip := range vs {
+		vips = append(vips, *vip)
+	}
+
+	vip := strings.Join(vips, ",")
+	return &vip
+}
+
+func (l *LbPublic) AsyncMeta(ctx context.Context) {
+	var (
+		wg          sync.WaitGroup
+		maxPageSize = 100
+		parse       = func(region string, offset, limit int, container []*clb.LoadBalancer) ([]*clb.LoadBalancer, int, error) {
+			bs, err := l.op.commonRequest(
+				region,
+				"clb",
+				"2018-03-17",
+				"DescribeLoadBalancers",
+				offset,
+				limit,
+				map[string]any{"LoadBalancerType": "OPEN"}, // lb_public只获取公网lb
+			)
+			if err != nil {
+				return nil, 0, err
+			}
+
+			resp := new(clb.DescribeLoadBalancersResponse)
+			if err = json.Unmarshal(bs, resp); err != nil {
+				return nil, 0, err
+			}
+			return append(container, resp.Response.LoadBalancerSet...), len(resp.Response.LoadBalancerSet), nil
+		}
+		sem = common.NewSemaphore(10)
+	)
+
+	if l.lbpMap == nil {
+		l.lbpMap = make(map[string]map[string]*clb.LoadBalancer)
+	}
+
+	for region := range l.clients {
+		wg.Add(1)
+		sem.Acquire()
+
+		go func(region string) {
+			defer func() {
+				wg.Done()
+				sem.Release()
+			}()
+
+			var (
+				offset    = 1
+				pageNum   = 1
+				container []*clb.LoadBalancer
+			)
+
+			container, currLen, err := parse(region, offset, maxPageSize, container)
+			if err != nil {
+				return
+			}
+
+			// 分页
+			for currLen == maxPageSize {
+				offset = pageNum * maxPageSize
+				container, currLen, err = parse(region, offset, maxPageSize, container)
+				if err != nil {
+					continue
+				}
+				pageNum++
+			}
+
+			l.m.Lock()
+			if _, ok := l.lbpMap[region]; !ok {
+				l.lbpMap[region] = make(map[string]*clb.LoadBalancer)
+			}
+			l.m.Unlock()
+
+			for i := range container {
+				cc := container[i]
+
+				l.m.Lock()
+				l.lbpMap[region][*transferVIPs(cc.LoadBalancerVips)] = cc
+				l.m.Unlock()
+			}
+		}(region)
+	}
+
+	wg.Wait()
+	logrus.WithFields(logrus.Fields{
+		"clbPublicLens": len(l.lbpMap),
+		"iden":          l.op.req.Iden,
+	}).Warnln("async loop get all tc clb public success")
+}
+
+func (l *LbPublic) push(transfer *transferData) {
+	for _, point := range transfer.points {
+		vip := point.Dimensions[0].Value
+		lb := l.getLb(transfer.region, vip)
+		if lb == nil {
+			return
+		}
+
+		for i, ts := range point.Timestamps {
+			series := &common.MetricValue{
+				Timestamp:    int64(*ts),
+				Metric:       common.BuildMetric("clb", transfer.metric),
+				ValueUntyped: *point.Values[i],
+				Endpoint:     *lb.LoadBalancerId,
+			}
+
+			tagsMap := map[string]string{
+				"iden":      l.op.req.Iden,
+				"provider":  ProviderName,
+				"region":    transfer.region,
+				"namespace": l.namespace,
+
+				"lb_id":   *lb.LoadBalancerId,
+				"lb_name": *lb.LoadBalancerName,
+				"lb_type": *lb.LoadBalancerType,
+				"lb_vips": *transferVIPs(lb.LoadBalancerVips),
+				"forward": strconv.FormatUint(*lb.Forward, 10),
+				"domain":  *lb.Domain,
+				"status":  strconv.FormatUint(*lb.Status, 10),
+			}
+
+			if pn, ok := l.op.projectMap.Load(*lb.ProjectId); ok {
+				tagsMap["project_mark"] = pn.(string)
+			}
+
+			for _, tag := range lb.Tags {
+				if *tag.TagValue != "" {
+					tagsMap[*tag.TagKey] = *tag.TagValue
+				}
+			}
+
+			series.BuildAndShift(tagsMap)
+			continue
+		}
+	}
+}
+
+func (l *LbPublic) getLb(region string, vip *string) *clb.LoadBalancer {
+	l.m.RLock()
+	defer l.m.RUnlock()
+
+	if lbM, ok := l.lbpMap[region]; ok {
+		if lb, ok := lbM[*vip]; ok {
+			return lb
+		}
+	}
+	return nil
+}

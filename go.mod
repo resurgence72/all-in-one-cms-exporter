@@ -28,7 +28,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/tebeka/strftime v0.1.5 // indirect
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/api v1.0.433
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.602
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.606
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm v1.0.478
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor v1.0.401
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag v1.0.521
@@ -46,6 +46,7 @@ require (
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.0.0
 	github.com/alibabacloud-go/tea v1.1.19
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cbs v1.0.602
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/clb v1.0.606
 )
 
 require (

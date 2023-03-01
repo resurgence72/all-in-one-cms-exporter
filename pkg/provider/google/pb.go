@@ -1,12 +1,12 @@
 package google
 
 import (
+	"cloud.google.com/go/monitoring/apiv3/v2/monitoringpb"
 	"sync"
 
 	"watcher4metrics/pkg/common"
 
 	monitoring "cloud.google.com/go/monitoring/apiv3"
-	"cloud.google.com/go/monitoring/apiv3/v2/monitoringpb"
 )
 
 type meta struct {
@@ -25,6 +25,12 @@ func newMeta(params ...any) meta {
 	}
 }
 
+type transferData struct {
+	series map[uint64]struct{}
+	points []*monitoringpb.TimeSeries
+	m      sync.Mutex
+}
+
 type GoogleReq struct {
 	MetricNamespace string `json:"metric_namespace"`
 	Iden            string `json:"iden"`
@@ -32,12 +38,6 @@ type GoogleReq struct {
 
 	Dur  int    `json:"_meta_duration,string"`
 	Expr string `json:"_meta_expr"`
-}
-
-type transferData struct {
-	series map[uint64]struct{}
-	points []*monitoringpb.TimeSeries
-	m      sync.Mutex
 }
 
 func (g *GoogleReq) Decode() *GoogleReq {

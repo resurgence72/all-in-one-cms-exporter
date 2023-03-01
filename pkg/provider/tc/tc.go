@@ -19,6 +19,7 @@ const (
 	QCE_CVM           common.MetricsType = "QCE/CVM"
 	QCE_WAF           common.MetricsType = "QCE/WAF"
 	QCE_BLOCK_STORAGE common.MetricsType = "QCE/BLOCK_STORAGE"
+	QCE_LB_PUBLIC     common.MetricsType = "QCE/LB_PUBLIC"
 )
 
 var registers = make(map[common.MetricsType]common.MetricsGetter)
@@ -35,7 +36,10 @@ func New(sub chan any) *TC {
 
 func (t *TC) setCliSet(req *TCReq) error {
 	// TODO 腾讯云拉取 metricData 接口并发限制为20次
-	t.op = &operator{req: req, sem: common.NewSemaphore(20)}
+	t.op = &operator{
+		req: req,
+		sem: common.NewSemaphore(20),
+	}
 
 	credential := com.NewCredential(
 		req.Sid,
@@ -44,6 +48,11 @@ func (t *TC) setCliSet(req *TCReq) error {
 	cpf := profile.NewClientProfile()
 	cpf.HttpProfile.Endpoint = "monitor.tencentcloudapi.com"
 	cpf.HttpProfile.ReqTimeout = 30
+
+	// 同步项目映射
+	if err := t.op.asyncProjectMeta(); err != nil {
+		logrus.Errorln("asyncProjectMeta failed", err)
+	}
 
 	regions := t.op.getRegions()
 	cSet := make(map[string]*monitor.Client, len(regions))

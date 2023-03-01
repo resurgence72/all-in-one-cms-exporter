@@ -13,15 +13,12 @@ import (
 	"github.com/sirupsen/logrus"
 	cvm "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cvm/v20170312"
 	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
-	tag "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag/v20180813"
 )
 
 type Ecs struct {
 	meta
 
 	ecsMap map[string]map[string]*cvm.Instance
-	//projectMap map[uint64]string
-	projectMap sync.Map
 }
 
 func init() {
@@ -122,7 +119,7 @@ func (e *Ecs) push(transfer *transferData) {
 				"private_ip": strings.Join(priIPs, ","),
 			}
 
-			if pn, ok := e.projectMap.Load(uint64(*ecs.Placement.ProjectId)); ok {
+			if pn, ok := e.op.projectMap.Load(uint64(*ecs.Placement.ProjectId)); ok {
 				tagsMap["project_mark"] = pn.(string)
 			}
 
@@ -157,42 +154,11 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 			return append(container, resp.Response.InstanceSet...), len(resp.Response.InstanceSet), nil
 		}
 
-		// 获取projectMap
-		parseProjects = func() error {
-			bs, err := e.op.commonRequest(
-				"ap-shanghai",
-				"tag",
-				"2018-08-13",
-				"DescribeProjects",
-				0,
-				1000,
-				map[string]any{"AllList": 1},
-			)
-			if err != nil {
-				return err
-			}
-
-			resp := new(tag.DescribeProjectsResponse)
-			if err = json.Unmarshal(bs, resp); err != nil {
-				return err
-			}
-
-			for _, pro := range resp.Response.Projects {
-				e.projectMap.Store(*pro.ProjectId, *pro.ProjectName)
-			}
-			return nil
-		}
-
 		sem = common.NewSemaphore(10)
 	)
 
 	if e.ecsMap == nil {
 		e.ecsMap = make(map[string]map[string]*cvm.Instance)
-	}
-
-	// 获取所有projectMap
-	if err := parseProjects(); err != nil {
-		logrus.Errorln("tc get project map failed ", err)
 	}
 
 	// 获取所有region下的ecs

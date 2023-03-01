@@ -2,6 +2,9 @@ package tc
 
 import (
 	"fmt"
+	"github.com/goccy/go-json"
+	tag "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag/v20180813"
+	"sync"
 	"time"
 
 	"watcher4metrics/pkg/common"
@@ -15,9 +18,35 @@ import (
 )
 
 type operator struct {
-	req *TCReq
+	req        *TCReq
+	projectMap *sync.Map
 
 	sem *common.Semaphore
+}
+
+func (o *operator) asyncProjectMeta() error {
+	bs, err := o.commonRequest(
+		"ap-shanghai",
+		"tag",
+		"2018-08-13",
+		"DescribeProjects",
+		0,
+		1000,
+		map[string]any{"AllList": 1},
+	)
+	if err != nil {
+		return err
+	}
+
+	resp := new(tag.DescribeProjectsResponse)
+	if err = json.Unmarshal(bs, resp); err != nil {
+		return err
+	}
+
+	for _, pro := range resp.Response.Projects {
+		o.projectMap.Store(*pro.ProjectId, *pro.ProjectName)
+	}
+	return nil
 }
 
 type PushFunc func(*transferData)
