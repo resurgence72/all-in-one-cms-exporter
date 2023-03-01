@@ -53,8 +53,9 @@ All-in-one Cloud CMS exporter 解决了哪些问题
 > provider:
 >   ali: # 当前仅支持 ali 定制化配置
 >     # 阿里云是否使用 batchGet 拉取方式;默认采用 DescribeMetricLastData
->     # BatchGet 付费模式实时拉取，不支持提前聚合
->     # DescribeMetricLastData 定量免费额度拉取，延时5min
+>     # BatchGet 付费模式拉取，不支持提前聚合 (Dimensions/Gruop by) 等配置
+>     # DescribeMetricLast 定量免费额度拉取，建议开通按量付费
+>     # 建议使用 DescribeMetricLast，因为 BatchGet 只保证数据完整性，但也无法做到实时数据落盘拉取；云产品数据产生->云监控需要min级落盘时延
 >     batch_get_enabled: false
 >
 > http:
