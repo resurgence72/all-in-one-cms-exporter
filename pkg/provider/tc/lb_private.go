@@ -3,7 +3,6 @@ package tc
 import (
 	"context"
 	"strconv"
-	"strings"
 	"sync"
 
 	"github.com/goccy/go-json"
@@ -14,21 +13,21 @@ import (
 	"watcher4metrics/pkg/common"
 )
 
-type LbPublic struct {
+type LbPrivate struct {
 	meta
 
 	lbpMap map[string]map[string]*clb.LoadBalancer
 }
 
 func init() {
-	registers[QCE_LB_PUBLIC] = new(LbPublic)
+	registers[QCE_LB_PRIVATE] = new(LbPrivate)
 }
 
-func (l *LbPublic) Inject(params ...any) common.MetricsGetter {
-	return &LbPublic{meta: newMeta(params...)}
+func (l *LbPrivate) Inject(params ...any) common.MetricsGetter {
+	return &LbPrivate{meta: newMeta(params...)}
 }
 
-func (l *LbPublic) GetMetrics() error {
+func (l *LbPrivate) GetMetrics() error {
 	metrics, err := l.op.getMetrics(
 		l.clients["ap-shanghai"],
 		l.namespace,
@@ -41,11 +40,11 @@ func (l *LbPublic) GetMetrics() error {
 	return nil
 }
 
-func (l *LbPublic) GetNamespace() string {
+func (l *LbPrivate) GetNamespace() string {
 	return l.namespace
 }
 
-func (l *LbPublic) Collector() {
+func (l *LbPrivate) Collector() {
 	l.op.getMonitorData(
 		l.clients,
 		l.metrics,
@@ -53,14 +52,19 @@ func (l *LbPublic) Collector() {
 		func() InstanceBuilderFunc {
 			return func(region string) []*monitor.Instance {
 				return l.op.buildInstances(
-					[]string{"vip"},
+					// lb内网产品必须传两个维度
+					// https://cloud.tencent.com/document/product/248/51899
+					// TODO push中默认取 Dimensions[0].Value，猜测索引顺序和下面指定的顺序有关；即 当前产品索引map保留的是哪个key,就把
+					// TODO 哪个key写前面；例如lb以 vip 作为key,这里就把vip作为第一个Dimension    待验证
+					[]string{"vip", "vpcId"},
 					func() [][]string {
 						var (
-							out  [][]string
-							vips []string
+							out          [][]string
+							vips, vpcIds []string
 						)
 						for _, lb := range l.lbpMap[region] {
 							vips = append(vips, *transferVIPs(lb.LoadBalancerVips))
+							vpcIds = append(vpcIds, *lb.VpcId)
 						}
 						return append(out, vips)
 					}(),
@@ -72,17 +76,7 @@ func (l *LbPublic) Collector() {
 	)
 }
 
-func transferVIPs(vs []*string) *string {
-	vips := make([]string, 0, len(vs))
-	for _, vip := range vs {
-		vips = append(vips, *vip)
-	}
-
-	vip := strings.Join(vips, ",")
-	return &vip
-}
-
-func (l *LbPublic) AsyncMeta(ctx context.Context) {
+func (l *LbPrivate) AsyncMeta(ctx context.Context) {
 	var (
 		wg          sync.WaitGroup
 		maxPageSize = 100
@@ -94,7 +88,7 @@ func (l *LbPublic) AsyncMeta(ctx context.Context) {
 				"DescribeLoadBalancers",
 				offset,
 				limit,
-				map[string]any{"LoadBalancerType": "OPEN"}, // lb_public只获取公网lb
+				map[string]any{"LoadBalancerType": "INTERNAL"}, // lb_private只获取内网lb
 			)
 			if err != nil {
 				return nil, 0, err
@@ -167,7 +161,7 @@ func (l *LbPublic) AsyncMeta(ctx context.Context) {
 	}).Warnln("async loop get all tc clb public success")
 }
 
-func (l *LbPublic) push(transfer *transferData) {
+func (l *LbPrivate) push(transfer *transferData) {
 	for _, point := range transfer.points {
 		vip := point.Dimensions[0].Value
 		lb := l.getLb(transfer.region, vip)
@@ -214,7 +208,7 @@ func (l *LbPublic) push(transfer *transferData) {
 	}
 }
 
-func (l *LbPublic) getLb(region string, vip *string) *clb.LoadBalancer {
+func (l *LbPrivate) getLb(region string, vip *string) *clb.LoadBalancer {
 	l.m.RLock()
 	defer l.m.RUnlock()
 

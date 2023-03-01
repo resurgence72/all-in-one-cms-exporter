@@ -52,15 +52,17 @@ func (e *Eip) Collector() {
 		func() InstanceBuilderFunc {
 			return func(region string) []*monitor.Instance {
 				return e.op.buildInstances(
-					"eip",
-					func() []*string {
-						var vs []*string
+					[]string{"eip"},
+					func() [][]string {
+						var (
+							out  [][]string
+							eips []string
+						)
 						for _, eip := range e.eipMap[region] {
-							vs = append(vs, eip.AddressIp)
+							eips = append(eips, *eip.AddressIp)
 						}
-						return vs
+						return append(out, eips)
 					}(),
-					nil,
 				)
 			}
 		}(),

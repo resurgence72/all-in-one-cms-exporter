@@ -2,6 +2,7 @@ package tc
 
 import (
 	"context"
+
 	"watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/common"
 
@@ -20,6 +21,7 @@ const (
 	QCE_WAF           common.MetricsType = "QCE/WAF"
 	QCE_BLOCK_STORAGE common.MetricsType = "QCE/BLOCK_STORAGE"
 	QCE_LB_PUBLIC     common.MetricsType = "QCE/LB_PUBLIC"
+	QCE_LB_PRIVATE    common.MetricsType = "QCE/LB_PRIVATE"
 )
 
 var registers = make(map[common.MetricsType]common.MetricsGetter)

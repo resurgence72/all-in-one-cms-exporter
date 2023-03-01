@@ -52,15 +52,17 @@ func (c *Cbs) Collector() {
 		func() InstanceBuilderFunc {
 			return func(region string) []*monitor.Instance {
 				return c.op.buildInstances(
-					"diskId",
-					func() []*string {
-						var vs []*string
+					[]string{"diskId"},
+					func() [][]string {
+						var (
+							out     [][]string
+							diskIds []string
+						)
 						for _, disk := range c.cbsMap[region] {
-							vs = append(vs, disk.DiskId)
+							diskIds = append(diskIds, *disk.DiskId)
 						}
-						return vs
+						return append(out, diskIds)
 					}(),
-					nil,
 				)
 			}
 		}(),

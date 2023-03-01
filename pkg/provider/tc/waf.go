@@ -52,15 +52,18 @@ func (w *Waf) Collector() {
 		func() InstanceBuilderFunc {
 			return func(region string) []*monitor.Instance {
 				return w.op.buildInstances(
-					"domain",
-					func() []*string {
-						var vs []*string
+					[]string{"domain", "edition"},
+					func() [][]string {
+						var (
+							out               [][]string
+							domains, editions []string
+						)
 						for _, waf := range w.wafMap[region] {
-							vs = append(vs, waf.Domain)
+							domains = append(domains, *waf.Domain)
+							editions = append(editions, "1")
 						}
-						return vs
+						return append(out, domains, editions)
 					}(),
-					map[string]string{"edition": "1"},
 				)
 			}
 		}(),

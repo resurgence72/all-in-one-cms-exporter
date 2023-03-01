@@ -2,10 +2,11 @@ package tc
 
 import (
 	"fmt"
-	"github.com/goccy/go-json"
-	tag "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag/v20180813"
 	"sync"
 	"time"
+
+	"github.com/goccy/go-json"
+	tag "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag/v20180813"
 
 	"watcher4metrics/pkg/common"
 
@@ -302,27 +303,49 @@ func (o *operator) commonRequest(
 
 // dName 腾讯拉取指标需要指定 monitor.Dimension的 Name
 // dValue 表示每个实例 Name 的唯一 key
+//func (o *operator) buildInstances(
+//	dName string,
+//	dValues []string,
+//	domains map[string]string, // waf 不但需要传入 domain 唯一的dimension，还需要同时传入 edition； 这里去兼容多个 dimension
+//) []*monitor.Instance {
+//	instances := make([]*monitor.Instance, 0, len(dValues))
+//	for _, v := range dValues {
+//		var d []*monitor.Dimension
+//		for k, vv := range domains {
+//			d = append(d, &monitor.Dimension{
+//				Name:  com.StringPtr(k),
+//				Value: com.StringPtr(vv),
+//			})
+//		}
+//
+//		instances = append(instances, &monitor.Instance{
+//			Dimensions: append(d, &monitor.Dimension{
+//				Name:  com.StringPtr(dName),
+//				Value: com.StringPtr(v),
+//			}),
+//		})
+//	}
+//	return instances
+//}
+
 func (o *operator) buildInstances(
-	dName string,
-	dValues []*string,
-	domains map[string]string, // waf 不但需要传入 domain 唯一的dimension，还需要同时传入 edition； 这里去兼容多个 dimension
+	dNameContainers []string, // 需要几个 Dimensions.n.Name 就写几个
+	dValuesContainers [][]string, // 对应每个 Dimensions.idx.Name 所对应的实例 Dimensions.Value
 ) []*monitor.Instance {
-	instances := make([]*monitor.Instance, 0, len(dValues))
-	for _, v := range dValues {
-		var d []*monitor.Dimension
-		for k, v := range domains {
-			d = append(d, &monitor.Dimension{
-				Name:  com.StringPtr(k),
-				Value: com.StringPtr(v),
+	ds := len(dNameContainers)
+	is := len(dValuesContainers[0])
+
+	instances := make([]*monitor.Instance, 0, is)
+	for i := 0; i < is; i++ {
+		var dimensions []*monitor.Dimension
+		for j := 0; j < ds; j++ {
+			dimensions = append(dimensions, &monitor.Dimension{
+				Name:  com.StringPtr(dNameContainers[j]),
+				Value: com.StringPtr(dValuesContainers[j][i]),
 			})
 		}
-
-		instances = append(instances, &monitor.Instance{
-			Dimensions: append(d, &monitor.Dimension{
-				Name:  com.StringPtr(dName),
-				Value: com.StringPtr(*v),
-			}),
-		})
+		instances = append(instances, &monitor.Instance{Dimensions: dimensions})
 	}
+
 	return instances
 }

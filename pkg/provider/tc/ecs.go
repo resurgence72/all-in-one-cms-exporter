@@ -54,15 +54,17 @@ func (e *Ecs) Collector() {
 		func() InstanceBuilderFunc {
 			return func(region string) []*monitor.Instance {
 				return e.op.buildInstances(
-					"InstanceId",
-					func() []*string {
-						var vs []*string
+					[]string{"InstanceId"},
+					func() [][]string {
+						var (
+							out         [][]string
+							instanceIds []string
+						)
 						for _, ecs := range e.ecsMap[region] {
-							vs = append(vs, ecs.InstanceId)
+							instanceIds = append(instanceIds, *ecs.InstanceId)
 						}
-						return vs
+						return append(out, instanceIds)
 					}(),
-					nil,
 				)
 			}
 		}(),
