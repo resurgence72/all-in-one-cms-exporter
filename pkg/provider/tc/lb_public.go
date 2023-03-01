@@ -2,13 +2,15 @@ package tc
 
 import (
 	"context"
+	"strconv"
+	"strings"
+	"sync"
+
 	"github.com/goccy/go-json"
 	"github.com/sirupsen/logrus"
 	clb "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/clb/v20180317"
 	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
-	"strconv"
-	"strings"
-	"sync"
+
 	"watcher4metrics/pkg/common"
 )
 
