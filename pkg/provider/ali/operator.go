@@ -1,6 +1,7 @@
 package ali
 
 import (
+	"go.uber.org/ratelimit"
 	"strconv"
 	"strings"
 	"time"
@@ -28,7 +29,8 @@ import (
 type operator struct {
 	req *AliReq
 
-	sem *common.Semaphore
+	limiter ratelimit.Limiter
+	sem     *common.Semaphore
 }
 
 // 获取namespace全量metrics
@@ -150,6 +152,8 @@ func (o *operator) pull(
 		o.sem.Acquire()
 		go func(metric *cms.Resource) {
 			defer o.sem.Release()
+			o.limiter.Take()
+
 			request := cms.CreateDescribeMetricLastRequest()
 			request.Scheme = "https"
 			request.Namespace = ns

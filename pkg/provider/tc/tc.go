@@ -2,7 +2,7 @@ package tc
 
 import (
 	"context"
-
+	"go.uber.org/ratelimit"
 	"watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/common"
 
@@ -37,10 +37,12 @@ func New(sub chan any) *TC {
 }
 
 func (t *TC) setCliSet(req *TCReq) error {
+	rate := 16
 	// 腾讯云拉取 metricData 接口并发限制为20次
 	t.op = &operator{
-		req: req,
-		sem: common.NewSemaphore(20),
+		req:     req,
+		sem:     common.NewSemaphore(rate),
+		limiter: ratelimit.New(rate),
 	}
 
 	credential := com.NewCredential(

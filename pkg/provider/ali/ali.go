@@ -2,6 +2,7 @@ package ali
 
 import (
 	"context"
+	"go.uber.org/ratelimit"
 	"time"
 
 	"watcher4metrics/pkg/bus"
@@ -63,7 +64,13 @@ func (a *Ali) setCli(req *AliReq) error {
 	client.SetReadTimeout(time.Duration(30) * time.Second)
 
 	a.cli = client
-	a.op = &operator{req: req, sem: common.NewSemaphore(50)}
+
+	rate := 45
+	a.op = &operator{
+		req:     req,
+		sem:     common.NewSemaphore(rate),
+		limiter: ratelimit.New(rate),
+	}
 	return nil
 }
 
