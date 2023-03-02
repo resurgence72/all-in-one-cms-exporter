@@ -73,7 +73,7 @@ func (o *operator) getMetrics(
 
 	req := &monitoringpb.ListMetricDescriptorsRequest{
 		Name:   p,
-		Filter: fmt.Sprintf(`metric.type=starts_with("%s")`, metricPrefix),
+		Filter: fmt.Sprintf(`metric.type=starts_with("%s/")`, metricPrefix),
 	}
 
 	ctx, _ := context.WithTimeout(context.TODO(), 30*time.Second)

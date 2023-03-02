@@ -21,9 +21,8 @@ func WithLimiter(size int) OptionFunc {
 
 func NewSemaphore(size int, opts ...OptionFunc) *Semaphore {
 	sem := &Semaphore{
-		pool:    make(chan struct{}, size),
-		limiter: ratelimit.New(size),
-		size:    size,
+		pool: make(chan struct{}, size),
+		size: size,
 	}
 
 	for _, opt := range opts {
