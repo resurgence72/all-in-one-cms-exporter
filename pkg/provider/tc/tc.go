@@ -2,7 +2,6 @@ package tc
 
 import (
 	"context"
-	"go.uber.org/ratelimit"
 	"watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/common"
 
@@ -24,7 +23,10 @@ const (
 	QCE_LB_PRIVATE    common.MetricsType = "QCE/LB_PRIVATE"
 )
 
-var registers = make(map[common.MetricsType]common.MetricsGetter)
+var (
+	registers      = make(map[common.MetricsType]common.MetricsGetter)
+	tencentLimiter = common.NewSemaphore(20, common.WithLimiter(20))
+)
 
 type TC struct {
 	clientSet map[string]*monitor.Client
@@ -37,13 +39,8 @@ func New(sub chan any) *TC {
 }
 
 func (t *TC) setCliSet(req *TCReq) error {
-	rate := 16
 	// 腾讯云拉取 metricData 接口并发限制为20次
-	t.op = &operator{
-		req:     req,
-		sem:     common.NewSemaphore(rate),
-		limiter: ratelimit.New(rate),
-	}
+	t.op = &operator{req: req}
 
 	credential := com.NewCredential(
 		req.Sid,

@@ -2,7 +2,6 @@ package ali
 
 import (
 	"context"
-	"go.uber.org/ratelimit"
 	"time"
 
 	"watcher4metrics/pkg/bus"
@@ -33,7 +32,8 @@ const (
 )
 
 var (
-	registers = make(map[common.MetricsType]common.MetricsGetter)
+	registers     = make(map[common.MetricsType]common.MetricsGetter)
+	aliyunLimiter = common.NewSemaphore(50, common.WithLimiter(50))
 )
 
 type Ali struct {
@@ -64,13 +64,7 @@ func (a *Ali) setCli(req *AliReq) error {
 	client.SetReadTimeout(time.Duration(30) * time.Second)
 
 	a.cli = client
-
-	rate := 45
-	a.op = &operator{
-		req:     req,
-		sem:     common.NewSemaphore(rate),
-		limiter: ratelimit.New(rate),
-	}
+	a.op = &operator{req: req}
 	return nil
 }
 

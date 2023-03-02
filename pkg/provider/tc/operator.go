@@ -2,13 +2,10 @@ package tc
 
 import (
 	"fmt"
-	"go.uber.org/ratelimit"
-	"sync"
-	"time"
-	"watcher4metrics/pkg/common"
-
 	"github.com/goccy/go-json"
 	tag "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag/v20180813"
+	"sync"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	api "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/api/v20201106"
@@ -21,9 +18,6 @@ import (
 type operator struct {
 	req        *TCReq
 	projectMap sync.Map
-
-	sem     *common.Semaphore
-	limiter ratelimit.Limiter
 }
 
 func (o *operator) asyncProjectMeta() error {
@@ -186,10 +180,9 @@ func (o *operator) getMonitorData(
 
 		instances := buildFunc(region)
 		for _, metric := range metrics {
-			o.sem.Acquire()
-			o.limiter.Take()
+			tencentLimiter.Acquire()
 			go func(cli *monitor.Client, metric *monitor.MetricSet, instances []*monitor.Instance) {
-				defer o.sem.Release()
+				defer tencentLimiter.Release()
 
 				if len(instances) == 0 {
 					return

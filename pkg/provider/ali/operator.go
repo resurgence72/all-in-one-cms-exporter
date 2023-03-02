@@ -1,7 +1,6 @@
 package ali
 
 import (
-	"go.uber.org/ratelimit"
 	"strconv"
 	"strings"
 	"time"
@@ -28,9 +27,6 @@ import (
 
 type operator struct {
 	req *AliReq
-
-	limiter ratelimit.Limiter
-	sem     *common.Semaphore
 }
 
 // 获取namespace全量metrics
@@ -149,10 +145,9 @@ func (o *operator) pull(
 		endTime = time.Now().Format("2006-01-02 15:04:05")
 	)
 	for _, metric := range metrics {
-		o.sem.Acquire()
-		o.limiter.Take()
+		aliyunLimiter.Acquire()
 		go func(metric *cms.Resource) {
-			defer o.sem.Release()
+			defer aliyunLimiter.Release()
 
 			request := cms.CreateDescribeMetricLastRequest()
 			request.Scheme = "https"
@@ -246,7 +241,7 @@ func (o *operator) getMetricLastData(
 			AccessKeyId:     tea.String(o.req.Ak),
 			AccessKeySecret: tea.String(o.req.As),
 		},
-			sem: o.sem,
+			sem: aliyunLimiter,
 		}
 	} else {
 		puller = o
