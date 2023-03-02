@@ -37,7 +37,7 @@ func New(sub chan any) *TC {
 }
 
 func (t *TC) setCliSet(req *TCReq) error {
-	// TODO 腾讯云拉取 metricData 接口并发限制为20次
+	// 腾讯云拉取 metricData 接口并发限制为20次
 	t.op = &operator{
 		req: req,
 		sem: common.NewSemaphore(20),

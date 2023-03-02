@@ -20,7 +20,7 @@ import (
 
 type operator struct {
 	req        *TCReq
-	projectMap *sync.Map
+	projectMap sync.Map
 
 	sem *common.Semaphore
 }
@@ -45,6 +45,7 @@ func (o *operator) asyncProjectMeta() error {
 	}
 
 	for _, pro := range resp.Response.Projects {
+		pro := pro
 		o.projectMap.Store(*pro.ProjectId, *pro.ProjectName)
 	}
 	return nil

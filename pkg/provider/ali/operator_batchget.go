@@ -60,7 +60,6 @@ func (b *batchGetOperator) pull( // TODO 待真实账号测试 beta
 			cursor := cursorResp.Body.Data.Cursor
 			tmpMap := make(map[string]Points)
 			for cursor != nil {
-				// TODO retry
 				batchResp, err := cli.BatchGet(&cms_export20211101.BatchGetRequest{
 					Cursor:    cursor,
 					Length:    tea.Int32(3000),
