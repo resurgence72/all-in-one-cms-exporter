@@ -37,7 +37,13 @@ func (l *LbPublic) GetMetrics() error {
 	if err != nil {
 		return err
 	}
-	l.metrics = metrics
+
+	for _, metric := range metrics {
+		mn := strings.ToLower(*metric.MetricName)
+		if !strings.HasPrefix(mn, "unhealth") {
+			l.metrics = append(l.metrics, metric)
+		}
+	}
 	return nil
 }
 

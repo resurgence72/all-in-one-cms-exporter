@@ -150,9 +150,9 @@ func (o *operator) pull(
 	)
 	for _, metric := range metrics {
 		o.sem.Acquire()
+		o.limiter.Take()
 		go func(metric *cms.Resource) {
 			defer o.sem.Release()
-			o.limiter.Take()
 
 			request := cms.CreateDescribeMetricLastRequest()
 			request.Scheme = "https"

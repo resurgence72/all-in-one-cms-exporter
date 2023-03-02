@@ -187,9 +187,9 @@ func (o *operator) getMonitorData(
 		instances := buildFunc(region)
 		for _, metric := range metrics {
 			o.sem.Acquire()
+			o.limiter.Take()
 			go func(cli *monitor.Client, metric *monitor.MetricSet, instances []*monitor.Instance) {
 				defer o.sem.Release()
-				o.limiter.Take()
 
 				if len(instances) == 0 {
 					return

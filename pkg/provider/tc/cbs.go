@@ -3,6 +3,7 @@ package tc
 import (
 	"context"
 	"strconv"
+	"strings"
 	"sync"
 
 	"watcher4metrics/pkg/common"
@@ -36,7 +37,14 @@ func (c *Cbs) GetMetrics() error {
 	if err != nil {
 		return err
 	}
-	c.metrics = metrics
+
+	// 暂时过滤Vm开头的指标
+	for _, metric := range metrics {
+		mn := strings.ToLower(*metric.MetricName)
+		if !strings.HasPrefix(mn, "vm") && !strings.HasPrefix(mn, "diskusage") {
+			c.metrics = append(c.metrics, metric)
+		}
+	}
 	return nil
 }
 

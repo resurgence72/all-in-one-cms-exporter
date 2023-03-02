@@ -2,6 +2,7 @@ package ali
 
 import (
 	"context"
+	"strings"
 
 	"watcher4metrics/pkg/common"
 )
@@ -32,7 +33,14 @@ func (w *Waf) GetMetrics() error {
 	if err != nil {
 		return err
 	}
-	w.metrics = metrics
+
+	// 过滤无用指标
+	for _, metric := range metrics {
+		mn := strings.ToLower(metric.MetricName)
+		if !strings.HasPrefix(mn, "pvv") && !strings.HasPrefix(mn, "rrv") && !strings.HasPrefix(mn, "rv") && !strings.HasPrefix(mn, "v_") {
+			w.metrics = append(w.metrics, metric)
+		}
+	}
 	return nil
 }
 
