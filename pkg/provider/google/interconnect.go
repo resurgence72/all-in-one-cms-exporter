@@ -61,6 +61,11 @@ func (i *InterConnect) push(transfer *transferData) {
 			ValueUntyped: value,
 		}
 		tagsMap := map[string]string{
+			"metric_kind":  transfer.metric.MetricKind.String(),
+			"value_type":   transfer.metric.ValueType.String(),
+			"unit":         transfer.metric.Unit,
+			"launch_stage": transfer.metric.LaunchStage.String(),
+
 			"provider":  ProviderName,
 			"iden":      i.op.req.Iden,
 			"namespace": i.namespace,

@@ -75,6 +75,11 @@ func (l *Lb) push(transfer *transferData) {
 			}
 
 			tagsMap := map[string]string{
+				"metric_kind":  transfer.metric.MetricKind.String(),
+				"value_type":   transfer.metric.ValueType.String(),
+				"unit":         transfer.metric.Unit,
+				"launch_stage": transfer.metric.LaunchStage.String(),
+
 				"provider":  ProviderName,
 				"iden":      l.op.req.Iden,
 				"namespace": l.namespace,

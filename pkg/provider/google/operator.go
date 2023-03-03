@@ -2,13 +2,14 @@ package google
 
 import (
 	"context"
-	"crypto/md5"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/duration"
+	"google.golang.org/genproto/googleapis/api"
+	metricpb "google.golang.org/genproto/googleapis/api/metric"
 
 	"watcher4metrics/pkg/common"
 
@@ -27,33 +28,21 @@ type operator struct {
 
 type PushFunc func(*transferData)
 
-const (
-	INT64Type        = "INT64"
-	DoubleType       = "DOUBLE"
-	BoolType         = "BOOL"
-	StringType       = "STRING"
-	DistributionType = "DISTRIBUTION"
-
-	GALaunchStage    = "GA"
-	BETALaunchStage  = "BETA"
-	ALPHALaunchStage = "ALPHA"
-)
-
-func (o *operator) getPointValue(valueType string, point *monitoringpb.Point) any {
-	switch valueType {
-	case INT64Type:
+func (o *operator) getPointValue(valueType *metricpb.MetricDescriptor_ValueType, point *monitoringpb.Point) any {
+	switch *valueType {
+	case metricpb.MetricDescriptor_INT64:
 		return point.GetValue().GetInt64Value()
-	case DoubleType:
+	case metricpb.MetricDescriptor_DOUBLE:
 		return point.GetValue().GetDoubleValue()
-	case BoolType:
+	case metricpb.MetricDescriptor_BOOL:
 		if point.GetValue().GetBoolValue() {
 			return 1
 		} else {
 			return 0
 		}
-	case DistributionType:
+	case metricpb.MetricDescriptor_DISTRIBUTION:
 		return point.GetValue().GetDistributionValue().Mean
-	case StringType:
+	case metricpb.MetricDescriptor_STRING:
 		return 0
 	default:
 		return 0
@@ -63,7 +52,7 @@ func (o *operator) getPointValue(valueType string, point *monitoringpb.Point) an
 func (o *operator) getMetrics(
 	cli *monitoring.MetricClient,
 	metricPrefix string,
-) ([]string, error) {
+) ([]*metricpb.MetricDescriptor, error) {
 	var p string
 	// 遍历一次即可，拿到任意一个project
 	o.projects.Range(func(key, value any) bool {
@@ -79,7 +68,7 @@ func (o *operator) getMetrics(
 	ctx, _ := context.WithTimeout(context.TODO(), 30*time.Second)
 	descriptors := cli.ListMetricDescriptors(ctx, req)
 
-	var metrics []string
+	var metrics []*metricpb.MetricDescriptor
 	for {
 		descriptor, err := descriptors.Next()
 		if err == iterator.Done {
@@ -90,34 +79,16 @@ func (o *operator) getMetrics(
 			return nil, err
 		}
 
-		switch descriptor.LaunchStage.String() {
+		switch *descriptor.LaunchStage.Enum() {
 		// TODO 只考虑GA的metrics
-		case GALaunchStage:
-			metrics = append(metrics, descriptor.Type)
+		case api.LaunchStage_GA:
+			metrics = append(metrics, descriptor)
+		case api.LaunchStage_BETA:
+		case api.LaunchStage_ALPHA:
 		default:
-			continue
 		}
 	}
 	return metrics, nil
-}
-
-// disuse
-func (o *operator) getSeriesSum64(m map[string]string) uint64 {
-	var buf strings.Builder
-	for k, v := range m {
-		buf.WriteString(k + v)
-	}
-	return o.sum64(md5.Sum([]byte(buf.String())))
-}
-
-// disuse
-func (o *operator) sum64(hash [md5.Size]byte) uint64 {
-	var s uint64
-	for i, b := range hash {
-		shift := uint64((md5.Size - i - 1) * 8)
-		s |= uint64(b) << shift
-	}
-	return s
 }
 
 func (o *operator) getRangeTime() (int64, int64) {
@@ -127,7 +98,7 @@ func (o *operator) getRangeTime() (int64, int64) {
 
 func (o *operator) listTimeSeries(
 	cli *monitoring.MetricClient,
-	metrics []string,
+	metrics []*metricpb.MetricDescriptor,
 	batch int,
 	push PushFunc,
 	groupBy []string,
@@ -145,14 +116,14 @@ func (o *operator) listTimeSeries(
 			sem.Acquire()
 			wg.Add(1)
 
-			go func(metric, pid string) {
+			go func(metric *metricpb.MetricDescriptor, pid string) {
 				defer func() {
 					sem.Release()
 					wg.Done()
 				}()
 				req := &monitoringpb.ListTimeSeriesRequest{
 					Name:   "projects/" + pid,
-					Filter: fmt.Sprintf(`metric.type="%s"`, metric),
+					Filter: fmt.Sprintf(`metric.type="%s"`, metric.Type),
 					Interval: &monitoringpb.TimeInterval{
 						StartTime: &timestamp.Timestamp{
 							Seconds: startTime,
@@ -171,6 +142,10 @@ func (o *operator) listTimeSeries(
 						PerSeriesAligner:   monitoringpb.Aggregation_ALIGN_SUM,
 						CrossSeriesReducer: monitoringpb.Aggregation_REDUCE_SUM,
 						GroupByFields:      groupBy,
+					}
+
+					if *metric.MetricKind.Enum() == metricpb.MetricDescriptor_CUMULATIVE {
+						req.Aggregation.PerSeriesAligner = monitoringpb.Aggregation_ALIGN_RATE
 					}
 				}
 
@@ -191,8 +166,8 @@ func (o *operator) listTimeSeries(
 				}
 
 				transfer := &transferData{
-					series: make(map[uint64]struct{}),
 					points: points,
+					metric: metric,
 				}
 				go push(transfer)
 			}(metric, pid)

@@ -58,7 +58,7 @@ func (e *Gce) push(transfer *transferData) {
 
 		point := points[len(points)-1]
 		ts := point.Interval.EndTime.GetSeconds()
-		value := e.op.getPointValue(series.ValueType.String(), point)
+		value := e.op.getPointValue(series.ValueType.Enum(), point)
 
 		metricLabels := series.Metric.Labels
 		resourceLabels := series.Resource.Labels
@@ -70,6 +70,11 @@ func (e *Gce) push(transfer *transferData) {
 		}
 
 		tagsMap := map[string]string{
+			"metric_kind":  transfer.metric.MetricKind.String(),
+			"value_type":   transfer.metric.ValueType.String(),
+			"unit":         transfer.metric.Unit,
+			"launch_stage": transfer.metric.LaunchStage.String(),
+
 			"provider":  ProviderName,
 			"iden":      e.op.req.Iden,
 			"namespace": e.namespace,

@@ -2,6 +2,8 @@ package google
 
 import (
 	"cloud.google.com/go/monitoring/apiv3/v2/monitoringpb"
+	metricpb "google.golang.org/genproto/googleapis/api/metric"
+
 	"sync"
 
 	"watcher4metrics/pkg/common"
@@ -13,7 +15,7 @@ type meta struct {
 	op        *operator
 	client    *monitoring.MetricClient
 	namespace string
-	metrics   []string
+	metrics   []*metricpb.MetricDescriptor
 	m         sync.Mutex
 }
 
@@ -26,8 +28,8 @@ func newMeta(params ...any) meta {
 }
 
 type transferData struct {
-	series map[uint64]struct{}
 	points []*monitoringpb.TimeSeries
+	metric *metricpb.MetricDescriptor
 	m      sync.Mutex
 }
 
