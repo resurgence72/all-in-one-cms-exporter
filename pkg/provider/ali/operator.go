@@ -84,7 +84,14 @@ func (o *operator) getMetrics(
 				continue
 			}
 		}
-		metrics = append(metrics, r)
+		
+		// 判断当前指标的 Dur 是否在 Periods 允许的范围内
+		for _, period := range strings.Split(r.Periods, ",") {
+			if strings.EqualFold(period, strconv.Itoa(o.req.Dur)) {
+				metrics = append(metrics, r)
+				break
+			}
+		}
 	}
 	return metrics, nil
 }
