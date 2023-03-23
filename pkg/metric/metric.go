@@ -9,8 +9,14 @@ var (
 		Name: "cms_metrics_total_counter",
 		Help: "cms metrics total counter",
 	}, []string{"provider", "namespace"})
+
+	CMSMetricsDiscardCounter = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "cms_metrics_discard_counter",
+		Help: "cms metrics discard counter",
+	})
 )
 
 func init() {
 	prometheus.MustRegister(CMSMetricsTotalCounter)
+	prometheus.MustRegister(CMSMetricsDiscardCounter)
 }

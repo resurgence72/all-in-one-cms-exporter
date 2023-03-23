@@ -58,7 +58,6 @@ type MetricValue struct {
 
 func (m *MetricValue) BuildAndShift(tm map[string]string) {
 	m.TagsMap = tm
-	//fmt.Println(m)
 	remoteCh <- m
 }
 

@@ -45,7 +45,7 @@ func newRemoteMgr() (*remoteMgr, error) {
 	report := &remoteMgr{
 		batchSize:      conf.Batch,
 		batchContainer: make([]*common.MetricValue, 0, conf.Batch),
-		autoCommit:     time.NewTicker(time.Duration(5) * time.Second),
+		autoCommit:     time.NewTicker(time.Duration(10) * time.Second),
 	}
 
 	var rcs []remote
@@ -105,7 +105,7 @@ func NewRemoteWritesClient(ctx context.Context) {
 				report.report()
 			}
 		case <-report.autoCommit.C:
-			// 每20s会检测当前batchContainer中是否存在 < conf.batch的未发送数据进行发送
+			// 每10s会检测当前batchContainer中是否存在 < conf.batch的未发送数据进行发送
 			if report.batchContainer != nil && len(report.batchContainer) > 0 {
 				report.report()
 			}
@@ -114,6 +114,8 @@ func NewRemoteWritesClient(ctx context.Context) {
 			report.autoCommit.Stop()
 			report, err = newRemoteMgr()
 			errCh <- err
+		default:
+			metric.CMSMetricsDiscardCounter.Inc()
 		}
 	}
 }
