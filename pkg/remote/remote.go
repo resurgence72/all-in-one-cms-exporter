@@ -43,7 +43,7 @@ func newRemoteMgr() (*remoteMgr, error) {
 	report := &remoteMgr{
 		batchSize:      conf.Batch,
 		batchContainer: make([]*common.MetricValue, 0, conf.Batch),
-		autoCommit:     time.NewTicker(time.Duration(10) * time.Second),
+		autoCommit:     time.NewTicker(time.Duration(5) * time.Second),
 	}
 
 	var rcs []remote
