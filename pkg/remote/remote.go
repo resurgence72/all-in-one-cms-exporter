@@ -7,8 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"watcher4metrics/pkg/metric"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
 	wconfig "github.com/prometheus/common/config"
@@ -114,8 +112,6 @@ func NewRemoteWritesClient(ctx context.Context) {
 			report.autoCommit.Stop()
 			report, err = newRemoteMgr()
 			errCh <- err
-		default:
-			metric.CMSMetricsDiscardCounter.Inc()
 		}
 	}
 }
