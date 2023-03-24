@@ -134,7 +134,7 @@ func NewCloseOnce() *CloseOnce {
 }
 
 // 核心series chan 连接 provider和 consumer
-var remoteCh = make(chan *MetricValue, 2048)
+var remoteCh = make(chan *MetricValue, 5000)
 
 func SeriesCh() chan *MetricValue {
 	return remoteCh
