@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"watcher4metrics/pkg/relabel"
+	"watcher4metrics/pkg/metric"
 
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
@@ -58,7 +59,12 @@ type MetricValue struct {
 
 func (m *MetricValue) BuildAndShift(tm map[string]string) {
 	m.TagsMap = tm
-	remoteCh <- m
+	
+	select {
+	case remoteCh <- m:
+	default:
+		metric.CMSMetricsDropCounter.Inc()
+	}
 }
 
 func (m *MetricValue) relabel(rlbs []*relabel.Config) labels.Labels {
