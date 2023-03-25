@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"watcher4metrics/pkg/metric"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
 	wconfig "github.com/prometheus/common/config"
