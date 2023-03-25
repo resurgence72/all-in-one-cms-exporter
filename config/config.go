@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"sync"
+	"time"
 
 	"watcher4metrics/pkg/relabel"
 
@@ -21,7 +22,7 @@ type Watcher4metricsConfig struct {
 
 type Provider struct {
 	Ali *AliProvider `yaml:"ali"`
-	//Tc *TcProvider `yaml:"tc"`
+	// Tc *TcProvider `yaml:"tc"`
 }
 
 type AliProvider struct {
@@ -184,6 +185,10 @@ func (r *RemoteWrite) UnmarshalYAML(unmarshal func(any) error) error {
 
 	if r.Authorization == nil {
 		r.Authorization = make(map[string]string)
+	}
+
+	if r.RemoteTimeout < model.Duration(30*time.Second) {
+		r.RemoteTimeout = model.Duration(30 * time.Second)
 	}
 
 	for _, rlcfg := range r.WriteRelabelConfigs {

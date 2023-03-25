@@ -74,7 +74,6 @@ func (w *Waf) Collector() {
 
 func (w *Waf) AsyncMeta(context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parse       = func(region string, offset, limit int, container []*waf.DomainInfo) ([]*waf.DomainInfo, int, error) {
 			bs, err := w.op.commonRequest(
@@ -96,62 +95,55 @@ func (w *Waf) AsyncMeta(context.Context) {
 			}
 			return append(container, resp.Response.Domains...), len(resp.Response.Domains), nil
 		}
-		sem = common.NewSemaphore(10)
 	)
 
 	if w.wafMap == nil {
 		w.wafMap = make(map[string]map[string]*waf.DomainInfo)
 	}
 
-	for region := range w.clients {
-		wg.Add(1)
-		sem.Acquire()
+	w.op.async(w.op.getRegions(), func(region string, wg *sync.WaitGroup, sem *common.Semaphore) {
+		defer func() {
+			wg.Done()
+			sem.Release()
+		}()
 
-		go func(region string) {
-			defer func() {
-				wg.Done()
-				sem.Release()
-			}()
+		var (
+			offset    = 1
+			pageNum   = 1
+			container []*waf.DomainInfo
+		)
 
-			var (
-				offset    = 1
-				pageNum   = 1
-				container []*waf.DomainInfo
-			)
+		container, currLen, err := parse(region, offset, maxPageSize, container)
+		if err != nil {
+			return
+		}
 
-			container, currLen, err := parse(region, offset, maxPageSize, container)
+		// 分页
+		for currLen == maxPageSize {
+			offset = pageNum * maxPageSize
+			container, currLen, err = parse(region, offset, maxPageSize, container)
 			if err != nil {
-				return
+				logrus.Errorln("tc loop paging failed", err)
+				continue
 			}
+			pageNum++
+		}
 
-			// 分页
-			for currLen == maxPageSize {
-				offset = pageNum * maxPageSize
-				container, currLen, err = parse(region, offset, maxPageSize, container)
-				if err != nil {
-					logrus.Errorln("tc loop paging failed", err)
-					continue
-				}
-				pageNum++
-			}
+		w.m.Lock()
+		if _, ok := w.wafMap[region]; !ok {
+			w.wafMap[region] = make(map[string]*waf.DomainInfo)
+		}
+		w.m.Unlock()
+
+		for i := range container {
+			waf := container[i]
 
 			w.m.Lock()
-			if _, ok := w.wafMap[region]; !ok {
-				w.wafMap[region] = make(map[string]*waf.DomainInfo)
-			}
+			w.wafMap[region][*waf.Domain] = waf
 			w.m.Unlock()
+		}
+	})
 
-			for i := range container {
-				waf := container[i]
-
-				w.m.Lock()
-				w.wafMap[region][*waf.Domain] = waf
-				w.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"wafLens": len(w.wafMap),
 		"iden":    w.op.req.Iden,

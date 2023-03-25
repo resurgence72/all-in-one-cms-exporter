@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/goccy/go-json"
+	"github.com/panjf2000/ants/v2"
 
 	"watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/common"
@@ -112,11 +113,15 @@ func (m *MPPort) doEvent(ctx context.Context) {
 		m.req.MetricNamespace,
 		registers,
 	) {
-		go m.do(ctx, mg.Inject(
-			m.req,
-			m.token,
-			ns,
-		))
+		ants.Submit(func(ns string, mg common.MetricsGetter) func() {
+			return func() {
+				m.do(ctx, mg.Inject(
+					m.req,
+					m.token,
+					ns,
+				))
+			}
+		}(ns, mg))
 	}
 }
 

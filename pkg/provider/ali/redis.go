@@ -57,7 +57,6 @@ func (r *Redis) Collector() {
 
 func (r *Redis) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parse       = func(region string, pageNum int, container []r_kvstore.KVStoreInstanceInDescribeInstances) ([]r_kvstore.KVStoreInstanceInDescribeInstances, int, error) {
 			bytes, err := r.op.commonRequest(
@@ -86,40 +85,36 @@ func (r *Redis) AsyncMeta(ctx context.Context) {
 		r.redisMap = make(map[string]*r_kvstore.KVStoreInstanceInDescribeInstances)
 	}
 
-	for _, region := range r.op.getRegions() {
-		wg.Add(1)
-		go func(region string) {
-			defer wg.Done()
-			var (
-				pageNum   = 1
-				container []r_kvstore.KVStoreInstanceInDescribeInstances
-			)
+	r.op.async(r.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		var (
+			pageNum   = 1
+			container []r_kvstore.KVStoreInstanceInDescribeInstances
+		)
 
-			container, currLen, err := parse(region, pageNum, container)
+		container, currLen, err := parse(region, pageNum, container)
+		if err != nil {
+			return
+		}
+
+		for currLen == maxPageSize {
+			pageNum++
+			container, currLen, err = parse(region, pageNum, container)
 			if err != nil {
-				return
+				logrus.Errorln("AsyncMeta paging err ", err)
+				continue
 			}
+		}
 
-			for currLen == maxPageSize {
-				pageNum++
-				container, currLen, err = parse(region, pageNum, container)
-				if err != nil {
-					logrus.Errorln("AsyncMeta paging err ", err)
-					continue
-				}
-			}
+		for i := range container {
+			redis := container[i]
 
-			for i := range container {
-				redis := container[i]
+			r.m.Lock()
+			r.redisMap[redis.InstanceId] = &redis
+			r.m.Unlock()
+		}
+	})
 
-				r.m.Lock()
-				r.redisMap[redis.InstanceId] = &redis
-				r.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"redisLens": len(r.redisMap),
 		"iden":      r.op.req.Iden,

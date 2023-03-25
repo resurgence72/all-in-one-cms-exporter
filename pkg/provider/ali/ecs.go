@@ -152,7 +152,6 @@ func (e *Ecs) push(transfer *transferData) {
 
 func (e *Ecs) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parse       = func(region string, pageNum int, container []ecs.Instance) ([]ecs.Instance, int, error) {
 			bytes, err := e.op.commonRequest(
@@ -181,41 +180,37 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 		e.ecsMap = make(map[string]*ecs.Instance)
 	}
 
-	for _, region := range e.op.getRegions() {
-		wg.Add(1)
-		go func(region string) {
-			defer wg.Done()
-			var (
-				pageNum   = 1
-				container []ecs.Instance
-			)
+	e.op.async(e.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		var (
+			pageNum   = 1
+			container []ecs.Instance
+		)
 
-			container, currLen, err := parse(region, pageNum, container)
+		container, currLen, err := parse(region, pageNum, container)
+		if err != nil {
+			logrus.Errorln("AsyncMeta err ", err, region)
+			return
+		}
+
+		for currLen == maxPageSize {
+			pageNum++
+			container, currLen, err = parse(region, pageNum, container)
 			if err != nil {
-				logrus.Errorln("AsyncMeta err ", err, region)
-				return
+				logrus.Errorln("AsyncMeta paging err ", err)
+				continue
 			}
+		}
 
-			for currLen == maxPageSize {
-				pageNum++
-				container, currLen, err = parse(region, pageNum, container)
-				if err != nil {
-					logrus.Errorln("AsyncMeta paging err ", err)
-					continue
-				}
-			}
+		for i := range container {
+			ecs := container[i]
 
-			for i := range container {
-				ecs := container[i]
+			e.m.Lock()
+			e.ecsMap[ecs.InstanceId] = &ecs
+			e.m.Unlock()
+		}
+	})
 
-				e.m.Lock()
-				e.ecsMap[ecs.InstanceId] = &ecs
-				e.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"ecsLens": len(e.ecsMap),
 		"iden":    e.op.req.Iden,

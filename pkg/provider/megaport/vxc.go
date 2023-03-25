@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/goccy/go-json"
+	"github.com/panjf2000/ants/v2"
 
 	"watcher4metrics/pkg/common"
 
@@ -89,94 +90,98 @@ func (v *VXC) Collector() {
 			// 并发请求
 			sem.Acquire()
 
-			go func(pid, pname, metric string) {
-				defer sem.Release()
-				u := fmt.Sprintf(
-					DOMAIN+"/v2/product/%s/%s/telemetry?type=%s&from=%d&to=%d",
-					strings.ToLower(v.namespace),
-					pid,
-					metric,
-					from,
-					to,
-				)
+			ants.Submit(func(pid, pname, metric string) func() {
+				return func() {
+					func(pid, pname, metric string) {
+						defer sem.Release()
+						u := fmt.Sprintf(
+							DOMAIN+"/v2/product/%s/%s/telemetry?type=%s&from=%d&to=%d",
+							strings.ToLower(v.namespace),
+							pid,
+							metric,
+							from,
+							to,
+						)
 
-				body, err := v.reqWithRetry(http.MethodGet, u)
-				if err != nil {
-					logrus.Errorln("Collector err", err)
-					return
-				}
-
-				tmp := struct {
-					Data []struct {
-						Type    string  `json:"type"`
-						SubType string  `json:"subtype"`
-						Samples [][]any `json:"samples"`
-						Unit    struct {
-							Name     string `json:"name"`
-							FullName string `json:"fullName"`
-						} `json:"unit"`
-					} `json:"data"`
-				}{}
-
-				err = json.Unmarshal(body, &tmp)
-				if err != nil {
-					logrus.Errorln("collector metrics Unmarshal failed", err)
-					return
-				}
-
-				if len(tmp.Data) == 0 {
-					logrus.WithFields(logrus.Fields{
-						"pid":    pid,
-						"pname":  pname,
-						"metric": metric,
-					}).Warnln("megaport data nodata")
-					return
-				}
-
-				for _, data := range tmp.Data {
-					points := data.Samples
-					if len(points) == 0 {
-						logrus.WithFields(logrus.Fields{
-							"pid":    pid,
-							"pname":  pname,
-							"metric": metric,
-						}).Warnln("megaport data.samples nodata")
-						continue
-					}
-
-					// metrics 体现出方向和vxcname和metrics类型
-					joinMetrics := fmt.Sprintf(
-						"%s_%s",
-						metric,
-						strings.Replace(data.SubType, " ", "_", 1),
-					)
-
-					if point, find := v.findPoint(targetTS, points); find {
-						ts, val := int64(point[0].(float64)), point[1].(float64)
-						transfer := &transferData{
-							endpoint: pname + "|" + pid,
-							metric:   joinMetrics,
-							tagMap: map[string]string{
-								"unit_name":     data.Unit.Name,
-								"unit_fullname": data.Unit.FullName,
-							},
-							ts:  ts,
-							val: val,
+						body, err := v.reqWithRetry(http.MethodGet, u)
+						if err != nil {
+							logrus.Errorln("Collector err", err)
+							return
 						}
-						go v.push(transfer)
-						continue
-					}
 
-					// 如果未找到所需点，说明漏点
-					// 1. 日志打印
-					logrus.WithFields(logrus.Fields{
-						"pid":      pid,
-						"pname":    pname,
-						"metric":   metric,
-						"targetTS": targetTS,
-					}).Errorln("vxc nodata")
+						tmp := struct {
+							Data []struct {
+								Type    string  `json:"type"`
+								SubType string  `json:"subtype"`
+								Samples [][]any `json:"samples"`
+								Unit    struct {
+									Name     string `json:"name"`
+									FullName string `json:"fullName"`
+								} `json:"unit"`
+							} `json:"data"`
+						}{}
+
+						err = json.Unmarshal(body, &tmp)
+						if err != nil {
+							logrus.Errorln("collector metrics Unmarshal failed", err)
+							return
+						}
+
+						if len(tmp.Data) == 0 {
+							logrus.WithFields(logrus.Fields{
+								"pid":    pid,
+								"pname":  pname,
+								"metric": metric,
+							}).Warnln("megaport data nodata")
+							return
+						}
+
+						for _, data := range tmp.Data {
+							points := data.Samples
+							if len(points) == 0 {
+								logrus.WithFields(logrus.Fields{
+									"pid":    pid,
+									"pname":  pname,
+									"metric": metric,
+								}).Warnln("megaport data.samples nodata")
+								continue
+							}
+
+							// metrics 体现出方向和vxcname和metrics类型
+							joinMetrics := fmt.Sprintf(
+								"%s_%s",
+								metric,
+								strings.Replace(data.SubType, " ", "_", 1),
+							)
+
+							if point, find := v.findPoint(targetTS, points); find {
+								ts, val := int64(point[0].(float64)), point[1].(float64)
+								transfer := &transferData{
+									endpoint: pname + "|" + pid,
+									metric:   joinMetrics,
+									tagMap: map[string]string{
+										"unit_name":     data.Unit.Name,
+										"unit_fullname": data.Unit.FullName,
+									},
+									ts:  ts,
+									val: val,
+								}
+								ants.Submit(func() { v.push(transfer) })
+								continue
+							}
+
+							// 如果未找到所需点，说明漏点
+							// 1. 日志打印
+							logrus.WithFields(logrus.Fields{
+								"pid":      pid,
+								"pname":    pname,
+								"metric":   metric,
+								"targetTS": targetTS,
+							}).Errorln("vxc nodata")
+						}
+					}(pid, pname, metric)
 				}
-			}(pid, pname, metric)
+			}(pid, pname, metric))
 		}
 	}
 }
@@ -208,8 +213,8 @@ func (v *VXC) getFromAndToTS() (int64, int64) {
 	// 两个 30s 保证每次调用区间都是闭合的
 	to := time.Now().Add(-5*time.Minute + 30*time.Second)
 	from := to.Add(-15*time.Minute - 30*time.Second)
-	//to := time.Now()
-	//from := to.Add(-20 * time.Minute)
+	// to := time.Now()
+	// from := to.Add(-20 * time.Minute)
 	return from.UnixMilli(), to.UnixMilli()
 }
 

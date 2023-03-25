@@ -53,7 +53,6 @@ func (k *Kafka) Collector() {
 
 func (k *Kafka) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parse       = func(region string, pageNum int, container []alikafka.InstanceVO) ([]alikafka.InstanceVO, int, error) {
 			bytes, err := k.op.commonRequest(
@@ -81,40 +80,36 @@ func (k *Kafka) AsyncMeta(ctx context.Context) {
 		k.kafkaMap = make(map[string]*alikafka.InstanceVO)
 	}
 
-	for _, region := range k.op.getRegions() {
-		wg.Add(1)
-		go func(region string) {
-			defer wg.Done()
-			var (
-				pageNum   = 1
-				container []alikafka.InstanceVO
-			)
+	k.op.async(k.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		var (
+			pageNum   = 1
+			container []alikafka.InstanceVO
+		)
 
-			container, currLen, err := parse(region, pageNum, container)
+		container, currLen, err := parse(region, pageNum, container)
+		if err != nil {
+			return
+		}
+
+		for currLen == maxPageSize {
+			pageNum++
+			container, currLen, err = parse(region, pageNum, container)
 			if err != nil {
-				return
+				logrus.Errorln("AsyncMeta paging err ", err)
+				continue
 			}
+		}
 
-			for currLen == maxPageSize {
-				pageNum++
-				container, currLen, err = parse(region, pageNum, container)
-				if err != nil {
-					logrus.Errorln("AsyncMeta paging err ", err)
-					continue
-				}
-			}
+		for i := range container {
+			kafka := container[i]
 
-			for i := range container {
-				kafka := container[i]
+			k.m.Lock()
+			k.kafkaMap[kafka.InstanceId] = &kafka
+			k.m.Unlock()
+		}
+	})
 
-				k.m.Lock()
-				k.kafkaMap[kafka.InstanceId] = &kafka
-				k.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"kafkaLens": len(k.kafkaMap),
 		"iden":      k.op.req.Iden,

@@ -78,7 +78,6 @@ func (l *LbPrivate) Collector() {
 
 func (l *LbPrivate) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parse       = func(region string, offset, limit int, container []*clb.LoadBalancer) ([]*clb.LoadBalancer, int, error) {
 			bs, err := l.op.commonRequest(
@@ -100,61 +99,54 @@ func (l *LbPrivate) AsyncMeta(ctx context.Context) {
 			}
 			return append(container, resp.Response.LoadBalancerSet...), len(resp.Response.LoadBalancerSet), nil
 		}
-		sem = common.NewSemaphore(10)
 	)
 
 	if l.lbpMap == nil {
 		l.lbpMap = make(map[string]map[string]*clb.LoadBalancer)
 	}
 
-	for region := range l.clients {
-		wg.Add(1)
-		sem.Acquire()
+	l.op.async(l.op.getRegions(), func(region string, wg *sync.WaitGroup, sem *common.Semaphore) {
+		defer func() {
+			wg.Done()
+			sem.Release()
+		}()
 
-		go func(region string) {
-			defer func() {
-				wg.Done()
-				sem.Release()
-			}()
+		var (
+			offset    = 1
+			pageNum   = 1
+			container []*clb.LoadBalancer
+		)
 
-			var (
-				offset    = 1
-				pageNum   = 1
-				container []*clb.LoadBalancer
-			)
+		container, currLen, err := parse(region, offset, maxPageSize, container)
+		if err != nil {
+			return
+		}
 
-			container, currLen, err := parse(region, offset, maxPageSize, container)
+		// 分页
+		for currLen == maxPageSize {
+			offset = pageNum * maxPageSize
+			container, currLen, err = parse(region, offset, maxPageSize, container)
 			if err != nil {
-				return
+				continue
 			}
+			pageNum++
+		}
 
-			// 分页
-			for currLen == maxPageSize {
-				offset = pageNum * maxPageSize
-				container, currLen, err = parse(region, offset, maxPageSize, container)
-				if err != nil {
-					continue
-				}
-				pageNum++
-			}
+		l.m.Lock()
+		if _, ok := l.lbpMap[region]; !ok {
+			l.lbpMap[region] = make(map[string]*clb.LoadBalancer)
+		}
+		l.m.Unlock()
+
+		for i := range container {
+			cc := container[i]
 
 			l.m.Lock()
-			if _, ok := l.lbpMap[region]; !ok {
-				l.lbpMap[region] = make(map[string]*clb.LoadBalancer)
-			}
+			l.lbpMap[region][*transferVIPs(cc.LoadBalancerVips)] = cc
 			l.m.Unlock()
+		}
+	})
 
-			for i := range container {
-				cc := container[i]
-
-				l.m.Lock()
-				l.lbpMap[region][*transferVIPs(cc.LoadBalancerVips)] = cc
-				l.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"clbPublicLens": len(l.lbpMap),
 		"iden":          l.op.req.Iden,

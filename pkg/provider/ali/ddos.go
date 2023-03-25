@@ -100,7 +100,6 @@ func (d *DDos) push(transfer *transferData) {
 
 func (d *DDos) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		// 构造ddosIds请求
 		parseDdosIds = func(
@@ -159,79 +158,74 @@ func (d *DDos) AsyncMeta(ctx context.Context) {
 		d.ddosMap = make(map[string]string)
 	}
 
-	// ddos产品只需要指定两个region
-	for _, region := range []string{"cn-hangzhou", "ap-southeast-1"} {
-		wg.Add(1)
-		go func(region string) {
-			defer wg.Done()
-			var (
-				pageNum   = 1
-				container []ddoscoo.Instance
-			)
-			// 1. 获取ddos的instance
-			container, currLen, err := parseDdosIds(region, pageNum, container)
+	d.op.async([]string{"cn-hangzhou", "ap-southeast-1"}, func(region string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		var (
+			pageNum   = 1
+			container []ddoscoo.Instance
+		)
+		// 1. 获取ddos的instance
+		container, currLen, err := parseDdosIds(region, pageNum, container)
+		if err != nil {
+			logrus.Errorln("AsyncMeta err ", err, region)
+			return
+		}
+		for currLen == maxPageSize {
+			pageNum++
+			container, currLen, err = parseDdosIds(region, pageNum, container)
 			if err != nil {
-				logrus.Errorln("AsyncMeta err ", err, region)
-				return
+				logrus.Errorln("AsyncMeta paging err ", err)
+				continue
 			}
-			for currLen == maxPageSize {
-				pageNum++
-				container, currLen, err = parseDdosIds(region, pageNum, container)
-				if err != nil {
-					logrus.Errorln("AsyncMeta paging err ", err)
-					continue
-				}
-			}
+		}
 
-			if len(container) == 0 {
-				return
-			}
+		if len(container) == 0 {
+			return
+		}
 
-			// 2. 拿着所有id请求DescribeInstanceDetails接口拿id对应的ip
-			var (
-				detailPageNum   = 1
-				detailContainer []ddoscoo.InstanceDetail
-				// 设置param 构造Detail接口的 instances.N 参数
-				paramsBuilder = func() map[string]string {
-					params := make(map[string]string, len(container))
-					for i, c := range container {
-						params[fmt.Sprintf("InstanceIds.%d", i+1)] = c.InstanceId
-					}
-					return params
+		// 2. 拿着所有id请求DescribeInstanceDetails接口拿id对应的ip
+		var (
+			detailPageNum   = 1
+			detailContainer []ddoscoo.InstanceDetail
+			// 设置param 构造Detail接口的 instances.N 参数
+			paramsBuilder = func() map[string]string {
+				params := make(map[string]string, len(container))
+				for i, c := range container {
+					params[fmt.Sprintf("InstanceIds.%d", i+1)] = c.InstanceId
 				}
-			)
-			// 1. 获取ddos的instance
+				return params
+			}
+		)
+		// 1. 获取ddos的instance
+		detailContainer, currLen, err = parseDdosDetails(region, detailPageNum, detailContainer, paramsBuilder)
+		if err != nil {
+			return
+		}
+		for currLen == maxPageSize {
+			detailPageNum++
 			detailContainer, currLen, err = parseDdosDetails(region, detailPageNum, detailContainer, paramsBuilder)
 			if err != nil {
-				return
+				logrus.Errorln("AsyncMeta paging err ", err)
+				continue
 			}
-			for currLen == maxPageSize {
-				detailPageNum++
-				detailContainer, currLen, err = parseDdosDetails(region, detailPageNum, detailContainer, paramsBuilder)
-				if err != nil {
-					logrus.Errorln("AsyncMeta paging err ", err)
-					continue
-				}
+		}
+
+		for i := range detailContainer {
+			ddos := detailContainer[i]
+			if len(ddos.EipInfos) == 0 {
+				continue
 			}
 
-			for i := range detailContainer {
-				ddos := detailContainer[i]
-				if len(ddos.EipInfos) == 0 {
-					continue
-				}
-
-				ips := make([]string, 0, len(ddos.EipInfos))
-				for ii := range ddos.EipInfos {
-					ips = append(ips, ddos.EipInfos[ii].Eip)
-				}
-
-				// 设置ddosmap k 为 ddos instanceID, v 为当前所生效的 ip地址
-				d.ddosMap[ddos.InstanceId] = strings.Join(ips, ",")
+			ips := make([]string, 0, len(ddos.EipInfos))
+			for ii := range ddos.EipInfos {
+				ips = append(ips, ddos.EipInfos[ii].Eip)
 			}
-		}(region)
-	}
 
-	wg.Wait()
+			// 设置ddosmap k 为 ddos instanceID, v 为当前所生效的 ip地址
+			d.ddosMap[ddos.InstanceId] = strings.Join(ips, ",")
+		}
+	})
+
 	logrus.WithFields(logrus.Fields{
 		"ddosLens": len(d.ddosMap),
 		"iden":     d.op.req.Iden,

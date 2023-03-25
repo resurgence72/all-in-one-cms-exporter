@@ -8,6 +8,7 @@ import (
 	"watcher4metrics/pkg/common"
 
 	monitoring "cloud.google.com/go/monitoring/apiv3"
+	"github.com/panjf2000/ants/v2"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/cloudresourcemanager/v1"
 	"google.golang.org/api/option"
@@ -85,11 +86,15 @@ func (g *Google) doEvent(ctx context.Context) {
 		g.op.req.MetricNamespace,
 		registers,
 	) {
-		go g.do(ctx, mg.Inject(
-			g.op,
-			g.getCli(),
-			ns,
-		))
+		ants.Submit(func(ns string, mg common.MetricsGetter) func() {
+			return func() {
+				g.do(ctx, mg.Inject(
+					g.op,
+					g.getCli(),
+					ns,
+				))
+			}
+		}(ns, mg))
 	}
 }
 

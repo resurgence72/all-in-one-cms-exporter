@@ -57,7 +57,6 @@ func (p *PolarDB) Collector() {
 
 func (p *PolarDB) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parse       = func(region string, pageNum int, container []polardb.DBCluster) ([]polardb.DBCluster, int, error) {
 			bytes, err := p.op.commonRequest(
@@ -86,41 +85,37 @@ func (p *PolarDB) AsyncMeta(ctx context.Context) {
 		p.pdbMap = make(map[string]*polardb.DBCluster)
 	}
 
-	for _, region := range p.op.getRegions() {
-		wg.Add(1)
-		go func(region string) {
-			defer wg.Done()
-			var (
-				pageNum   = 1
-				container []polardb.DBCluster
-			)
+	p.op.async(p.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		var (
+			pageNum   = 1
+			container []polardb.DBCluster
+		)
 
-			container, currLen, err := parse(region, pageNum, container)
+		container, currLen, err := parse(region, pageNum, container)
+		if err != nil {
+			// logrus.Errorln("AsyncMeta err ", err, region)
+			return
+		}
+
+		for currLen == maxPageSize {
+			pageNum++
+			container, currLen, err = parse(region, pageNum, container)
 			if err != nil {
-				//logrus.Errorln("AsyncMeta err ", err, region)
-				return
+				logrus.Errorln("AsyncMeta paging err ", err)
+				continue
 			}
+		}
 
-			for currLen == maxPageSize {
-				pageNum++
-				container, currLen, err = parse(region, pageNum, container)
-				if err != nil {
-					logrus.Errorln("AsyncMeta paging err ", err)
-					continue
-				}
-			}
+		for i := range container {
+			pdb := container[i]
 
-			for i := range container {
-				pdb := container[i]
+			p.m.Lock()
+			p.pdbMap[pdb.DBClusterId] = &pdb
+			p.m.Unlock()
+		}
+	})
 
-				p.m.Lock()
-				p.pdbMap[pdb.DBClusterId] = &pdb
-				p.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"polarDBLens": len(p.pdbMap),
 		"iden":        p.op.req.Iden,

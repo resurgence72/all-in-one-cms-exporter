@@ -101,7 +101,6 @@ func (s *SAG) push(transfer *transferData) {
 
 func (s *SAG) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 50
 		parse       = func(region string, pageNum int, container []smartag.SmartAccessGateway) ([]smartag.SmartAccessGateway, int, error) {
 			bytes, err := s.op.commonRequest(
@@ -129,40 +128,36 @@ func (s *SAG) AsyncMeta(ctx context.Context) {
 		s.sagMap = make(map[string]*smartag.SmartAccessGateway)
 	}
 
-	for _, region := range s.op.getRegions() {
-		wg.Add(1)
-		go func(region string) {
-			defer wg.Done()
-			var (
-				pageNum   = 1
-				container []smartag.SmartAccessGateway
-			)
+	s.op.async(s.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		var (
+			pageNum   = 1
+			container []smartag.SmartAccessGateway
+		)
 
-			container, currLen, err := parse(region, pageNum, container)
+		container, currLen, err := parse(region, pageNum, container)
+		if err != nil {
+			return
+		}
+
+		for currLen == maxPageSize {
+			pageNum++
+			container, currLen, err = parse(region, pageNum, container)
 			if err != nil {
-				return
+				logrus.Errorln("AsyncMeta paging err ", err)
+				continue
 			}
+		}
 
-			for currLen == maxPageSize {
-				pageNum++
-				container, currLen, err = parse(region, pageNum, container)
-				if err != nil {
-					logrus.Errorln("AsyncMeta paging err ", err)
-					continue
-				}
-			}
+		for i := range container {
+			sag := container[i]
 
-			for i := range container {
-				sag := container[i]
+			s.m.Lock()
+			s.sagMap[sag.SmartAGId] = &sag
+			s.m.Unlock()
+		}
+	})
 
-				s.m.Lock()
-				s.sagMap[sag.SmartAGId] = &sag
-				s.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"sagLens": len(s.sagMap),
 		"iden":    s.op.req.Iden,

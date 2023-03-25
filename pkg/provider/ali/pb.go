@@ -1,9 +1,11 @@
 package ali
 
 import (
-	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"sync"
+
 	"watcher4metrics/pkg/common"
+
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 )
 
 type meta struct {
@@ -48,7 +50,7 @@ func (a *AliReq) Decode() *AliReq {
 	a.As = common.DecodeBase64(a.As)
 	a.Ak = common.DecodeBase64(a.Ak)
 
-	//a.Dur = 60
+	// a.Dur = 60
 	return a
 }
 
@@ -84,4 +86,12 @@ type transferData struct {
 	unit   string
 
 	requestID string
+}
+
+type antFunc = func(string, *sync.WaitGroup)
+
+func warpFunc(region string, wg *sync.WaitGroup, f antFunc) func() {
+	return func() {
+		f(region, wg)
+	}
 }

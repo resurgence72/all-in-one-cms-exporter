@@ -31,7 +31,6 @@ func (v *Vbr) GetNamespace() string {
 
 func (v *Vbr) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 50
 		parse       = func(region string, pageNum int, container []vpc.VirtualBorderRouterType) ([]vpc.VirtualBorderRouterType, int, error) {
 			bytes, err := v.op.commonRequest(
@@ -63,40 +62,36 @@ func (v *Vbr) AsyncMeta(ctx context.Context) {
 		v.vbrMap = make(map[string]*vpc.VirtualBorderRouterType)
 	}
 
-	for _, region := range v.op.getRegions() {
-		wg.Add(1)
-		go func(region string) {
-			defer wg.Done()
-			var (
-				pageNum   = 1
-				container []vpc.VirtualBorderRouterType
-			)
+	v.op.async(v.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		var (
+			pageNum   = 1
+			container []vpc.VirtualBorderRouterType
+		)
 
-			container, currLen, err := parse(region, pageNum, container)
+		container, currLen, err := parse(region, pageNum, container)
+		if err != nil {
+			logrus.Errorln("AsyncMeta err ", err, region)
+			return
+		}
+		for currLen == maxPageSize {
+			pageNum++
+			container, currLen, err = parse(region, pageNum, container)
 			if err != nil {
-				logrus.Errorln("AsyncMeta err ", err, region)
-				return
+				logrus.Errorln("AsyncMeta paging err ", err)
+				continue
 			}
-			for currLen == maxPageSize {
-				pageNum++
-				container, currLen, err = parse(region, pageNum, container)
-				if err != nil {
-					logrus.Errorln("AsyncMeta paging err ", err)
-					continue
-				}
-			}
+		}
 
-			for i := range container {
-				vbr := container[i]
+		for i := range container {
+			vbr := container[i]
 
-				v.m.Lock()
-				v.vbrMap[vbr.VbrId] = &vbr
-				v.m.Unlock()
-			}
-		}(region)
-	}
+			v.m.Lock()
+			v.vbrMap[vbr.VbrId] = &vbr
+			v.m.Unlock()
+		}
+	})
 
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"vbrLens": len(v.vbrMap),
 		"iden":    v.op.req.Iden,

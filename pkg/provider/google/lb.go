@@ -65,7 +65,7 @@ func (l *Lb) push(transfer *transferData) {
 
 		for _, point := range points {
 			ts := point.Interval.EndTime.GetSeconds()
-			value := l.op.getPointValue(series.ValueType.String(), point)
+			value := l.op.getPointValue(series.GetValueType(), point)
 
 			series := &common.MetricValue{
 				Metric:       common.BuildMetric("lb", metricName),

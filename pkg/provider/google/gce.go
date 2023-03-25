@@ -9,6 +9,7 @@ import (
 
 	"watcher4metrics/pkg/common"
 
+	"github.com/panjf2000/ants/v2"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
@@ -58,7 +59,7 @@ func (e *Gce) push(transfer *transferData) {
 
 		point := points[len(points)-1]
 		ts := point.Interval.EndTime.GetSeconds()
-		value := e.op.getPointValue(series.ValueType.Enum(), point)
+		value := e.op.getPointValue(series.GetValueType(), point)
 
 		metricLabels := series.Metric.Labels
 		resourceLabels := series.Resource.Labels
@@ -175,7 +176,12 @@ func (e *Gce) AsyncMeta(ctx context.Context) {
 		for _, zone := range e.op.getZones() {
 			wg.Add(1)
 			sem.Acquire()
-			go do(pid, zone)
+
+			ants.Submit(func(pid, zone string) func() {
+				return func() {
+					do(pid, zone)
+				}
+			}(pid, zone))
 		}
 		return true
 	})

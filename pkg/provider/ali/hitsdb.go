@@ -57,7 +57,6 @@ func (h *HiTSDB) Collector() {
 
 func (h *HiTSDB) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parse       = func(region string, pageNum int, container []hitsdb.LindormInstanceSummary) ([]hitsdb.LindormInstanceSummary, int, error) {
 			bytes, err := h.op.commonRequest(
@@ -86,41 +85,37 @@ func (h *HiTSDB) AsyncMeta(ctx context.Context) {
 		h.tsdbMap = make(map[string]*hitsdb.LindormInstanceSummary)
 	}
 
-	for _, region := range h.op.getRegions() {
-		wg.Add(1)
-		go func(region string) {
-			defer wg.Done()
-			var (
-				pageNum   = 1
-				container []hitsdb.LindormInstanceSummary
-			)
+	h.op.async(h.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		var (
+			pageNum   = 1
+			container []hitsdb.LindormInstanceSummary
+		)
 
-			container, currLen, err := parse(region, pageNum, container)
+		container, currLen, err := parse(region, pageNum, container)
+		if err != nil {
+			logrus.Errorln("AsyncMeta err ", err, region)
+			return
+		}
+
+		for currLen == maxPageSize {
+			pageNum++
+			container, currLen, err = parse(region, pageNum, container)
 			if err != nil {
-				logrus.Errorln("AsyncMeta err ", err, region)
-				return
+				logrus.Errorln("AsyncMeta paging err ", err)
+				continue
 			}
+		}
 
-			for currLen == maxPageSize {
-				pageNum++
-				container, currLen, err = parse(region, pageNum, container)
-				if err != nil {
-					logrus.Errorln("AsyncMeta paging err ", err)
-					continue
-				}
-			}
+		for i := range container {
+			tsdb := container[i]
 
-			for i := range container {
-				tsdb := container[i]
+			h.m.Lock()
+			h.tsdbMap[tsdb.InstanceId] = &tsdb
+			h.m.Unlock()
+		}
+	})
 
-				h.m.Lock()
-				h.tsdbMap[tsdb.InstanceId] = &tsdb
-				h.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"tsdbLens": len(h.tsdbMap),
 		"iden":     h.op.req.Iden,

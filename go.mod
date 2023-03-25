@@ -36,7 +36,7 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/waf v1.0.566
 	github.com/zsais/go-gin-prometheus v0.1.0
 	google.golang.org/api v0.102.0
-	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
+	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c
 	gopkg.in/fsnotify.v1 v1.4.7
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -45,6 +45,7 @@ require (
 	github.com/alibabacloud-go/cms-export-20211101/v2 v2.0.0
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.0.0
 	github.com/alibabacloud-go/tea v1.1.19
+	github.com/panjf2000/ants/v2 v2.7.2
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cbs v1.0.602
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/clb v1.0.606
 	go.uber.org/ratelimit v0.2.0
@@ -97,7 +98,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
+	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/tjfoc/gmsm v1.3.2 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	go.opencensus.io v0.23.0 // indirect

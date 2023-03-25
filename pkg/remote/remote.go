@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
+	"github.com/panjf2000/ants/v2"
 	wconfig "github.com/prometheus/common/config"
 
 	"github.com/prometheus/prometheus/prompb"
@@ -135,6 +136,31 @@ func (r *remoteMgr) buildSeries(tmp []*common.MetricValue, rlbs []*relabel.Confi
 	return series
 }
 
+func (r *remoteMgr) send(rc remote, tmp []*common.MetricValue, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	series := r.buildSeries(tmp, rc.relabels)
+	if len(series) == 0 {
+		return
+	}
+
+	req := &prompb.WriteRequest{
+		Timeseries: series,
+	}
+	data, err := proto.Marshal(req)
+	if err != nil {
+		logrus.Errorln("proto marshal failed ", err)
+		return
+	}
+
+	if err := rc.w.Store(context.TODO(), snappy.Encode(nil, data)); err != nil {
+		logrus.Errorln("remote write failed ", err)
+		return
+	}
+
+	logrus.Warnln("remote write success, send batch size ", len(series))
+}
+
 func (r *remoteMgr) report() {
 	// 做深拷贝，防止影响到当前的batchContainer
 	tmp := make([]*common.MetricValue, len(r.batchContainer))
@@ -145,31 +171,11 @@ func (r *remoteMgr) report() {
 	var wg sync.WaitGroup
 	for _, rc := range r.rs {
 		wg.Add(1)
-
-		go func(rc remote) {
-			defer wg.Done()
-
-			series := r.buildSeries(tmp, rc.relabels)
-			if len(series) == 0 {
-				return
+		ants.Submit(func(rc remote, wg *sync.WaitGroup) func() {
+			return func() {
+				r.send(rc, tmp, wg)
 			}
-
-			req := &prompb.WriteRequest{
-				Timeseries: series,
-			}
-			data, err := proto.Marshal(req)
-			if err != nil {
-				logrus.Errorln("proto marshal failed ", err)
-				return
-			}
-
-			if err := rc.w.Store(context.TODO(), snappy.Encode(nil, data)); err != nil {
-				logrus.Errorln("remote write failed ", err)
-				return
-			}
-
-			logrus.Warnln("remote write success, send batch size ", len(series))
-		}(rc)
+		}(rc, &wg))
 	}
 	wg.Wait()
 	logrus.Warnln("current remote write job done")

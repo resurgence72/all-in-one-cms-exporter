@@ -127,7 +127,6 @@ func (e *Eip) getEip(instance string) *vpc.EipAddress {
 func (e *Eip) AsyncMeta(ctx context.Context) {
 	// 并发获取全量region的eip对象，保存到map中
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parse       = func(region string, pageNum int, container []vpc.EipAddress) ([]vpc.EipAddress, int, error) {
 			bytes, err := e.op.commonRequest(
@@ -156,47 +155,42 @@ func (e *Eip) AsyncMeta(ctx context.Context) {
 		e.eipMap = make(map[string]*vpc.EipAddress)
 	}
 
-	// 获取eip同步时使用全量region
-	for _, region := range e.op.getRegions() {
-		wg.Add(1)
-		go func(region string) {
-			defer wg.Done()
-			var (
-				pageNum   = 1
-				container []vpc.EipAddress
-			)
+	e.op.async(e.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		var (
+			pageNum   = 1
+			container []vpc.EipAddress
+		)
 
-			container, currLen, err := parse(region, pageNum, container)
+		container, currLen, err := parse(region, pageNum, container)
+		if err != nil {
+			logrus.Errorln("AsyncMeta err ", err, region)
+			return
+		}
+
+		for currLen == maxPageSize {
+			pageNum++
+			container, currLen, err = parse(region, pageNum, container)
 			if err != nil {
-				logrus.Errorln("AsyncMeta err ", err, region)
-				return
+				logrus.Errorln("AsyncMeta paging err ", err)
+				continue
 			}
+		}
 
-			for currLen == maxPageSize {
-				pageNum++
-				container, currLen, err = parse(region, pageNum, container)
-				if err != nil {
-					logrus.Errorln("AsyncMeta paging err ", err)
-					continue
-				}
-			}
+		// eipList拿到当前region下的所有eip实例
+		// 保存到 eipMap 中
+		for i := range container {
+			eip := container[i]
 
-			// eipList拿到当前region下的所有eip实例
-			// 保存到 eipMap 中
-			for i := range container {
-				eip := container[i]
+			// 并发写map加锁
+			e.m.Lock()
+			// AllocationId 是eip的id
+			// Instance 是当前绑定的实例id
+			e.eipMap[eip.AllocationId] = &eip
+			e.m.Unlock()
+		}
+	})
 
-				// 并发写map加锁
-				e.m.Lock()
-				// AllocationId 是eip的id
-				// Instance 是当前绑定的实例id
-				e.eipMap[eip.AllocationId] = &eip
-				e.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"eipLens": len(e.eipMap),
 		"iden":    e.op.req.Iden,

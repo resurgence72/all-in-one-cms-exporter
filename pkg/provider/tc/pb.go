@@ -3,6 +3,7 @@ package tc
 import (
 	"strings"
 	"sync"
+
 	"watcher4metrics/pkg/common"
 
 	monitor "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/monitor/v20180724"
@@ -48,6 +49,14 @@ func (t *TCReq) Decode() *TCReq {
 	t.Skey = common.DecodeBase64(t.Skey)
 	t.MetricNamespace = strings.ToUpper(t.MetricNamespace)
 
-	//t.Dur = 60
+	// t.Dur = 60
 	return t
+}
+
+type antFunc = func(string, *sync.WaitGroup, *common.Semaphore)
+
+func warpFunc(region string, wg *sync.WaitGroup, sem *common.Semaphore, f antFunc) func() {
+	return func() {
+		f(region, wg, sem)
+	}
 }

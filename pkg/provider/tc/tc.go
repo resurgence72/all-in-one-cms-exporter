@@ -2,9 +2,11 @@ package tc
 
 import (
 	"context"
+
 	"watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/common"
 
+	"github.com/panjf2000/ants/v2"
 	"github.com/sirupsen/logrus"
 	com "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
@@ -113,11 +115,15 @@ func (t *TC) doEvent(ctx context.Context) {
 		t.op.req.MetricNamespace,
 		registers,
 	) {
-		go t.do(ctx, mg.Inject(
-			t.op,
-			t.clientSet,
-			ns,
-		))
+		ants.Submit(func(ns string, mg common.MetricsGetter) func() {
+			return func() {
+				t.do(ctx, mg.Inject(
+					t.op,
+					t.clientSet,
+					ns,
+				))
+			}
+		}(ns, mg))
 	}
 }
 

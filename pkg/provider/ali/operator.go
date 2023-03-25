@@ -3,11 +3,13 @@ package ali
 import (
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"watcher4metrics/config"
 
 	"github.com/alibabacloud-go/tea/tea"
+	"github.com/panjf2000/ants/v2"
 
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
@@ -84,7 +86,7 @@ func (o *operator) getMetrics(
 				continue
 			}
 		}
-		
+
 		// 判断当前指标的 Dur 是否在 Periods 允许的范围内
 		for _, period := range strings.Split(r.Periods, ",") {
 			if strings.EqualFold(period, strconv.Itoa(o.req.Dur)) {
@@ -153,83 +155,90 @@ func (o *operator) pull(
 	)
 	for _, metric := range metrics {
 		aliyunLimiter.Acquire()
-		go func(metric *cms.Resource) {
-			defer aliyunLimiter.Release()
 
-			request := cms.CreateDescribeMetricLastRequest()
-			request.Scheme = "https"
-			request.Namespace = ns
-			request.MetricName = metric.MetricName
-			request.Period = strconv.Itoa(period)
-			request.EndTime = endTime
-			request.Length = "1500"
-			if ds != nil {
-				request.Dimensions = *ds
-			}
+		ants.Submit(func(metric *cms.Resource) func() {
+			return func() {
+				func(metric *cms.Resource) {
+					defer aliyunLimiter.Release()
 
-			if len(groupBy) > 0 {
-				bs, err := json.Marshal(map[string][]string{"groupby": groupBy})
-				if err == nil {
-					request.Express = string(bs)
-				}
-			}
-
-			resp, err := retry(cli, request, 5)
-
-			if err != nil || !resp.Success {
-				logrus.WithFields(logrus.Fields{
-					"namespace": ns,
-					"metric":    metric.MetricName,
-					"err":       err,
-					"reason":    resp,
-				}).Errorln("DescribeMetricLast failed")
-				return
-			}
-
-			var points Points
-			err = parser.Parser().Unmarshal([]byte(resp.Datapoints), &points)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"namespace": ns,
-					"metric":    metric.MetricName,
-					"err":       err,
-				}).Errorln("json.Unmarshal failed")
-				return
-			}
-
-			if len(points) == 0 {
-				return
-			}
-
-			tmpMap := map[string]Points{resp.RequestId: points}
-			nextToken := resp.NextToken
-			for nextToken != "" {
-				request.NextToken = nextToken
-				resp, err := retry(cli, request, 5)
-				if err != nil {
-					break
-				}
-				var tmpPoints Points
-				if err = parser.Parser().Unmarshal([]byte(resp.Datapoints), &tmpPoints); err == nil {
-					if len(tmpPoints) != 0 {
-						tmpMap[resp.RequestId] = tmpPoints
+					request := cms.CreateDescribeMetricLastRequest()
+					request.Scheme = "https"
+					request.Namespace = ns
+					request.MetricName = metric.MetricName
+					request.Period = strconv.Itoa(period)
+					request.EndTime = endTime
+					request.Length = "1500"
+					if ds != nil {
+						request.Dimensions = *ds
 					}
-				}
-				nextToken = resp.NextToken
-			}
 
-			// 3. 将数据转换格式推送至rw
-			for requestId, points := range tmpMap {
-				transfer := &transferData{
-					points:    points,
-					metric:    metric.MetricName,
-					unit:      metric.Unit,
-					requestID: requestId,
-				}
-				go push(transfer)
+					if len(groupBy) > 0 {
+						bs, err := json.Marshal(map[string][]string{"groupby": groupBy})
+						if err == nil {
+							request.Express = string(bs)
+						}
+					}
+
+					resp, err := retry(cli, request, 5)
+
+					if err != nil || !resp.Success {
+						logrus.WithFields(logrus.Fields{
+							"namespace": ns,
+							"metric":    metric.MetricName,
+							"err":       err,
+							"reason":    resp,
+						}).Errorln("DescribeMetricLast failed")
+						return
+					}
+
+					var points Points
+					err = parser.Parser().Unmarshal([]byte(resp.Datapoints), &points)
+					if err != nil {
+						logrus.WithFields(logrus.Fields{
+							"namespace": ns,
+							"metric":    metric.MetricName,
+							"err":       err,
+						}).Errorln("json.Unmarshal failed")
+						return
+					}
+
+					if len(points) == 0 {
+						return
+					}
+
+					tmpMap := map[string]Points{resp.RequestId: points}
+					nextToken := resp.NextToken
+					for nextToken != "" {
+						request.NextToken = nextToken
+						resp, err := retry(cli, request, 5)
+						if err != nil {
+							break
+						}
+						var tmpPoints Points
+						if err = parser.Parser().Unmarshal([]byte(resp.Datapoints), &tmpPoints); err == nil {
+							if len(tmpPoints) != 0 {
+								tmpMap[resp.RequestId] = tmpPoints
+							}
+						}
+						nextToken = resp.NextToken
+					}
+
+					// 3. 将数据转换格式推送至rw
+					for requestId, points := range tmpMap {
+						transfer := &transferData{
+							points:    points,
+							metric:    metric.MetricName,
+							unit:      metric.Unit,
+							requestID: requestId,
+						}
+						ants.Submit(func() {
+							push(transfer)
+						})
+					}
+					time.Sleep(time.Duration(200) * time.Millisecond)
+				}(metric)
 			}
-			time.Sleep(time.Duration(200) * time.Millisecond)
-		}(metric)
+		}(metric))
 	}
 }
 
@@ -339,4 +348,14 @@ func (o *operator) commonRequest(
 		return nil, err
 	}
 	return resp.BaseResponse.GetHttpContentBytes(), nil
+}
+
+func (o *operator) async(regions []string, f antFunc) {
+	var wg sync.WaitGroup
+	for _, region := range regions {
+		wg.Add(1)
+		ants.Submit(warpFunc(region, &wg, f))
+	}
+
+	wg.Wait()
 }

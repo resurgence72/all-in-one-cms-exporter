@@ -2,10 +2,14 @@ package tc
 
 import (
 	"fmt"
-	"github.com/goccy/go-json"
-	tag "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag/v20180813"
 	"sync"
 	"time"
+
+	"watcher4metrics/pkg/common"
+
+	"github.com/goccy/go-json"
+	"github.com/panjf2000/ants/v2"
+	tag "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/tag/v20180813"
 
 	"github.com/sirupsen/logrus"
 	api "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/api/v20201106"
@@ -181,52 +185,57 @@ func (o *operator) getMonitorData(
 		instances := buildFunc(region)
 		for _, metric := range metrics {
 			tencentLimiter.Acquire()
-			go func(cli *monitor.Client, metric *monitor.MetricSet, instances []*monitor.Instance) {
-				defer tencentLimiter.Release()
 
-				if len(instances) == 0 {
-					return
+			ants.Submit(func(cli *monitor.Client, metric *monitor.MetricSet, instances []*monitor.Instance) func() {
+				return func() {
+					func(cli *monitor.Client, metric *monitor.MetricSet, instances []*monitor.Instance) {
+						defer tencentLimiter.Release()
+
+						if len(instances) == 0 {
+							return
+						}
+						request := monitor.NewGetMonitorDataRequest()
+						request.Period = com.Uint64Ptr(uint64(o.req.Dur))
+						request.StartTime, request.EndTime = o.getRangeTime()
+						// tc 指定Namespace需要强制大写，否则报错
+						request.Namespace = com.StringPtr(ns)
+						request.MetricName = metric.MetricName
+
+						pageSize := len(instances)/apiInstancesN + 1
+						for i := 0; i < pageSize; i++ {
+							// 每次请求instances.N为200 否则会超时
+							// 0-199 200-299
+							start, end := i*apiInstancesN, (i+1)*apiInstancesN-1
+							if pageSize == 1 || len(instances) < end {
+								end = len(instances)
+							}
+							request.Instances = instances[start:end]
+							resp, err := retry(cli, request, 5)
+							if err != nil {
+								logrus.WithFields(logrus.Fields{
+									"err":    err,
+									"region": region,
+									"metric": *metric.MetricName,
+									"total":  len(instances),
+								}).Errorln("GetMonitorData failed")
+								return
+							}
+
+							transfer := &transferData{
+								points:    resp.Response.DataPoints,
+								metric:    *metric.MetricName,
+								unit:      *metric.Unit,
+								region:    cli.GetRegion(),
+								requestID: *resp.Response.RequestId,
+							}
+
+							// remote write
+							ants.Submit(func() { push(transfer) })
+						}
+						time.Sleep(time.Duration(200) * time.Millisecond)
+					}(cli, metric, instances)
 				}
-				request := monitor.NewGetMonitorDataRequest()
-				request.Period = com.Uint64Ptr(uint64(o.req.Dur))
-				request.StartTime, request.EndTime = o.getRangeTime()
-				// tc 指定Namespace需要强制大写，否则报错
-				request.Namespace = com.StringPtr(ns)
-				request.MetricName = metric.MetricName
-
-				pageSize := len(instances)/apiInstancesN + 1
-				for i := 0; i < pageSize; i++ {
-					// 每次请求instances.N为200 否则会超时
-					// 0-199 200-299
-					start, end := i*apiInstancesN, (i+1)*apiInstancesN-1
-					if pageSize == 1 || len(instances) < end {
-						end = len(instances)
-					}
-					request.Instances = instances[start:end]
-					resp, err := retry(cli, request, 5)
-					if err != nil {
-						logrus.WithFields(logrus.Fields{
-							"err":    err,
-							"region": region,
-							"metric": *metric.MetricName,
-							"total":  len(instances),
-						}).Errorln("GetMonitorData failed")
-						return
-					}
-
-					transfer := &transferData{
-						points:    resp.Response.DataPoints,
-						metric:    *metric.MetricName,
-						unit:      *metric.Unit,
-						region:    cli.GetRegion(),
-						requestID: *resp.Response.RequestId,
-					}
-
-					// remote write
-					go push(transfer)
-				}
-				time.Sleep(time.Duration(200) * time.Millisecond)
-			}(cli, metric, instances)
+			}(cli, metric, instances))
 		}
 	}
 }
@@ -259,7 +268,7 @@ func (o *operator) commonRequest(
 	cpf := profile.NewClientProfile()
 	cpf.HttpProfile.Endpoint = fmt.Sprintf("%s.tencentcloudapi.com", domain)
 	cpf.HttpProfile.ReqMethod = "POST"
-	//创建common client
+	// 创建common client
 	client := com.NewCommonClient(
 		credential,
 		region,
@@ -288,7 +297,7 @@ func (o *operator) commonRequest(
 		return nil, err
 	}
 
-	//发送请求
+	// 发送请求
 	resp, err := retry(client, request, 5)
 	if err != nil || resp == nil {
 		return nil, err
@@ -300,11 +309,11 @@ func (o *operator) commonRequest(
 
 // dName 腾讯拉取指标需要指定 monitor.Dimension的 Name
 // dValue 表示每个实例 Name 的唯一 key
-//func (o *operator) buildInstances(
+// func (o *operator) buildInstances(
 //	dName string,
 //	dValues []string,
 //	domains map[string]string, // waf 不但需要传入 domain 唯一的dimension，还需要同时传入 edition； 这里去兼容多个 dimension
-//) []*monitor.Instance {
+// ) []*monitor.Instance {
 //	instances := make([]*monitor.Instance, 0, len(dValues))
 //	for _, v := range dValues {
 //		var d []*monitor.Dimension
@@ -323,7 +332,7 @@ func (o *operator) commonRequest(
 //		})
 //	}
 //	return instances
-//}
+// }
 
 func (o *operator) buildInstances(
 	dNameContainers []string, // 需要几个 Dimensions.n.Name 就写几个
@@ -345,4 +354,20 @@ func (o *operator) buildInstances(
 	}
 
 	return instances
+}
+
+func (o *operator) async(regions []string, f antFunc) {
+	var (
+		wg  sync.WaitGroup
+		sem = common.NewSemaphore(10)
+	)
+
+	for _, region := range regions {
+		wg.Add(1)
+		sem.Acquire()
+
+		f(region, &wg, sem)
+	}
+
+	wg.Wait()
 }

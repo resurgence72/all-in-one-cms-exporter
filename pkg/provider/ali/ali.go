@@ -8,6 +8,7 @@ import (
 	"watcher4metrics/pkg/common"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
+	"github.com/panjf2000/ants/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -100,11 +101,15 @@ func (a *Ali) doEvent(ctx context.Context) {
 		a.op.req.MetricNamespace,
 		registers,
 	) {
-		go a.do(ctx, mg.Inject(
-			a.op,
-			a.cli,
-			ns,
-		))
+		ants.Submit(func(ns string, mg common.MetricsGetter) func() {
+			return func() {
+				a.do(ctx, mg.Inject(
+					a.op,
+					a.cli,
+					ns,
+				))
+			}
+		}(ns, mg))
 	}
 }
 

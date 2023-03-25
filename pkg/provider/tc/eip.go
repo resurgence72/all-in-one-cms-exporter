@@ -120,7 +120,6 @@ func (e *Eip) getEip(region string, ip *string) *vpc.Address {
 
 func (e *Eip) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parse       = func(region string, offset, limit int, container []*vpc.Address) ([]*vpc.Address, int, error) {
 			bs, err := e.op.commonRequest(
@@ -142,64 +141,57 @@ func (e *Eip) AsyncMeta(ctx context.Context) {
 			}
 			return append(container, resp.Response.AddressSet...), len(resp.Response.AddressSet), nil
 		}
-		sem = common.NewSemaphore(10)
 	)
 
 	if e.eipMap == nil {
 		e.eipMap = make(map[string]map[string]*vpc.Address)
 	}
 
-	// 获取所有region下的meta信息
-	for region := range e.clients {
-		wg.Add(1)
-		sem.Acquire()
-		go func(region string) {
-			defer func() {
-				wg.Done()
-				sem.Release()
-			}()
-			// 同步当前region eip详情
-			var (
-				offset    = 0
-				pageNum   = 1
-				container []*vpc.Address
-			)
+	e.op.async(e.op.getRegions(), func(region string, wg *sync.WaitGroup, sem *common.Semaphore) {
+		defer func() {
+			wg.Done()
+			sem.Release()
+		}()
+		// 同步当前region eip详情
+		var (
+			offset    = 0
+			pageNum   = 1
+			container []*vpc.Address
+		)
 
-			container, currLen, err := parse(region, offset, maxPageSize, container)
+		container, currLen, err := parse(region, offset, maxPageSize, container)
+		if err != nil {
+			return
+		}
+
+		// 分页
+		for currLen == maxPageSize {
+			offset = pageNum * maxPageSize
+			container, currLen, err = parse(region, offset, maxPageSize, container)
 			if err != nil {
-				return
+				logrus.Errorln("tc loop paging failed", err)
+				continue
 			}
+			pageNum++
+		}
 
-			// 分页
-			for currLen == maxPageSize {
-				offset = pageNum * maxPageSize
-				container, currLen, err = parse(region, offset, maxPageSize, container)
-				if err != nil {
-					logrus.Errorln("tc loop paging failed", err)
-					continue
-				}
-				pageNum++
-			}
+		// 保存获取到的所有eip map
+		e.m.Lock()
+		if _, ok := e.eipMap[region]; !ok {
+			e.eipMap[region] = make(map[string]*vpc.Address)
+		}
+		e.m.Unlock()
 
-			// 保存获取到的所有eip map
+		for i := range container {
+			eip := container[i]
+
 			e.m.Lock()
-			if _, ok := e.eipMap[region]; !ok {
-				e.eipMap[region] = make(map[string]*vpc.Address)
-			}
+			// 只有 BIND eip才是有数据的
+			e.eipMap[region][*eip.AddressIp] = eip
 			e.m.Unlock()
+		}
+	})
 
-			for i := range container {
-				eip := container[i]
-
-				e.m.Lock()
-				// 只有 BIND eip才是有数据的
-				e.eipMap[region][*eip.AddressIp] = eip
-				e.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"eipLens": len(e.eipMap),
 		"iden":    e.op.req.Iden,

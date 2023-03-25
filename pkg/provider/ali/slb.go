@@ -96,7 +96,6 @@ func (s *Slb) push(transfer *transferData) {
 
 func (s *Slb) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parse       = func(region string, pageNum int, container []slb.LoadBalancer) ([]slb.LoadBalancer, int, error) {
 			bytes, err := s.op.commonRequest(
@@ -124,41 +123,37 @@ func (s *Slb) AsyncMeta(ctx context.Context) {
 		s.slbMap = make(map[string]*slb.LoadBalancer)
 	}
 
-	for _, region := range s.op.getRegions() {
-		wg.Add(1)
-		go func(region string) {
-			defer wg.Done()
-			var (
-				pageNum   = 1
-				container []slb.LoadBalancer
-			)
+	s.op.async(s.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+		defer wg.Done()
+		var (
+			pageNum   = 1
+			container []slb.LoadBalancer
+		)
 
-			container, currLen, err := parse(region, pageNum, container)
+		container, currLen, err := parse(region, pageNum, container)
+		if err != nil {
+			logrus.Errorln("AsyncMeta err ", err, region)
+			return
+		}
+
+		for currLen == maxPageSize {
+			pageNum++
+			container, currLen, err = parse(region, pageNum, container)
 			if err != nil {
-				logrus.Errorln("AsyncMeta err ", err, region)
-				return
+				logrus.Errorln("AsyncMeta paging err ", err)
+				continue
 			}
+		}
 
-			for currLen == maxPageSize {
-				pageNum++
-				container, currLen, err = parse(region, pageNum, container)
-				if err != nil {
-					logrus.Errorln("AsyncMeta paging err ", err)
-					continue
-				}
-			}
+		for i := range container {
+			slb := container[i]
 
-			for i := range container {
-				slb := container[i]
+			s.m.Lock()
+			s.slbMap[slb.LoadBalancerId] = &slb
+			s.m.Unlock()
+		}
+	})
 
-				s.m.Lock()
-				s.slbMap[slb.LoadBalancerId] = &slb
-				s.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"slbLens": len(s.slbMap),
 		"iden":    s.op.req.Iden,

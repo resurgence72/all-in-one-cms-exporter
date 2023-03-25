@@ -28,8 +28,8 @@ type operator struct {
 
 type PushFunc func(*transferData)
 
-func (o *operator) getPointValue(valueType *metricpb.MetricDescriptor_ValueType, point *monitoringpb.Point) any {
-	switch *valueType {
+func (o *operator) getPointValue(valueType metricpb.MetricDescriptor_ValueType, point *monitoringpb.Point) any {
+	switch valueType {
 	case metricpb.MetricDescriptor_INT64:
 		return point.GetValue().GetInt64Value()
 	case metricpb.MetricDescriptor_DOUBLE:

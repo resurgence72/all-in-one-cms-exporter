@@ -81,7 +81,6 @@ func (c *Cbs) Collector() {
 
 func (c *Cbs) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parse       = func(region string, offset, limit int, container []*cbs.Disk) ([]*cbs.Disk, int, error) {
 			bs, err := c.op.commonRequest(
@@ -103,61 +102,54 @@ func (c *Cbs) AsyncMeta(ctx context.Context) {
 			}
 			return append(container, resp.Response.DiskSet...), len(resp.Response.DiskSet), nil
 		}
-		sem = common.NewSemaphore(10)
 	)
 
 	if c.cbsMap == nil {
 		c.cbsMap = make(map[string]map[string]*cbs.Disk)
 	}
 
-	for region := range c.clients {
-		wg.Add(1)
-		sem.Acquire()
+	c.op.async(c.op.getRegions(), func(region string, wg *sync.WaitGroup, sem *common.Semaphore) {
+		defer func() {
+			wg.Done()
+			sem.Release()
+		}()
 
-		go func(region string) {
-			defer func() {
-				wg.Done()
-				sem.Release()
-			}()
+		var (
+			offset    = 1
+			pageNum   = 1
+			container []*cbs.Disk
+		)
 
-			var (
-				offset    = 1
-				pageNum   = 1
-				container []*cbs.Disk
-			)
+		container, currLen, err := parse(region, offset, maxPageSize, container)
+		if err != nil {
+			return
+		}
 
-			container, currLen, err := parse(region, offset, maxPageSize, container)
+		// 分页
+		for currLen == maxPageSize {
+			offset = pageNum * maxPageSize
+			container, currLen, err = parse(region, offset, maxPageSize, container)
 			if err != nil {
-				return
+				continue
 			}
+			pageNum++
+		}
 
-			// 分页
-			for currLen == maxPageSize {
-				offset = pageNum * maxPageSize
-				container, currLen, err = parse(region, offset, maxPageSize, container)
-				if err != nil {
-					continue
-				}
-				pageNum++
-			}
+		c.m.Lock()
+		if _, ok := c.cbsMap[region]; !ok {
+			c.cbsMap[region] = make(map[string]*cbs.Disk)
+		}
+		c.m.Unlock()
+
+		for i := range container {
+			cc := container[i]
 
 			c.m.Lock()
-			if _, ok := c.cbsMap[region]; !ok {
-				c.cbsMap[region] = make(map[string]*cbs.Disk)
-			}
+			c.cbsMap[region][*cc.DiskId] = cc
 			c.m.Unlock()
+		}
+	})
 
-			for i := range container {
-				cc := container[i]
-
-				c.m.Lock()
-				c.cbsMap[region][*cc.DiskId] = cc
-				c.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"cbsLens": len(c.cbsMap),
 		"iden":    c.op.req.Iden,

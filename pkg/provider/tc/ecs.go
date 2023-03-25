@@ -133,7 +133,6 @@ func (e *Ecs) push(transfer *transferData) {
 
 func (e *Ecs) AsyncMeta(ctx context.Context) {
 	var (
-		wg          sync.WaitGroup
 		maxPageSize = 100
 		parseECS    = func(region string, offset, limit int, container []*cvm.Instance) ([]*cvm.Instance, int, error) {
 			bs, err := e.op.commonRequest(
@@ -155,63 +154,55 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 			}
 			return append(container, resp.Response.InstanceSet...), len(resp.Response.InstanceSet), nil
 		}
-
-		sem = common.NewSemaphore(10)
 	)
 
 	if e.ecsMap == nil {
 		e.ecsMap = make(map[string]map[string]*cvm.Instance)
 	}
 
-	// 获取所有region下的ecs
-	for region := range e.clients {
-		wg.Add(1)
-		sem.Acquire()
-		go func(region string) {
-			defer func() {
-				wg.Done()
-				sem.Release()
-			}()
+	e.op.async(e.op.getRegions(), func(region string, wg *sync.WaitGroup, sem *common.Semaphore) {
+		defer func() {
+			wg.Done()
+			sem.Release()
+		}()
 
-			var (
-				offset    = 0
-				pageNum   = 1
-				container []*cvm.Instance
-			)
+		var (
+			offset    = 0
+			pageNum   = 1
+			container []*cvm.Instance
+		)
 
-			container, currLen, err := parseECS(region, offset, maxPageSize, container)
+		container, currLen, err := parseECS(region, offset, maxPageSize, container)
+		if err != nil {
+			return
+		}
+
+		// 分页
+		for currLen == maxPageSize {
+			offset = pageNum * maxPageSize
+			container, currLen, err = parseECS(region, offset, maxPageSize, container)
 			if err != nil {
-				return
+				logrus.Errorln("tc loop paging failed", err)
+				continue
 			}
+			pageNum++
+		}
 
-			// 分页
-			for currLen == maxPageSize {
-				offset = pageNum * maxPageSize
-				container, currLen, err = parseECS(region, offset, maxPageSize, container)
-				if err != nil {
-					logrus.Errorln("tc loop paging failed", err)
-					continue
-				}
-				pageNum++
-			}
+		e.m.Lock()
+		if _, ok := e.ecsMap[region]; !ok {
+			e.ecsMap[region] = make(map[string]*cvm.Instance)
+		}
+		e.m.Unlock()
+
+		for i := range container {
+			ecs := container[i]
 
 			e.m.Lock()
-			if _, ok := e.ecsMap[region]; !ok {
-				e.ecsMap[region] = make(map[string]*cvm.Instance)
-			}
+			e.ecsMap[region][*ecs.InstanceId] = ecs
 			e.m.Unlock()
+		}
+	})
 
-			for i := range container {
-				ecs := container[i]
-
-				e.m.Lock()
-				e.ecsMap[region][*ecs.InstanceId] = ecs
-				e.m.Unlock()
-			}
-		}(region)
-	}
-
-	wg.Wait()
 	logrus.WithFields(logrus.Fields{
 		"ecsLens": len(e.ecsMap),
 		"iden":    e.op.req.Iden,
