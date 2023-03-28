@@ -58,8 +58,8 @@ func (e *Ecs) Collector() {
 }
 
 func (e *Ecs) getIP(id string) *ecs.Instance {
-	e.m.Lock()
-	defer e.m.Unlock()
+	e.m.RLock()
+	defer e.m.RUnlock()
 
 	if ip, ok := e.ecsMap[id]; ok {
 		return ip
@@ -81,7 +81,10 @@ func (e *Ecs) push(transfer *transferData) {
 		}
 
 		// 获取tags 和 endpoint
-		var ips []string
+		var (
+			ips    = common.GetSliceString()
+			series = common.GetSeries()
+		)
 		for i := range ip.PublicIpAddress.IpAddress {
 			if len(ip.PublicIpAddress.IpAddress[i]) > 0 {
 				ips = append(ips, ip.PublicIpAddress.IpAddress[i])
@@ -92,14 +95,12 @@ func (e *Ecs) push(transfer *transferData) {
 			ips = append(ips, ip.EipAddress.IpAddress)
 		}
 		sort.Strings(ips)
-
 		pubIP := strings.Join(ips, ",")
-		series := &common.MetricValue{
-			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
-			Metric:       common.BuildMetric("ecs", transfer.metric),
-			ValueUntyped: point.Value(),
-			Endpoint:     pubIP,
-		}
+
+		series.Timestamp = int64(point["timestamp"].(float64)) / 1e3
+		series.Metric = common.BuildMetric("ecs", transfer.metric)
+		series.ValueUntyped = point.Value()
+		series.Endpoint = pubIP
 
 		var priIP string
 		switch ip.InstanceNetworkType {
@@ -147,6 +148,10 @@ func (e *Ecs) push(transfer *transferData) {
 		}
 
 		series.BuildAndShift(tagsMap)
+
+		// defer buf
+		common.PutSliceString(ips)
+		common.PutSeries(series)
 	}
 }
 

@@ -7,8 +7,30 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
+
+var (
+	sliceStringPool = sync.Pool{New: func() any { return []string{} }}
+	seriesPool      = sync.Pool{New: func() any { return &MetricValue{} }}
+)
+
+func GetSliceString() []string { return sliceStringPool.Get().([]string) }
+func PutSliceString(x []string) {
+	x = x[:0]
+	sliceStringPool.Put(x)
+}
+
+func GetSeries() *MetricValue { return seriesPool.Get().(*MetricValue) }
+func PutSeries(x *MetricValue) {
+	x.Endpoint = ""
+
+	for k := range x.TagsMap {
+		delete(x.TagsMap, k)
+	}
+	seriesPool.Put(x)
+}
 
 func DecodeBase64(s string) string {
 	bs, _ := base64.StdEncoding.DecodeString(s)
