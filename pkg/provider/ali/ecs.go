@@ -83,7 +83,6 @@ func (e *Ecs) push(transfer *transferData) {
 		// 获取tags 和 endpoint
 		var (
 			ips    = common.GetSliceString()
-			series = common.GetSeries()
 		)
 		for i := range ip.PublicIpAddress.IpAddress {
 			if len(ip.PublicIpAddress.IpAddress[i]) > 0 {
@@ -97,10 +96,12 @@ func (e *Ecs) push(transfer *transferData) {
 		sort.Strings(ips)
 		pubIP := strings.Join(ips, ",")
 
-		series.Timestamp = int64(point["timestamp"].(float64)) / 1e3
-		series.Metric = common.BuildMetric("ecs", transfer.metric)
-		series.ValueUntyped = point.Value()
-		series.Endpoint = pubIP
+		series := &common.MetricValue{
+			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
+			Metric:       common.BuildMetric("ecs", transfer.metric),
+			ValueUntyped: point.Value(),
+			Endpoint:     pubIP,
+		}
 
 		var priIP string
 		switch ip.InstanceNetworkType {
@@ -151,7 +152,6 @@ func (e *Ecs) push(transfer *transferData) {
 
 		// defer buf
 		common.PutSliceString(ips)
-		common.PutSeries(series)
 	}
 }
 
