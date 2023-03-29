@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/spaolacci/murmur3"
 )
 
 const (
@@ -20,6 +22,8 @@ const (
 	GoogleCloudProvider   = "google"
 	MegaPortCloudProvider = "megaport"
 	AWSCloudProvider      = "aws"
+
+	RemoteShard = 1 << 2
 )
 
 func GetDefaultEnv(key, defaultValue string) string {
@@ -58,10 +62,25 @@ type MetricValue struct {
 
 func (m *MetricValue) BuildAndShift() {
 	select {
-	case remoteCh <- m:
+	case remoteChs[m.hashLabel()&uint64(RemoteShard-1)] <- m:
 	default:
 		metric.CMSMetricsDiscardCounter.Inc()
 	}
+}
+
+func (m *MetricValue) hashLabel() uint64 {
+	buf := BytesPool.Get().(bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		BytesPool.Put(buf)
+	}()
+
+	for k, v := range m.TagsMap {
+		buf.WriteString(k)
+		buf.WriteByte('_')
+		buf.WriteString(v)
+	}
+	return murmur3.Sum64(buf.Bytes())
 }
 
 func (m *MetricValue) relabel(rlbs []*relabel.Config) labels.Labels {
@@ -131,10 +150,17 @@ func NewCloseOnce() *CloseOnce {
 }
 
 // 核心series chan 连接 provider和 consumer
-var remoteCh = make(chan *MetricValue, 5000)
+var remoteChs = func() []chan *MetricValue {
+	chs := make([]chan *MetricValue, 0, RemoteShard)
+	for shard := 0; shard < RemoteShard; shard++ {
+		chs = append(chs, make(chan *MetricValue, 1<<12))
+	}
 
-func SeriesCh() chan *MetricValue {
-	return remoteCh
+	return chs
+}()
+
+func SeriesCh(shard int) <-chan *MetricValue {
+	return remoteChs[shard]
 }
 
 func BuildMetric(mType, metric string) string {

@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
-	"github.com/panjf2000/ants/v2"
 	wconfig "github.com/prometheus/common/config"
 
 	"github.com/prometheus/prometheus/prompb"
@@ -26,12 +25,12 @@ import (
 )
 
 type remoteMgr struct {
-	batchSize      int
-	batchContainer []*common.MetricValue
-	autoCommit     *time.Ticker
-	rs             []remote
+	batchSize       int
+	batchContainers [][]*common.MetricValue
+	autoCommit      <-chan time.Time
+	rs              []remote
 
-	m sync.Mutex
+	shard int
 }
 
 type remote struct {
@@ -44,10 +43,16 @@ var reloadCh = make(chan chan error, 1)
 func newRemoteMgr() (*remoteMgr, error) {
 	conf := config.Get().Report
 	report := &remoteMgr{
-		batchSize:      conf.Batch,
-		batchContainer: make([]*common.MetricValue, 0, conf.Batch),
-		autoCommit:     time.NewTicker(time.Duration(5) * time.Second),
+		batchSize:  conf.Batch,
+		autoCommit: time.After(5 * time.Second),
+		shard:      common.RemoteShard,
 	}
+
+	bcs := make([][]*common.MetricValue, 0, report.shard)
+	for shard := 0; shard < report.shard; shard++ {
+		bcs = append(bcs, make([]*common.MetricValue, 0, conf.Batch))
+	}
+	report.batchContainers = bcs
 
 	var rcs []remote
 	for i, rw := range conf.RemoteWrites {
@@ -89,34 +94,45 @@ func NewRemoteWritesClient(ctx context.Context) {
 	if err != nil {
 		return
 	}
-	defer report.autoCommit.Stop()
 
-	for {
-		select {
-		case <-ctx.Done():
-			// 确保将当前队列中数据发送完毕
-			if report.batchContainer != nil && len(report.batchContainer) > 0 {
-				report.report()
+	var wg sync.WaitGroup
+
+	for shard := 0; shard < report.shard; shard++ {
+		wg.Add(1)
+
+		go func(shard int) {
+			defer wg.Done()
+			logrus.Warnf("remote write client shard %d is start", shard)
+
+			for {
+				select {
+				case <-ctx.Done():
+					// 确保将当前队列中数据发送完毕
+					if report.batchContainers[shard] != nil && len(report.batchContainers[shard]) > 0 {
+						report.report(shard)
+					}
+					return
+				case nPoint := <-common.SeriesCh(shard):
+					// 攒够 batch的数量再发送
+					report.batchContainers[shard] = append(report.batchContainers[shard], nPoint)
+					if len(report.batchContainers[shard]) == report.batchSize {
+						report.report(shard)
+					}
+				case <-report.autoCommit:
+					// 每5s会检测当前batchContainer中是否存在 < conf.batch的未发送数据进行发送
+					if report.batchContainers[shard] != nil && len(report.batchContainers[shard]) > 0 {
+						report.report(shard)
+					}
+				case errCh := <-reloadCh:
+					// reload
+					report, err = newRemoteMgr()
+					errCh <- err
+				}
 			}
-			return
-		case nPoint := <-common.SeriesCh():
-			// 攒够 batch的数量再发送
-			report.batchContainer = append(report.batchContainer, nPoint)
-			if len(report.batchContainer) == report.batchSize {
-				report.report()
-			}
-		case <-report.autoCommit.C:
-			// 每10s会检测当前batchContainer中是否存在 < conf.batch的未发送数据进行发送
-			if report.batchContainer != nil && len(report.batchContainer) > 0 {
-				report.report()
-			}
-		case errCh := <-reloadCh:
-			// reload
-			report.autoCommit.Stop()
-			report, err = newRemoteMgr()
-			errCh <- err
-		}
+		}(shard)
 	}
+
+	wg.Wait()
 }
 
 func (r *remoteMgr) buildSeries(tmp []*common.MetricValue, rlbs []*relabel.Config) []prompb.TimeSeries {
@@ -136,9 +152,7 @@ func (r *remoteMgr) buildSeries(tmp []*common.MetricValue, rlbs []*relabel.Confi
 	return series
 }
 
-func (r *remoteMgr) send(rc remote, tmp []*common.MetricValue, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func (r *remoteMgr) send(rc remote, tmp []*common.MetricValue) {
 	series := r.buildSeries(tmp, rc.relabels)
 	if len(series) == 0 {
 		return
@@ -161,24 +175,16 @@ func (r *remoteMgr) send(rc remote, tmp []*common.MetricValue, wg *sync.WaitGrou
 	logrus.Warnln("remote write success, send batch size ", len(series))
 }
 
-func (r *remoteMgr) report() {
+func (r *remoteMgr) report(shard int) {
 	// 做深拷贝，防止影响到当前的batchContainer
-	tmp := make([]*common.MetricValue, len(r.batchContainer))
-	copy(tmp, r.batchContainer)
+	dc := make([]*common.MetricValue, len(r.batchContainers[shard]))
+	copy(dc, r.batchContainers[shard])
 	// 当前批次发送后重置batchContainer
-	r.batchContainer = r.batchContainer[:0]
+	r.batchContainers[shard] = r.batchContainers[shard][:0]
 
-	var wg sync.WaitGroup
 	for _, rc := range r.rs {
-		wg.Add(1)
-		ants.Submit(func(rc remote, wg *sync.WaitGroup) func() {
-			return func() {
-				r.send(rc, tmp, wg)
-			}
-		}(rc, &wg))
+		go r.send(rc, dc)
 	}
-	wg.Wait()
-	logrus.Warnln("current remote write job done")
 }
 
 func Reload() error {
