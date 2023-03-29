@@ -143,7 +143,7 @@ func (v *Vbr) push(transfer *transferData) {
 			Endpoint:     vbr.Name,
 		}
 
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"provider":         ProviderName,
 			"iden":             v.op.req.Iden,
 			"namespace":        v.namespace,
@@ -155,6 +155,6 @@ func (v *Vbr) push(transfer *transferData) {
 			"local_gateway_ip": vbr.LocalGatewayIp,
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }

@@ -2,7 +2,6 @@ package common
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -57,9 +56,7 @@ type MetricValue struct {
 	TagsMap      map[string]string `json:"tagsMap" description:"tags的map结构"` // {"a":1, "b"=2, "c="3} 保留2种格式，方便后端组件使用
 }
 
-func (m *MetricValue) BuildAndShift(tm map[string]string) {
-	m.TagsMap = tm
-
+func (m *MetricValue) BuildAndShift() {
 	select {
 	case remoteCh <- m:
 	default:
@@ -142,7 +139,18 @@ func SeriesCh() chan *MetricValue {
 
 func BuildMetric(mType, metric string) string {
 	metric = strings.ReplaceAll(strings.ReplaceAll(metric, ".", "_"), "-", "_")
-	return fmt.Sprintf("cms_%s_%s", strings.ToLower(mType), strings.ToLower(metric))
+
+	buf := StringBuilderPool.Get().(strings.Builder)
+	defer func() {
+		buf.Reset()
+		StringBuilderPool.Put(buf)
+	}()
+
+	buf.WriteString("cms_")
+	buf.WriteString(strings.ToLower(mType))
+	buf.WriteString("_")
+	buf.WriteString(strings.ToLower(metric))
+	return buf.String()
 }
 
 const (

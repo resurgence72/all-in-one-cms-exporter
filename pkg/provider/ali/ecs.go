@@ -82,7 +82,7 @@ func (e *Ecs) push(transfer *transferData) {
 
 		// 获取tags 和 endpoint
 		var (
-			ips    = common.GetSliceString()
+			ips = common.SliceStringPool.Get().([]string)[:0]
 		)
 		for i := range ip.PublicIpAddress.IpAddress {
 			if len(ip.PublicIpAddress.IpAddress[i]) > 0 {
@@ -95,6 +95,7 @@ func (e *Ecs) push(transfer *transferData) {
 		}
 		sort.Strings(ips)
 		pubIP := strings.Join(ips, ",")
+		common.SliceStringPool.Put(ips)
 
 		series := &common.MetricValue{
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
@@ -111,7 +112,7 @@ func (e *Ecs) push(transfer *transferData) {
 			priIP = strings.Join(ip.VpcAttributes.PrivateIpAddress.IpAddress, ",")
 		}
 
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"region":                 ip.RegionId,
 			"instance_name":          ip.InstanceName,
 			"instance_id":            ip.InstanceId,
@@ -144,14 +145,11 @@ func (e *Ecs) push(transfer *transferData) {
 		// 注入ecs的Tags
 		for _, tag := range ip.Tags.Tag {
 			if tag.TagValue != "" {
-				tagsMap[tag.TagKey] = tag.TagValue
+				series.TagsMap[tag.TagKey] = tag.TagValue
 			}
 		}
 
-		series.BuildAndShift(tagsMap)
-
-		// defer buf
-		common.PutSliceString(ips)
+		series.BuildAndShift()
 	}
 }
 

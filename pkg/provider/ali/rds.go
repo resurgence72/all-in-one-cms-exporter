@@ -141,7 +141,7 @@ func (r *Rds) push(transfer *transferData) {
 			Endpoint:     rds.DBInstanceId,
 		}
 
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"region":          rds.RegionId,
 			"engine":          rds.Engine,
 			"engine_version":  rds.EngineVersion,
@@ -158,7 +158,7 @@ func (r *Rds) push(transfer *transferData) {
 			"unit_name": transfer.unit,
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }
 

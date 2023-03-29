@@ -167,7 +167,7 @@ func (w *Waf) push(transfer *transferData) {
 				Endpoint:     *waf.Domain,
 			}
 
-			tagsMap := map[string]string{
+			series.TagsMap = map[string]string{
 				"iden":        w.op.req.Iden,
 				"provider":    ProviderName,
 				"region":      transfer.region,
@@ -175,7 +175,7 @@ func (w *Waf) push(transfer *transferData) {
 				"unit_name":   transfer.unit,
 				"instance_id": *waf.DomainId,
 			}
-			series.BuildAndShift(tagsMap)
+			series.BuildAndShift()
 			continue
 		}
 	}

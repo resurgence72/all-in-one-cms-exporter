@@ -142,7 +142,7 @@ func (h *HiTSDB) push(transfer *transferData) {
 			Endpoint:     instanceID,
 		}
 
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"engine_type":      tsdb.EngineType,
 			"region":           tsdb.RegionId,
 			"instance_storage": tsdb.InstanceStorage,
@@ -160,10 +160,10 @@ func (h *HiTSDB) push(transfer *transferData) {
 
 		for _, tag := range tsdb.Tags {
 			if tag.Value != "" {
-				tagsMap[tag.Key] = tag.Value
+				series.TagsMap[tag.Key] = tag.Value
 			}
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }

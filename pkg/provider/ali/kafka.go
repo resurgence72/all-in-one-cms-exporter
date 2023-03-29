@@ -135,7 +135,7 @@ func (k *Kafka) push(transfer *transferData) {
 			ValueUntyped: point.Value(),
 		}
 
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"instance_id":     kfk.InstanceId,
 			"instance_name":   kfk.Name,
 			"spec_type":       kfk.SpecType,
@@ -155,16 +155,16 @@ func (k *Kafka) push(transfer *transferData) {
 		}
 
 		if topic, ok := point["topic"]; ok {
-			tagsMap["topic"] = topic.(string)
+			series.TagsMap["topic"] = topic.(string)
 		}
 
 		for _, tag := range kfk.Tags.TagVO {
 			if tag.Value != "" {
-				tagsMap[tag.Key] = tag.Value
+				series.TagsMap[tag.Key] = tag.Value
 			}
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }
 

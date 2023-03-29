@@ -74,7 +74,7 @@ func (s *Slb) push(transfer *transferData) {
 			Endpoint:     slb.Address,
 		}
 
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"provider":    ProviderName,
 			"iden":        s.op.req.Iden,
 			"namespace":   s.namespace,
@@ -86,11 +86,11 @@ func (s *Slb) push(transfer *transferData) {
 
 		for _, tag := range slb.Tags.Tag {
 			if tag.TagValue != "" {
-				tagsMap[tag.TagKey] = tag.TagValue
+				series.TagsMap[tag.TagKey] = tag.TagValue
 			}
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }
 

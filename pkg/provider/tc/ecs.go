@@ -105,7 +105,7 @@ func (e *Ecs) push(transfer *transferData) {
 			series.Endpoint = strings.Join(pubIPs, ",")
 
 			// 设置Tags TagsMap
-			tagsMap := map[string]string{
+			series.TagsMap = map[string]string{
 				"iden":            e.op.req.Iden,
 				"provider":        ProviderName,
 				"region":          transfer.region,
@@ -122,10 +122,10 @@ func (e *Ecs) push(transfer *transferData) {
 			}
 
 			if pn, ok := e.op.projectMap.Load(uint64(*ecs.Placement.ProjectId)); ok {
-				tagsMap["project_mark"] = pn.(string)
+				series.TagsMap["project_mark"] = pn.(string)
 			}
 
-			series.BuildAndShift(tagsMap)
+			series.BuildAndShift()
 			continue
 		}
 	}

@@ -74,10 +74,10 @@ func (e *Eip) push(transfer *transferData) {
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("eip", transfer.metric),
 			ValueUntyped: point.Value(),
+			Endpoint:     eip.IpAddress,
 		}
 
-		series.Endpoint = eip.IpAddress
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"region": eip.RegionId,
 			// eip付费类型
 			"internet_charge_type": eip.InternetChargeType,
@@ -106,11 +106,11 @@ func (e *Eip) push(transfer *transferData) {
 
 		for _, tag := range eip.Tags.Tag {
 			if tag.Value != "" {
-				tagsMap[tag.Key] = tag.Value
+				series.TagsMap[tag.Key] = tag.Value
 			}
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }
 

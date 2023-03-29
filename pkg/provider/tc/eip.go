@@ -86,13 +86,11 @@ func (e *Eip) push(transfer *transferData) {
 				Timestamp:    int64(*ts),
 				Metric:       common.BuildMetric("eip", transfer.metric),
 				ValueUntyped: *point.Values[i],
+				Endpoint:     *eip.AddressIp,
 			}
 
-			// 存在eip, 赋值tag 及 ip
-			series.Endpoint = *eip.AddressIp
-
 			// 设置Tags TagsMap
-			tagsMap := map[string]string{
+			series.TagsMap = map[string]string{
 				"iden":        e.op.req.Iden,
 				"provider":    ProviderName,
 				"region":      transfer.region,
@@ -101,7 +99,7 @@ func (e *Eip) push(transfer *transferData) {
 				"instance_id": *eip.InstanceId,
 				"status":      *eip.AddressStatus,
 			}
-			series.BuildAndShift(tagsMap)
+			series.BuildAndShift()
 			continue
 		}
 	}

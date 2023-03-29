@@ -148,11 +148,10 @@ func (r *Redis) push(transfer *transferData) {
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("redis", transfer.metric),
 			ValueUntyped: point.Value(),
-			Endpoint:     instanceID,
+			Endpoint:     redis.InstanceId,
 		}
 
-		series.Endpoint = redis.InstanceId
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"region":            redis.RegionId,
 			"engine_version":    redis.EngineVersion,
 			"instance_capacity": strconv.FormatInt(redis.Capacity, 10),
@@ -173,6 +172,6 @@ func (r *Redis) push(transfer *transferData) {
 			"unit_name": transfer.unit,
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }

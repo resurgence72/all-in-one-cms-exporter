@@ -169,7 +169,7 @@ func (l *LbPrivate) push(transfer *transferData) {
 				Endpoint:     *lb.LoadBalancerId,
 			}
 
-			tagsMap := map[string]string{
+			series.TagsMap = map[string]string{
 				"iden":      l.op.req.Iden,
 				"provider":  ProviderName,
 				"region":    transfer.region,
@@ -185,16 +185,16 @@ func (l *LbPrivate) push(transfer *transferData) {
 			}
 
 			if pn, ok := l.op.projectMap.Load(*lb.ProjectId); ok {
-				tagsMap["project_mark"] = pn.(string)
+				series.TagsMap["project_mark"] = pn.(string)
 			}
 
 			for _, tag := range lb.Tags {
 				if *tag.TagValue != "" {
-					tagsMap[*tag.TagKey] = *tag.TagValue
+					series.TagsMap[*tag.TagKey] = *tag.TagValue
 				}
 			}
 
-			series.BuildAndShift(tagsMap)
+			series.BuildAndShift()
 			continue
 		}
 	}

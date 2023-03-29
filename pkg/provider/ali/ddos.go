@@ -75,11 +75,10 @@ func (d *DDos) push(transfer *transferData) {
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("ddos", transfer.metric),
 			ValueUntyped: point.Value(),
+			Endpoint:     ip,
 		}
 
-		series.Endpoint = ip
-
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"instance_id": instanceID,
 			"provider":    ProviderName,
 			"iden":        d.op.req.Iden,
@@ -91,10 +90,10 @@ func (d *DDos) push(transfer *transferData) {
 			// 两种 一种有ip
 			// 一种有domain
 			// 没有ip 需要加入domain标签
-			tagsMap["domain"] = point["domain"].(string)
+			series.TagsMap["domain"] = point["domain"].(string)
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }
 

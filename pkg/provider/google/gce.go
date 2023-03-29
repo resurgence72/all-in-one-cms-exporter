@@ -70,7 +70,7 @@ func (e *Gce) push(transfer *transferData) {
 			ValueUntyped: value,
 		}
 
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"metric_kind":  transfer.metric.MetricKind.String(),
 			"value_type":   transfer.metric.ValueType.String(),
 			"unit":         transfer.metric.Unit,
@@ -81,35 +81,35 @@ func (e *Gce) push(transfer *transferData) {
 			"namespace": e.namespace,
 		}
 		if in, ok := metricLabels["instance_name"]; ok {
-			tagsMap["instance_name"] = in
+			series.TagsMap["instance_name"] = in
 			series.Endpoint = in
 		}
 
 		if ii, ok := resourceLabels["instance_id"]; ok {
-			tagsMap["instance_id"] = ii
+			series.TagsMap["instance_id"] = ii
 			ii, err := strconv.ParseInt(ii, 10, 64)
 			if err == nil {
 				e.m.Lock()
 				if ip, ok := e.gceMap[uint64(ii)]; ok {
-					tagsMap["network_ip"] = ip
+					series.TagsMap["network_ip"] = ip
 				}
 				e.m.Unlock()
 			}
 		}
 
 		if pid, ok := resourceLabels["project_id"]; ok {
-			tagsMap["project_id"] = pid
+			series.TagsMap["project_id"] = pid
 
 			if pn, ok := e.op.projects.Load(pid); ok {
-				tagsMap["project_mark"] = pn.(string)
+				series.TagsMap["project_mark"] = pn.(string)
 			}
 		}
 
 		if region, ok := resourceLabels["zone"]; ok {
-			tagsMap["region"] = region
+			series.TagsMap["region"] = region
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }
 

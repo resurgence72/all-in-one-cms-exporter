@@ -65,13 +65,13 @@ func (c *ClickHouse) push(transfer *transferData) {
 			Endpoint:     logicName,
 		}
 
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"provider":  ProviderName,
 			"iden":      c.op.req.Iden,
 			"namespace": c.namespace,
 			"unit_name": transfer.unit,
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }

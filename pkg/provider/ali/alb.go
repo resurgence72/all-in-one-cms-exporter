@@ -139,7 +139,7 @@ func (a *Alb) push(transfer *transferData) {
 			ValueUntyped: point.Value(),
 		}
 
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"provider":      ProviderName,
 			"iden":          a.op.req.Iden,
 			"namespace":     a.namespace,
@@ -151,10 +151,10 @@ func (a *Alb) push(transfer *transferData) {
 
 		for _, tag := range alb.Tags {
 			if tag.Value != "" {
-				tagsMap[tag.Key] = tag.Value
+				series.TagsMap[tag.Key] = tag.Value
 			}
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }

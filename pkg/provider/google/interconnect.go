@@ -60,7 +60,7 @@ func (i *InterConnect) push(transfer *transferData) {
 			Timestamp:    ts,
 			ValueUntyped: value,
 		}
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"metric_kind":  transfer.metric.MetricKind.String(),
 			"value_type":   transfer.metric.ValueType.String(),
 			"unit":         transfer.metric.Unit,
@@ -72,10 +72,10 @@ func (i *InterConnect) push(transfer *transferData) {
 		}
 
 		for k, v := range resourceLabels {
-			tagsMap[k] = v
+			series.TagsMap[k] = v
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }
 

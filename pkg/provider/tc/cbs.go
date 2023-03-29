@@ -173,7 +173,7 @@ func (c *Cbs) push(transfer *transferData) {
 				Endpoint:     *disk.DiskId,
 			}
 
-			tagsMap := map[string]string{
+			series.TagsMap = map[string]string{
 				"iden":      c.op.req.Iden,
 				"provider":  ProviderName,
 				"region":    transfer.region,
@@ -196,11 +196,11 @@ func (c *Cbs) push(transfer *transferData) {
 
 			for _, tag := range disk.Tags {
 				if *tag.Value != "" {
-					tagsMap[*tag.Key] = *tag.Value
+					series.TagsMap[*tag.Key] = *tag.Value
 				}
 			}
 
-			series.BuildAndShift(tagsMap)
+			series.BuildAndShift()
 			continue
 		}
 

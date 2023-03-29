@@ -77,7 +77,7 @@ func (w *Waf) push(transfer *transferData) {
 			series.Endpoint = p.(string)
 		}
 
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"provider":    ProviderName,
 			"iden":        w.op.req.Iden,
 			"namespace":   w.namespace,
@@ -85,7 +85,7 @@ func (w *Waf) push(transfer *transferData) {
 			"instance_id": p.(string),
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }
 

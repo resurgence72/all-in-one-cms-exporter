@@ -72,11 +72,10 @@ func (s *SAG) push(transfer *transferData) {
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("sag", transfer.metric),
 			ValueUntyped: point.Value(),
+			Endpoint:     instanceID,
 		}
 
-		series.Endpoint = instanceID
-
-		tagsMap := map[string]string{
+		series.TagsMap = map[string]string{
 			"instance_id":         instanceID,
 			"instance_name":       sag.Name,
 			"region":              sag.City,
@@ -95,7 +94,7 @@ func (s *SAG) push(transfer *transferData) {
 			"unit_name": transfer.unit,
 		}
 
-		series.BuildAndShift(tagsMap)
+		series.BuildAndShift()
 	}
 }
 

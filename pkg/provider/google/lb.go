@@ -74,7 +74,7 @@ func (l *Lb) push(transfer *transferData) {
 				ValueUntyped: value,
 			}
 
-			tagsMap := map[string]string{
+			series.TagsMap = map[string]string{
 				"metric_kind":  transfer.metric.MetricKind.String(),
 				"value_type":   transfer.metric.ValueType.String(),
 				"unit":         transfer.metric.Unit,
@@ -86,22 +86,22 @@ func (l *Lb) push(transfer *transferData) {
 			}
 
 			if pid, ok := resourceLabels["project_id"]; ok {
-				tagsMap["project_id"] = pid
+				series.TagsMap["project_id"] = pid
 
 				if pname, ok := l.op.projects.Load(pid); ok {
-					tagsMap["project_mark"] = pname.(string)
+					series.TagsMap["project_mark"] = pname.(string)
 				}
 			}
 
 			if ccode, ok := metricLabels["response_code"]; ok {
-				tagsMap["response_code"] = ccode
+				series.TagsMap["response_code"] = ccode
 			}
 
 			if cc, ok := metricLabels["response_code_class"]; ok {
-				tagsMap["response_code_class"] = cc
+				series.TagsMap["response_code_class"] = cc
 			}
 
-			series.BuildAndShift(tagsMap)
+			series.BuildAndShift()
 		}
 	}
 }

@@ -230,7 +230,8 @@ func (v *VXC) push(transfer *transferData) {
 	transfer.tagMap["provider"] = ProviderName
 	transfer.tagMap["namespace"] = v.namespace
 
-	series.BuildAndShift(transfer.tagMap)
+	series.TagsMap = transfer.tagMap
+	series.BuildAndShift()
 }
 
 func (v *VXC) reqWithRetry(method, url string) ([]byte, error) {
