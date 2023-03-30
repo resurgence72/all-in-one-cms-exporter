@@ -152,8 +152,7 @@ func (r *remoteMgr) buildSeries(tmp []*common.MetricValue, rlbs []*relabel.Confi
 	return series
 }
 
-func (r *remoteMgr) send(rc remote, tmp []*common.MetricValue) {
-	series := r.buildSeries(tmp, rc.relabels)
+func (r *remoteMgr) send(rc remote, series []prompb.TimeSeries) {
 	if len(series) == 0 {
 		return
 	}
@@ -176,14 +175,12 @@ func (r *remoteMgr) send(rc remote, tmp []*common.MetricValue) {
 }
 
 func (r *remoteMgr) report(shard int) {
-	// 做深拷贝，防止影响到当前的batchContainer
-	dc := make([]*common.MetricValue, len(r.batchContainers[shard]))
-	copy(dc, r.batchContainers[shard])
-	// 当前批次发送后重置batchContainer
+	series := r.buildSeries(r.batchContainers[shard], rc.relabels)
+	// 重置batchContainer
 	r.batchContainers[shard] = r.batchContainers[shard][:0]
 
 	for _, rc := range r.rs {
-		go r.send(rc, dc)
+		go r.send(rc, series)
 	}
 }
 
