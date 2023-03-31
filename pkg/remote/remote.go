@@ -175,12 +175,11 @@ func (r *remoteMgr) send(rc remote, series []prompb.TimeSeries) {
 }
 
 func (r *remoteMgr) report(shard int) {
-	series := r.buildSeries(r.batchContainers[shard], rc.relabels)
 	// 重置batchContainer
 	r.batchContainers[shard] = r.batchContainers[shard][:0]
 
 	for _, rc := range r.rs {
-		go r.send(rc, series)
+		go r.send(rc, r.buildSeries(r.batchContainers[shard], rc.relabels))
 	}
 }
 
