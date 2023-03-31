@@ -3,8 +3,8 @@ package notify
 import (
 	"context"
 
-	"watcher4metrics/config"
-	"watcher4metrics/web/api/v1"
+	"watcher4metrics/pkg/config"
+	"watcher4metrics/pkg/web/api/v1"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/fsnotify.v1"

@@ -3,8 +3,8 @@ package v1
 import (
 	"net/http"
 
-	"watcher4metrics/config"
 	ebus "watcher4metrics/pkg/bus"
+	"watcher4metrics/pkg/config"
 	"watcher4metrics/pkg/provider/ali"
 	"watcher4metrics/pkg/provider/google"
 	"watcher4metrics/pkg/provider/megaport"

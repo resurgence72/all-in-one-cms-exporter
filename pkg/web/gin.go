@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"watcher4metrics/config"
-	apiv1 "watcher4metrics/web/api/v1"
+	"watcher4metrics/pkg/config"
+	apiv1 "watcher4metrics/pkg/web/api/v1"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"watcher4metrics/config"
+	"watcher4metrics/pkg/config"
 
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/panjf2000/ants/v2"

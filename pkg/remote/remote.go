@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"watcher4metrics/pkg/config"
 	"watcher4metrics/pkg/metric"
 
 	"github.com/golang/protobuf/proto"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/prometheus/prometheus/prompb"
 
-	"watcher4metrics/config"
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/relabel"
 

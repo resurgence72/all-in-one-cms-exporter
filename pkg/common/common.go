@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"watcher4metrics/config"
+	"watcher4metrics/pkg/config"
 	"watcher4metrics/pkg/metric"
 	"watcher4metrics/pkg/relabel"
 
