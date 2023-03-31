@@ -14,9 +14,21 @@ var (
 		Name: "cms_metrics_discard_counter",
 		Help: "cms metrics discard counter",
 	})
+
+	CMSRemoteWriteSuccessCounter = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "cms_remote_write_success_counter",
+		Help: "cms remote write success counter",
+	})
+
+	CMSRemoteWriteFailedCounter = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "cms_remote_write_failed_counter",
+		Help: "cms remote write failed counter",
+	})
 )
 
 func init() {
 	prometheus.MustRegister(CMSMetricsTotalCounter)
 	prometheus.MustRegister(CMSMetricsDiscardCounter)
+	prometheus.MustRegister(CMSRemoteWriteSuccessCounter)
+	prometheus.MustRegister(CMSRemoteWriteFailedCounter)
 }

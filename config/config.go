@@ -31,7 +31,12 @@ type AliProvider struct {
 
 type ReportConfig struct {
 	RemoteWrites []*RemoteWrite `yaml:"remote_write"`
-	Batch        int            `yaml:"batch"`
+	WriteConfig  WriteConfig    `yaml:"write_config"`
+}
+
+type WriteConfig struct {
+	Batch int `yaml:"batch"`
+	Shard int `yaml:"shard"`
 }
 
 type RemoteWrite struct {
@@ -163,8 +168,12 @@ func (r *ReportConfig) UnmarshalYAML(unmarshal func(any) error) error {
 		return err
 	}
 
-	if rc.Batch <= 0 {
-		rc.Batch = 1000
+	if rc.WriteConfig.Batch <= 0 {
+		rc.WriteConfig.Batch = 1000
+	}
+
+	if rc.WriteConfig.Shard <= 0 {
+		rc.WriteConfig.Shard = 2
 	}
 
 	*r = *rc

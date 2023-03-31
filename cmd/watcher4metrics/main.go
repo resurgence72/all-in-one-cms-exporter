@@ -160,6 +160,9 @@ func main() {
 		logrus.Fatalf("InitConfig err: %v", err)
 	}
 
+	// 初始化remoteChs
+	common.NewRemoteChs(config.Get().Report.WriteConfig.Shard)
+
 	// event-bus
 	// 初始化provider
 	pvdMgr := provider.New(ebus.New(time.Duration(100)*time.Millisecond, 1024))

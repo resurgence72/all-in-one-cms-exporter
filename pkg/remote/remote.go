@@ -43,14 +43,14 @@ var reloadCh = make(chan chan error, 1)
 func newRemoteMgr() (*remoteMgr, error) {
 	conf := config.Get().Report
 	report := &remoteMgr{
-		batchSize:  conf.Batch,
+		batchSize:  conf.WriteConfig.Batch,
 		autoCommit: time.After(5 * time.Second),
-		shard:      common.RemoteShard,
+		shard:      conf.WriteConfig.Shard,
 	}
 
 	bcs := make([][]*common.MetricValue, 0, report.shard)
 	for shard := 0; shard < report.shard; shard++ {
-		bcs = append(bcs, make([]*common.MetricValue, 0, conf.Batch))
+		bcs = append(bcs, make([]*common.MetricValue, 0, conf.WriteConfig.Batch))
 	}
 	report.batchContainers = bcs
 
@@ -113,7 +113,7 @@ func NewRemoteWritesClient(ctx context.Context) {
 					}
 					return
 				case nPoint := <-common.SeriesCh(shard):
-					// 攒够 batch的数量再发送
+					// batch send
 					report.batchContainers[shard] = append(report.batchContainers[shard], nPoint)
 					if len(report.batchContainers[shard]) == report.batchSize {
 						report.report(shard)
@@ -152,9 +152,9 @@ func (r *remoteMgr) buildSeries(tmp []*common.MetricValue, rlbs []*relabel.Confi
 	return series
 }
 
-func (r *remoteMgr) send(rc remote, series []prompb.TimeSeries) {
+func (r *remoteMgr) send(rc remote, series []prompb.TimeSeries) error {
 	if len(series) == 0 {
-		return
+		return nil
 	}
 
 	req := &prompb.WriteRequest{
@@ -163,15 +163,16 @@ func (r *remoteMgr) send(rc remote, series []prompb.TimeSeries) {
 	data, err := proto.Marshal(req)
 	if err != nil {
 		logrus.Errorln("proto marshal failed ", err)
-		return
+		return err
 	}
 
-	if err := rc.w.Store(context.TODO(), snappy.Encode(nil, data)); err != nil {
+	if err = rc.w.Store(context.TODO(), snappy.Encode(nil, data)); err != nil {
 		logrus.Errorln("remote write failed ", err)
-		return
+		return err
 	}
 
 	logrus.Warnln("remote write success, send batch size ", len(series))
+	return nil
 }
 
 func (r *remoteMgr) report(shard int) {
@@ -179,7 +180,13 @@ func (r *remoteMgr) report(shard int) {
 	r.batchContainers[shard] = r.batchContainers[shard][:0]
 
 	for _, rc := range r.rs {
-		go r.send(rc, r.buildSeries(r.batchContainers[shard], rc.relabels))
+		go func(rc remote) {
+			if err := r.send(rc, r.buildSeries(r.batchContainers[shard], rc.relabels)); err != nil {
+				metric.CMSRemoteWriteFailedCounter.Inc()
+			} else {
+				metric.CMSRemoteWriteSuccessCounter.Inc()
+			}
+		}(rc)
 	}
 }
 

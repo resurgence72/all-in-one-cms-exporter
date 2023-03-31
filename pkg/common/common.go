@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"watcher4metrics/config"
 	"watcher4metrics/pkg/metric"
 	"watcher4metrics/pkg/relabel"
 
@@ -22,8 +23,6 @@ const (
 	GoogleCloudProvider   = "google"
 	MegaPortCloudProvider = "megaport"
 	AWSCloudProvider      = "aws"
-
-	RemoteShard = 1 << 2
 )
 
 func GetDefaultEnv(key, defaultValue string) string {
@@ -62,7 +61,7 @@ type MetricValue struct {
 
 func (m *MetricValue) BuildAndShift() {
 	select {
-	case remoteChs[m.hashLabel()&uint64(RemoteShard-1)] <- m:
+	case remoteChs[m.hashLabel()%uint64(config.Get().Report.WriteConfig.Shard)] <- m:
 	default:
 		metric.CMSMetricsDiscardCounter.Inc()
 	}
@@ -150,14 +149,15 @@ func NewCloseOnce() *CloseOnce {
 }
 
 // 核心series chan 连接 provider和 consumer
-var remoteChs = func() []chan *MetricValue {
-	chs := make([]chan *MetricValue, 0, RemoteShard)
-	for shard := 0; shard < RemoteShard; shard++ {
+var remoteChs []chan *MetricValue
+
+func NewRemoteChs(shard int) {
+	chs := make([]chan *MetricValue, 0, shard)
+	for i := 0; i < shard; i++ {
 		chs = append(chs, make(chan *MetricValue, 1<<12))
 	}
-
-	return chs
-}()
+	remoteChs = chs
+}
 
 func SeriesCh(shard int) <-chan *MetricValue {
 	return remoteChs[shard]

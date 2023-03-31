@@ -2,7 +2,10 @@ global:
   auto_reload: false
 
 report:
-  batch: 5000
+  write_config:
+    batch: 5000
+    shard: 4
+
   remote_write:
     - url: http://api.bokecorp.com/n9e-v5-server/prometheus/v1/write
       remote_timeout: 30s
