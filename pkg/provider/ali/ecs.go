@@ -36,8 +36,65 @@ func (e *Ecs) GetMetrics() error {
 	metrics, err := e.op.getMetrics(
 		e.client,
 		e.namespace,
-		nil,
-		nil,
+		map[string]string{"productCategory": "ecs"},
+		[]string{
+			"CPUUtilization",
+			"memory_usedutilization",
+			"concurrentConnections",
+			"vm.ProcessCount", // 系统进程总数
+
+			// IP维度公网流入带宽
+			"VPC_PublicIP_InternetInRate",
+			// IP维度公网流出带宽
+			"VPC_PublicIP_InternetOutRate",
+			// IP维度公网流出带宽使用率
+			"VPC_PublicIP_InternetOutRate_Percent",
+
+			// EIP实例维度流入带宽
+			"eip_InternetInRate",
+			// EIP实例维度流出带宽
+			"eip_InternetOutRate",
+
+			// 内网带宽
+			"IntranetInRate",
+			"IntranetOutRate",
+			// 内网流量
+			"IntranetIn",
+			"IntranetOut",
+
+			// 经典网络公网流入流量
+			"InternetIn",
+			// 经典网络公网流出流量
+			"InternetOut",
+			// 经典网络公网流入带宽
+			"InternetInRate",
+			// 经典网络公网流出带宽
+			"InternetOutRate",
+			// 经典网络公网流出带宽使用率
+			"InternetOutRate_Percent",
+
+			// 丢包
+			"networkcredit_limit_overflow_errorpackets", // 实例网络能力超限丢包数（Count）
+			"packetInDropRates",                         // 入方向丢包率
+			"packetOutDropRates",                        // 出方向丢包率
+
+			// 磁盘读取bps
+			"DiskReadBPS",
+			// 所有磁盘每秒读取次数
+			"DiskReadIOPS",
+			// 写入bps
+			"DiskWriteBPS",
+			// 所有磁盘每秒写入次数
+			"DiskWriteIOPS",
+			"diskusage_utilization",
+
+			// load
+			"load_1m",
+			"load_5m",
+			"load_15m",
+
+			"net_tcpconnection",
+		},
 	)
 	if err != nil {
 		return err
@@ -53,7 +110,7 @@ func (e *Ecs) Collector() {
 		e.namespace,
 		e.push,
 		nil,
-		[]string{"instanceId"},
+		[]string{"instanceId", "state", "device"},
 	)
 }
 
@@ -133,13 +190,27 @@ func (e *Ecs) push(transfer *transferData) {
 			"public_ip":  pubIP,
 			"private_ip": priIP,
 			"cpu":        strconv.Itoa(ip.Cpu),
-			"memory":     strconv.Itoa(ip.Memory / 1024),
 
 			// 指标单位
 			"unit_name": transfer.unit,
 			"provider":  ProviderName,
 			"iden":      e.op.req.Iden,
 			"namespace": e.namespace,
+		}
+		// 适配不同Metric tag
+		for _, tag := range []string{"state", "device"} {
+			if _, ok = point[tag]; ok {
+				v := point[tag].(string)
+				if len(v) > 0 {
+					series.TagsMap[tag] = v
+				}
+			}
+		}
+		
+		if ip.Memory/1024 == 0 {
+			series.TagsMap["memory"] = "0.5"
+		} else {
+			series.TagsMap["memory"] = strconv.Itoa(ip.Memory / 1024)
 		}
 
 		// 注入ecs的Tags
