@@ -70,10 +70,12 @@ type Auth struct {
 var (
 	config   *Watcher4metricsConfig
 	fileName string
-	lock     sync.Mutex
+	lock     sync.RWMutex
 )
 
 func Reload() error {
+	lock.Lock()
+	defer lock.Unlock()
 	return InitConfig(fileName)
 }
 
@@ -88,8 +90,8 @@ func InitConfig(filePath string) error {
 }
 
 func Get() *Watcher4metricsConfig {
-	lock.Lock()
-	defer lock.Unlock()
+	lock.RLock()
+	defer lock.RUnlock()
 	return config
 }
 
