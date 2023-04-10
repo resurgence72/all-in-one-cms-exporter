@@ -6,6 +6,7 @@ import (
 
 	"watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/common"
+	"watcher4metrics/pkg/config"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/cms"
 	"github.com/panjf2000/ants/v2"
@@ -48,15 +49,16 @@ func New(sub chan any) *Ali {
 }
 
 func (a *Ali) setCli(req *AliReq) error {
+	ep := config.Get().Provider.Ali.Endpoint
 	client, err := cms.NewClientWithAccessKey(
-		// 阿里相关云监控region仅作接入用，只需要指定默认的cn-shanghai即可
+		// 阿里相关云监控region仅作接入用,从 config.Endpoint 读取
 		// 而获取实例需要使用到传入 regions，例如获取eip实例
-		"cn-shanghai",
+		ep,
 		req.Ak,
 		req.As,
 	)
 	if err != nil {
-		logrus.Errorf("region: cn-shanghai client err: %s\n", err)
+		logrus.Errorf("region: %s client err: %s\n", ep, err)
 		return err
 	}
 

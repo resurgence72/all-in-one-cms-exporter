@@ -100,12 +100,14 @@ func (o *operator) getMetrics(
 
 // 获取全量region
 func (o *operator) getRegions() []string {
-	defaultRegions := []string{"cn-shanghai"}
+	ep := config.Get().Provider.Ali.Endpoint
+
+	defaultRegions := []string{ep}
 	credential := credentials.NewAccessKeyCredential(
 		o.req.Ak,
 		o.req.As,
 	)
-	client, err := vpc.NewClientWithOptions("cn-shanghai", sdk.NewConfig(), credential)
+	client, err := vpc.NewClientWithOptions(ep, sdk.NewConfig(), credential)
 	if err != nil {
 		logrus.Errorln("NewClientWithOptions failed ", err)
 		return defaultRegions

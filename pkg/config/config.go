@@ -26,7 +26,8 @@ type Provider struct {
 }
 
 type AliProvider struct {
-	BatchGetEnabled bool `yaml:"batch_get_enabled"`
+	BatchGetEnabled bool   `yaml:"batch_get_enabled"`
+	Endpoint        string `yaml:"endpoint"`
 }
 
 type ReportConfig struct {
@@ -147,6 +148,26 @@ func (p *Provider) UnmarshalYAML(unmarshal func(any) error) error {
 	}
 
 	*p = *pc
+	return nil
+}
+
+func (a *AliProvider) UnmarshalYAML(unmarshal func(any) error) error {
+	ap := &AliProvider{}
+	type plain AliProvider
+
+	if err := unmarshal((*plain)(ap)); err != nil {
+		return err
+	}
+
+	if len(ap.Endpoint) == 0 {
+		if ep, ok := os.LookupEnv("ALI_ENDPOINT"); ok && len(ep) > 0 {
+			ap.Endpoint = ep
+		} else {
+			ap.Endpoint = "cn-shanghai"
+		}
+	}
+
+	*a = *ap
 	return nil
 }
 
