@@ -68,7 +68,7 @@ func (m *MetricValue) BuildAndShift() {
 }
 
 func (m *MetricValue) hashLabel() uint64 {
-	buf := BytesPool.Get().(bytes.Buffer)
+	buf := BytesPool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
 		BytesPool.Put(buf)
@@ -166,7 +166,7 @@ func SeriesCh(shard int) <-chan *MetricValue {
 func BuildMetric(mType, metric string) string {
 	metric = strings.ReplaceAll(strings.ReplaceAll(metric, ".", "_"), "-", "_")
 
-	buf := StringBuilderPool.Get().(strings.Builder)
+	buf := StringBuilderPool.Get().(*strings.Builder)
 	defer func() {
 		buf.Reset()
 		StringBuilderPool.Put(buf)
@@ -176,7 +176,9 @@ func BuildMetric(mType, metric string) string {
 	buf.WriteString(strings.ToLower(mType))
 	buf.WriteString("_")
 	buf.WriteString(strings.ToLower(metric))
-	return buf.String()
+
+	m := buf.String()
+	return m
 }
 
 const (
