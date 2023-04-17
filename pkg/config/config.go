@@ -22,12 +22,16 @@ type Watcher4metricsConfig struct {
 
 type Provider struct {
 	Ali *AliProvider `yaml:"ali"`
-	// Tc *TcProvider `yaml:"tc"`
+	Tc  *TcProvider  `yaml:"tc"`
 }
 
 type AliProvider struct {
 	BatchGetEnabled bool   `yaml:"batch_get_enabled"`
 	Endpoint        string `yaml:"endpoint"`
+}
+
+type TcProvider struct {
+	Endpoint string `yaml:"endpoint"`
 }
 
 type ReportConfig struct {
@@ -147,6 +151,10 @@ func (p *Provider) UnmarshalYAML(unmarshal func(any) error) error {
 		pc.Ali = &AliProvider{BatchGetEnabled: false}
 	}
 
+	if pc.Tc == nil {
+		pc.Tc = &TcProvider{}
+	}
+
 	*p = *pc
 	return nil
 }
@@ -168,6 +176,26 @@ func (a *AliProvider) UnmarshalYAML(unmarshal func(any) error) error {
 	}
 
 	*a = *ap
+	return nil
+}
+
+func (t *TcProvider) UnmarshalYAML(unmarshal func(any) error) error {
+	tp := &TcProvider{}
+	type plain TcProvider
+
+	if err := unmarshal((*plain)(tp)); err != nil {
+		return err
+	}
+
+	if len(tp.Endpoint) == 0 {
+		if ep, ok := os.LookupEnv("TC_ENDPOINT"); ok && len(ep) > 0 {
+			tp.Endpoint = ep
+		} else {
+			tp.Endpoint = "ap-shanghai"
+		}
+	}
+
+	*t = *tp
 	return nil
 }
 

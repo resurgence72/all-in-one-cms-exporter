@@ -16,16 +16,18 @@ report:
 
 
 provider:
-  ali: # 当前仅支持 ali 定制化配置
-
+  ali:
     # 阿里云是否使用 batchGet 拉取方式;默认采用 DescribeMetricLastData
     # BatchGet 付费模式实时拉取，不支持提前聚合
     # DescribeMetricLastData 定量免费额度拉取，会有分钟级别的延时
     batch_get_enabled: false
-
     # cms 接入endpoint；默认设置为 cn-shanghai
     # 支持环境变量读取  ALI_ENDPOINT
     endpoint: cn-shanghai
+
+  tc:
+    # 支持环境变量读取  TC_ENDPOINT
+    endpoint: ap-shanghai
 
 http:
   listen: :8081

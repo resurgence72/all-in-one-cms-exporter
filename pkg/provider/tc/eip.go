@@ -33,7 +33,7 @@ func (e *Eip) GetNamespace() string {
 func (e *Eip) GetMetrics() error {
 	// 获取所有ns下metrics指标  默认拿 ap-shanghai 即可
 	metrics, err := e.op.getMetrics(
-		e.clients["ap-shanghai"],
+		e.clients[e.op.endpoint],
 		e.namespace,
 		nil,
 	)

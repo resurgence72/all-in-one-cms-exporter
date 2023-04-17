@@ -29,6 +29,7 @@ const (
 	ACS_KAFKA               common.MetricsType = "acs_kafka"
 	ACS_CLICKHOUSE          common.MetricsType = "acs_clickhouse"
 	ACS_HITSDB              common.MetricsType = "acs_hitsdb"
+	ACS_SLS_DASHBOARD       common.MetricsType = "acs_sls_dashboard"
 
 	ProviderName = common.AlibabaCloudProvider
 )

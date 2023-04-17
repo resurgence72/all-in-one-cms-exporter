@@ -30,7 +30,7 @@ func (c *Cbs) Inject(params ...any) common.MetricsGetter {
 
 func (c *Cbs) GetMetrics() error {
 	metrics, err := c.op.getMetrics(
-		c.clients["ap-shanghai"],
+		c.clients[c.op.endpoint],
 		c.namespace,
 		nil,
 	)

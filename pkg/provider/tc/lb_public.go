@@ -30,7 +30,7 @@ func (l *LbPublic) Inject(params ...any) common.MetricsGetter {
 
 func (l *LbPublic) GetMetrics() error {
 	metrics, err := l.op.getMetrics(
-		l.clients["ap-shanghai"],
+		l.clients[l.op.endpoint],
 		l.namespace,
 		nil,
 	)

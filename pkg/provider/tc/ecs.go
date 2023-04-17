@@ -35,7 +35,7 @@ func (e *Ecs) GetNamespace() string {
 
 func (e *Ecs) GetMetrics() error {
 	metrics, err := e.op.getMetrics(
-		e.clients["ap-shanghai"],
+		e.clients[e.op.endpoint],
 		e.namespace,
 		nil,
 	)

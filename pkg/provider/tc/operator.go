@@ -20,13 +20,15 @@ import (
 )
 
 type operator struct {
-	req        *TCReq
+	req      *TCReq
+	endpoint string
+
 	projectMap sync.Map
 }
 
 func (o *operator) asyncProjectMeta() error {
 	bs, err := o.commonRequest(
-		"ap-shanghai",
+		o.endpoint,
 		"tag",
 		"2018-08-13",
 		"DescribeProjects",
@@ -65,12 +67,12 @@ func (o *operator) getRangeTime() (*string, *string) {
 
 // 获取所有region
 func (o *operator) getRegions() []string {
-	defaultRegions := []string{"ap-shanghai"}
+	defaultRegions := []string{o.endpoint}
 
 	credential := com.NewCredential(o.req.Sid, o.req.Skey)
 	cpf := profile.NewClientProfile()
 	cpf.HttpProfile.Endpoint = "api.tencentcloudapi.com"
-	client, _ := api.NewClient(credential, "", cpf)
+	client, _ := api.NewClient(credential, o.endpoint, cpf)
 	request := api.NewDescribeRegionsRequest()
 	request.Product = com.StringPtr("monitor")
 
@@ -306,33 +308,6 @@ func (o *operator) commonRequest(
 	// 获取响应结果
 	return resp.GetBody(), nil
 }
-
-// dName 腾讯拉取指标需要指定 monitor.Dimension的 Name
-// dValue 表示每个实例 Name 的唯一 key
-// func (o *operator) buildInstances(
-//	dName string,
-//	dValues []string,
-//	domains map[string]string, // waf 不但需要传入 domain 唯一的dimension，还需要同时传入 edition； 这里去兼容多个 dimension
-// ) []*monitor.Instance {
-//	instances := make([]*monitor.Instance, 0, len(dValues))
-//	for _, v := range dValues {
-//		var d []*monitor.Dimension
-//		for k, vv := range domains {
-//			d = append(d, &monitor.Dimension{
-//				Name:  com.StringPtr(k),
-//				Value: com.StringPtr(vv),
-//			})
-//		}
-//
-//		instances = append(instances, &monitor.Instance{
-//			Dimensions: append(d, &monitor.Dimension{
-//				Name:  com.StringPtr(dName),
-//				Value: com.StringPtr(v),
-//			}),
-//		})
-//	}
-//	return instances
-// }
 
 func (o *operator) buildInstances(
 	dNameContainers []string, // 需要几个 Dimensions.n.Name 就写几个

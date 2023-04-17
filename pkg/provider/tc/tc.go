@@ -5,6 +5,7 @@ import (
 
 	"watcher4metrics/pkg/bus"
 	"watcher4metrics/pkg/common"
+	"watcher4metrics/pkg/config"
 
 	"github.com/panjf2000/ants/v2"
 	"github.com/sirupsen/logrus"
@@ -42,7 +43,7 @@ func New(sub chan any) *TC {
 
 func (t *TC) setCliSet(req *TCReq) error {
 	// 腾讯云拉取 metricData 接口并发限制为20次
-	t.op = &operator{req: req}
+	t.op = &operator{req: req, endpoint: config.Get().Provider.Tc.Endpoint}
 
 	credential := com.NewCredential(
 		req.Sid,

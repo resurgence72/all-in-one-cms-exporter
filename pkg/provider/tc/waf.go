@@ -28,7 +28,7 @@ func (w *Waf) Inject(params ...any) common.MetricsGetter {
 
 func (w *Waf) GetMetrics() error {
 	metrics, err := w.op.getMetrics(
-		w.clients["ap-shanghai"],
+		w.clients[w.op.endpoint],
 		w.namespace,
 		nil,
 	)
