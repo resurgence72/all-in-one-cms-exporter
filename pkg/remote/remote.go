@@ -27,7 +27,7 @@ import (
 type remoteMgr struct {
 	batchSize       int
 	batchContainers [][]*common.MetricValue
-	autoCommit      <-chan time.Time
+	autoCommit      *time.Ticker
 	rs              []remote
 
 	shard int
@@ -44,7 +44,7 @@ func newRemoteMgr() (*remoteMgr, error) {
 	conf := config.Get().Report
 	report := &remoteMgr{
 		batchSize:  conf.WriteConfig.Batch,
-		autoCommit: time.After(5 * time.Second),
+		autoCommit: time.NewTicker(5 * time.Second),
 		shard:      conf.WriteConfig.Shard,
 	}
 
@@ -101,7 +101,10 @@ func NewRemoteWritesClient(ctx context.Context) {
 		wg.Add(1)
 
 		go func(shard int) {
-			defer wg.Done()
+			defer func(){
+				wg.Done()
+				report.autoCommit.Stop()
+			}
 			logrus.Warnf("remote write client shard %d is start", shard)
 
 			for {
@@ -118,7 +121,7 @@ func NewRemoteWritesClient(ctx context.Context) {
 					if len(report.batchContainers[shard]) == report.batchSize {
 						report.report(shard)
 					}
-				case <-report.autoCommit:
+				case <-report.autoCommit.C:
 					// 每5s会检测当前batchContainer中是否存在 < conf.batch的未发送数据进行发送
 					if report.batchContainers[shard] != nil && len(report.batchContainers[shard]) > 0 {
 						report.report(shard)
