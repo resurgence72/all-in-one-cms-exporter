@@ -14,9 +14,6 @@ import (
 // metrics 4 eip 维度对象
 type Eip struct {
 	meta
-
-	// 保存eip的实例id对应的eip对象
-	eipMap map[string]*vpc.EipAddress
 }
 
 func init() {
@@ -64,7 +61,7 @@ func (e *Eip) push(transfer *transferData) {
 		}
 
 		instanceID := p.(string)
-		eip := e.getEip(instanceID)
+		eip := e.loadEip(instanceID)
 		if eip == nil {
 			continue
 		}
@@ -114,12 +111,9 @@ func (e *Eip) push(transfer *transferData) {
 	}
 }
 
-func (e *Eip) getEip(instance string) *vpc.EipAddress {
-	e.m.RLock()
-	defer e.m.RUnlock()
-
-	if eip, ok := e.eipMap[instance]; ok {
-		return eip
+func (e *Eip) loadEip(id string) *vpc.EipAddress {
+	if eip, ok := e.mp.Load(id); ok {
+		return eip.(*vpc.EipAddress)
 	}
 	return nil
 }
@@ -151,10 +145,6 @@ func (e *Eip) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if e.eipMap == nil {
-		e.eipMap = make(map[string]*vpc.EipAddress)
-	}
-
 	e.op.async(e.op.getRegions(), func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -178,21 +168,15 @@ func (e *Eip) AsyncMeta(ctx context.Context) {
 		}
 
 		// eipList拿到当前region下的所有eip实例
-		// 保存到 eipMap 中
+		// 保存到 mp 中
 		for i := range container {
 			eip := container[i]
-
-			// 并发写map加锁
-			e.m.Lock()
-			// AllocationId 是eip的id
-			// Instance 是当前绑定的实例id
-			e.eipMap[eip.AllocationId] = &eip
-			e.m.Unlock()
+			e.mp.Store(eip.AllocationId, &eip)
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"eipLens": len(e.eipMap),
+		"eipLens": e.op.mapLens(e.mp),
 		"iden":    e.op.req.Iden,
 	}).Warnln("async loop success, get all eip instance")
 }

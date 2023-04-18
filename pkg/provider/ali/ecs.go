@@ -16,8 +16,6 @@ import (
 
 type Ecs struct {
 	meta
-
-	ecsMap map[string]*ecs.Instance
 }
 
 func init() {
@@ -114,12 +112,9 @@ func (e *Ecs) Collector() {
 	)
 }
 
-func (e *Ecs) getIP(id string) *ecs.Instance {
-	e.m.RLock()
-	defer e.m.RUnlock()
-
-	if ip, ok := e.ecsMap[id]; ok {
-		return ip
+func (e *Ecs) loadECS(id string) *ecs.Instance {
+	if es, ok := e.mp.Load(id); ok {
+		return es.(*ecs.Instance)
 	}
 	return nil
 }
@@ -132,7 +127,7 @@ func (e *Ecs) push(transfer *transferData) {
 		}
 
 		instanceID := p.(string)
-		ip := e.getIP(instanceID)
+		ip := e.loadECS(instanceID)
 		if ip == nil {
 			continue
 		}
@@ -206,7 +201,7 @@ func (e *Ecs) push(transfer *transferData) {
 				}
 			}
 		}
-		
+
 		if ip.Memory/1024 == 0 {
 			series.TagsMap["memory"] = "0.5"
 		} else {
@@ -250,10 +245,6 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if e.ecsMap == nil {
-		e.ecsMap = make(map[string]*ecs.Instance)
-	}
-
 	e.op.async(e.op.getRegions(), func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -279,14 +270,12 @@ func (e *Ecs) AsyncMeta(ctx context.Context) {
 		for i := range container {
 			ecs := container[i]
 
-			e.m.Lock()
-			e.ecsMap[ecs.InstanceId] = &ecs
-			e.m.Unlock()
+			e.mp.Store(ecs.InstanceId, &ecs)
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"ecsLens": len(e.ecsMap),
+		"ecsLens": e.op.mapLens(e.mp),
 		"iden":    e.op.req.Iden,
 	}).Warnln("async loop success, get all ecs instance")
 }

@@ -14,8 +14,6 @@ import (
 
 type MongoDB struct {
 	meta
-
-	mongoMap map[string]*dds.DBInstance
 }
 
 func (m *MongoDB) Inject(params ...any) common.MetricsGetter {
@@ -52,13 +50,9 @@ func (m *MongoDB) Collector() {
 }
 
 func (m *MongoDB) AsyncMeta(ctx context.Context) {
-	if m.mongoMap == nil {
-		m.mongoMap = make(map[string]*dds.DBInstance)
-	}
-
 	m.op.async(m.op.getRegions(), m.asyncByRegion)
 	logrus.WithFields(logrus.Fields{
-		"mongoLens": len(m.mongoMap),
+		"mongoLens": m.op.mapLens(m.mp),
 		"iden":      m.op.req.Iden,
 	}).Warnln("async loop success, get all redis instance")
 }
@@ -70,8 +64,7 @@ func (m *MongoDB) push(transfer *transferData) {
 			continue
 		}
 
-		instanceID := p.(string)
-		mongo := m.getMongo(instanceID)
+		mongo := m.loadMongo(p.(string))
 		if mongo == nil {
 			continue
 		}
@@ -113,12 +106,9 @@ func (m *MongoDB) push(transfer *transferData) {
 	}
 }
 
-func (m *MongoDB) getMongo(id string) *dds.DBInstance {
-	m.m.RLock()
-	defer m.m.RUnlock()
-
-	if mongo, ok := m.mongoMap[id]; ok {
-		return mongo
+func (m *MongoDB) loadMongo(id string) *dds.DBInstance {
+	if mongo, ok := m.mp.Load(id); ok {
+		return mongo.(*dds.DBInstance)
 	}
 	return nil
 }
@@ -170,9 +160,7 @@ func (m *MongoDB) asyncByRegion(region string, wg *sync.WaitGroup) {
 	for i := range container {
 		mongo := container[i]
 
-		m.m.Lock()
-		m.mongoMap[mongo.DBInstanceId] = &mongo
-		m.m.Unlock()
+		m.mp.Store(mongo.DBInstanceId, &mongo)
 	}
 }
 

@@ -14,8 +14,6 @@ import (
 
 type PolarDB struct {
 	meta
-
-	pdbMap map[string]*polardb.DBCluster
 }
 
 func init() {
@@ -81,10 +79,6 @@ func (p *PolarDB) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if p.pdbMap == nil {
-		p.pdbMap = make(map[string]*polardb.DBCluster)
-	}
-
 	p.op.async(p.op.getRegions(), func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -110,14 +104,12 @@ func (p *PolarDB) AsyncMeta(ctx context.Context) {
 		for i := range container {
 			pdb := container[i]
 
-			p.m.Lock()
-			p.pdbMap[pdb.DBClusterId] = &pdb
-			p.m.Unlock()
+			p.mp.Store(pdb.DBClusterId, &pdb)
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"polarDBLens": len(p.pdbMap),
+		"polarDBLens": p.op.mapLens(p.mp),
 		"iden":        p.op.req.Iden,
 	}).Warnln("async loop success, get all polardb instance")
 }
@@ -130,7 +122,7 @@ func (p *PolarDB) push(transfer *transferData) {
 		}
 
 		instanceID := po.(string)
-		pdb := p.getPolarDB(instanceID)
+		pdb := p.loadPolarDB(instanceID)
 		if pdb == nil {
 			continue
 		}
@@ -164,12 +156,9 @@ func (p *PolarDB) push(transfer *transferData) {
 
 }
 
-func (p *PolarDB) getPolarDB(id string) *polardb.DBCluster {
-	p.m.RLock()
-	defer p.m.RUnlock()
-
-	if pdb, ok := p.pdbMap[id]; ok {
-		return pdb
+func (p *PolarDB) loadPolarDB(id string) *polardb.DBCluster {
+	if pdb, ok := p.mp.Load(id); ok {
+		return pdb.(*polardb.DBCluster)
 	}
 	return nil
 }

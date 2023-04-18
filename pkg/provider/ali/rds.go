@@ -13,8 +13,6 @@ import (
 
 type Rds struct {
 	meta
-	// 保存eip的实例id对应的eip对象
-	rdsMap map[string]*rds.DBInstance
 }
 
 func init() {
@@ -80,10 +78,6 @@ func (r *Rds) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if r.rdsMap == nil {
-		r.rdsMap = make(map[string]*rds.DBInstance)
-	}
-
 	r.op.async(r.op.getRegions(), func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -109,14 +103,12 @@ func (r *Rds) AsyncMeta(ctx context.Context) {
 		for i := range container {
 			rds := container[i]
 
-			r.m.Lock()
-			r.rdsMap[rds.DBInstanceId] = &rds
-			r.m.Unlock()
+			r.mp.Store(rds.DBInstanceId, &rds)
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"rdsLens": len(r.rdsMap),
+		"rdsLens": r.op.mapLens(r.mp),
 		"iden":    r.op.req.Iden,
 	}).Warnln("async loop success, get all rds instance")
 }
@@ -129,7 +121,7 @@ func (r *Rds) push(transfer *transferData) {
 		}
 
 		instanceID := p.(string)
-		rds := r.getRds(instanceID)
+		rds := r.loadRds(instanceID)
 		if rds == nil {
 			continue
 		}
@@ -162,12 +154,9 @@ func (r *Rds) push(transfer *transferData) {
 	}
 }
 
-func (r *Rds) getRds(id string) *rds.DBInstance {
-	r.m.RLock()
-	defer r.m.RUnlock()
-
-	if rds, ok := r.rdsMap[id]; ok {
-		return rds
+func (r *Rds) loadRds(id string) *rds.DBInstance {
+	if rs, ok := r.mp.Load(id); ok {
+		return rs.(*rds.DBInstance)
 	}
 	return nil
 }

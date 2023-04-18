@@ -14,8 +14,6 @@ import (
 
 type SAG struct {
 	meta
-
-	sagMap map[string]*smartag.SmartAccessGateway
 }
 
 func init() {
@@ -55,6 +53,14 @@ func (s *SAG) Collector() {
 	)
 }
 
+func (s *SAG) loadSAG(id string) *smartag.SmartAccessGateway {
+	if sag, ok := s.mp.Load(id); ok {
+		return sag.(*smartag.SmartAccessGateway)
+	} else {
+		return nil
+	}
+}
+
 func (s *SAG) push(transfer *transferData) {
 	for _, point := range transfer.points {
 		p, ok := point["instanceId"]
@@ -63,8 +69,8 @@ func (s *SAG) push(transfer *transferData) {
 		}
 
 		instanceID := p.(string)
-		sag, ok := s.sagMap[instanceID]
-		if !ok {
+		sag := s.loadSAG(p.(string))
+		if sag == nil {
 			continue
 		}
 
@@ -123,10 +129,6 @@ func (s *SAG) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if s.sagMap == nil {
-		s.sagMap = make(map[string]*smartag.SmartAccessGateway)
-	}
-
 	s.op.async(s.op.getRegions(), func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -151,14 +153,12 @@ func (s *SAG) AsyncMeta(ctx context.Context) {
 		for i := range container {
 			sag := container[i]
 
-			s.m.Lock()
-			s.sagMap[sag.SmartAGId] = &sag
-			s.m.Unlock()
+			s.mp.Store(sag.SmartAGId, &sag)
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"sagLens": len(s.sagMap),
+		"sagLens": s.op.mapLens(s.mp),
 		"iden":    s.op.req.Iden,
 	}).Warnln("async loop success, get all sag instance")
 }

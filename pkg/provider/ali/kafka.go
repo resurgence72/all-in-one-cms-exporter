@@ -14,8 +14,6 @@ import (
 
 type Kafka struct {
 	meta
-
-	kafkaMap map[string]*alikafka.InstanceVO
 }
 
 func (k *Kafka) Inject(params ...any) common.MetricsGetter {
@@ -76,10 +74,6 @@ func (k *Kafka) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if k.kafkaMap == nil {
-		k.kafkaMap = make(map[string]*alikafka.InstanceVO)
-	}
-
 	k.op.async(k.op.getRegions(), func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -103,17 +97,21 @@ func (k *Kafka) AsyncMeta(ctx context.Context) {
 
 		for i := range container {
 			kafka := container[i]
-
-			k.m.Lock()
-			k.kafkaMap[kafka.InstanceId] = &kafka
-			k.m.Unlock()
+			k.mp.Store(kafka.InstanceId, &kafka)
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"kafkaLens": len(k.kafkaMap),
+		"kafkaLens": k.op.mapLens(k.mp),
 		"iden":      k.op.req.Iden,
 	}).Warnln("async loop success, get all kafka instance")
+}
+
+func (k *Kafka) loadKafka(id string) *alikafka.InstanceVO {
+	if kfk, ok := k.mp.Load(id); ok {
+		return kfk.(*alikafka.InstanceVO)
+	}
+	return nil
 }
 
 func (k *Kafka) push(transfer *transferData) {
@@ -122,9 +120,9 @@ func (k *Kafka) push(transfer *transferData) {
 		if !ok {
 			continue
 		}
-		instanceID := p.(string)
-		kfk, ok := k.kafkaMap[instanceID]
-		if !ok {
+
+		kfk := k.loadKafka(p.(string))
+		if kfk == nil {
 			continue
 		}
 

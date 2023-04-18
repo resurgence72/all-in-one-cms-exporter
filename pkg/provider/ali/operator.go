@@ -361,3 +361,12 @@ func (o *operator) async(regions []string, f antFunc) {
 
 	wg.Wait()
 }
+
+func (o *operator) mapLens(m sync.Map) int {
+	var i int
+	m.Range(func(_, _ any) bool {
+		i++
+		return true
+	})
+	return i
+}

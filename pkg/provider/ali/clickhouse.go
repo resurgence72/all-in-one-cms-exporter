@@ -4,15 +4,10 @@ import (
 	"context"
 
 	"watcher4metrics/pkg/common"
-
-	ck "github.com/aliyun/alibaba-cloud-sdk-go/services/clickhouse"
 )
 
 type ClickHouse struct {
 	meta
-
-	// 保存eip的实例id对应的eip对象
-	ckMap map[string]*ck.DBCluster
 }
 
 func init() {

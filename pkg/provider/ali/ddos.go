@@ -15,8 +15,6 @@ import (
 
 type DDos struct {
 	meta
-
-	ddosMap map[string]string
 }
 
 func init() {
@@ -58,6 +56,15 @@ func (d *DDos) Collector() {
 	}
 }
 
+func (d *DDos) loadDDos(id string) *string {
+	if ddos, ok := d.mp.Load(id); !ok {
+		ddos := ddos.(string)
+		return &ddos
+	} else {
+		return nil
+	}
+}
+
 func (d *DDos) push(transfer *transferData) {
 	for _, point := range transfer.points {
 		p, ok := point["InstanceId"]
@@ -65,9 +72,8 @@ func (d *DDos) push(transfer *transferData) {
 			continue
 		}
 
-		instanceID := p.(string)
-		ip, ok := d.ddosMap[instanceID]
-		if !ok {
+		ip := d.loadDDos(p.(string))
+		if ip == nil {
 			continue
 		}
 
@@ -75,11 +81,11 @@ func (d *DDos) push(transfer *transferData) {
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("ddos", transfer.metric),
 			ValueUntyped: point.Value(),
-			Endpoint:     ip,
+			Endpoint:     *ip,
 		}
 
 		series.TagsMap = map[string]string{
-			"instance_id": instanceID,
+			"instance_id": p.(string),
 			"provider":    ProviderName,
 			"iden":        d.op.req.Iden,
 			"namespace":   d.namespace,
@@ -153,10 +159,6 @@ func (d *DDos) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if d.ddosMap == nil {
-		d.ddosMap = make(map[string]string)
-	}
-
 	d.op.async([]string{"cn-hangzhou", "ap-southeast-1"}, func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -221,12 +223,12 @@ func (d *DDos) AsyncMeta(ctx context.Context) {
 			}
 
 			// 设置ddosmap k 为 ddos instanceID, v 为当前所生效的 ip地址
-			d.ddosMap[ddos.InstanceId] = strings.Join(ips, ",")
+			d.mp.Store(ddos.InstanceId, strings.Join(ips, ","))
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"ddosLens": len(d.ddosMap),
+		"ddosLens": d.op.mapLens(d.mp),
 		"iden":     d.op.req.Iden,
 	}).Warnln("async loop success, get all ddos instance")
 }

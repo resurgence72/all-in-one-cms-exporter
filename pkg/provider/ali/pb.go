@@ -14,7 +14,8 @@ type meta struct {
 	metrics   []*cms.Resource
 	client    *cms.Client
 
-	m sync.RWMutex
+	m  sync.RWMutex
+	mp sync.Map
 }
 
 func newMeta(params ...any) meta {

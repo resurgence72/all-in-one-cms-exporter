@@ -13,8 +13,6 @@ import (
 
 type Slb struct {
 	meta
-
-	slbMap map[string]*slb.LoadBalancer
 }
 
 func init() {
@@ -54,6 +52,14 @@ func (s *Slb) Collector() {
 	)
 }
 
+func (s *Slb) loadSLB(id string) *slb.LoadBalancer {
+	if sb, ok := s.mp.Load(id); ok {
+		return sb.(*slb.LoadBalancer)
+	} else {
+		return nil
+	}
+}
+
 func (s *Slb) push(transfer *transferData) {
 	for _, point := range transfer.points {
 		p, ok := point["instanceId"]
@@ -61,9 +67,8 @@ func (s *Slb) push(transfer *transferData) {
 			continue
 		}
 
-		instanceID := p.(string)
-		slb, ok := s.slbMap[instanceID]
-		if !ok {
+		slb := s.loadSLB(p.(string))
+		if slb == nil {
 			continue
 		}
 
@@ -79,7 +84,7 @@ func (s *Slb) push(transfer *transferData) {
 			"iden":        s.op.req.Iden,
 			"namespace":   s.namespace,
 			"unit_name":   transfer.unit,
-			"instance_id": instanceID,
+			"instance_id": slb.LoadBalancerId,
 			"status":      slb.LoadBalancerStatus,
 			"region":      slb.RegionId,
 		}
@@ -119,10 +124,6 @@ func (s *Slb) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if s.slbMap == nil {
-		s.slbMap = make(map[string]*slb.LoadBalancer)
-	}
-
 	s.op.async(s.op.getRegions(), func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -147,15 +148,12 @@ func (s *Slb) AsyncMeta(ctx context.Context) {
 
 		for i := range container {
 			slb := container[i]
-
-			s.m.Lock()
-			s.slbMap[slb.LoadBalancerId] = &slb
-			s.m.Unlock()
+			s.mp.Store(slb.LoadBalancerId, &slb)
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"slbLens": len(s.slbMap),
+		"slbLens": s.op.mapLens(s.mp),
 		"iden":    s.op.req.Iden,
 	}).Warnln("async loop success, get all slb instance")
 }

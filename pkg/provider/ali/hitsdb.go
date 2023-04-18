@@ -13,9 +13,6 @@ import (
 
 type HiTSDB struct {
 	meta
-
-	// 保存eip的实例id对应的eip对象
-	tsdbMap map[string]*hitsdb.LindormInstanceSummary
 }
 
 func init() {
@@ -81,10 +78,6 @@ func (h *HiTSDB) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if h.tsdbMap == nil {
-		h.tsdbMap = make(map[string]*hitsdb.LindormInstanceSummary)
-	}
-
 	h.op.async(h.op.getRegions(), func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -109,17 +102,21 @@ func (h *HiTSDB) AsyncMeta(ctx context.Context) {
 
 		for i := range container {
 			tsdb := container[i]
-
-			h.m.Lock()
-			h.tsdbMap[tsdb.InstanceId] = &tsdb
-			h.m.Unlock()
+			h.mp.Store(tsdb.InstanceId, &tsdb)
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"tsdbLens": len(h.tsdbMap),
+		"tsdbLens": h.op.mapLens(h.mp),
 		"iden":     h.op.req.Iden,
 	}).Warnln("async loop success, get all hitsdb instance")
+}
+
+func (h *HiTSDB) loadTSDB(id string) *hitsdb.LindormInstanceSummary {
+	if tsdb, ok := h.mp.Load(id); ok {
+		return tsdb.(*hitsdb.LindormInstanceSummary)
+	}
+	return nil
 }
 
 func (h *HiTSDB) push(transfer *transferData) {
@@ -129,9 +126,8 @@ func (h *HiTSDB) push(transfer *transferData) {
 			continue
 		}
 
-		instanceID := p.(string)
-		tsdb, ok := h.tsdbMap[instanceID]
-		if !ok {
+		tsdb := h.loadTSDB(p.(string))
+		if tsdb == nil {
 			continue
 		}
 
@@ -139,7 +135,7 @@ func (h *HiTSDB) push(transfer *transferData) {
 			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
 			Metric:       common.BuildMetric("hitsdb", transfer.metric),
 			ValueUntyped: point.Value(),
-			Endpoint:     instanceID,
+			Endpoint:     tsdb.InstanceId,
 		}
 
 		series.TagsMap = map[string]string{

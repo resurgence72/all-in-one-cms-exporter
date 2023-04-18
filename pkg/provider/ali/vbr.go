@@ -13,8 +13,6 @@ import (
 
 type Vbr struct {
 	meta
-
-	vbrMap map[string]*vpc.VirtualBorderRouterType
 }
 
 func init() {
@@ -58,10 +56,6 @@ func (v *Vbr) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if v.vbrMap == nil {
-		v.vbrMap = make(map[string]*vpc.VirtualBorderRouterType)
-	}
-
 	v.op.async(v.op.getRegions(), func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -86,14 +80,12 @@ func (v *Vbr) AsyncMeta(ctx context.Context) {
 		for i := range container {
 			vbr := container[i]
 
-			v.m.Lock()
-			v.vbrMap[vbr.VbrId] = &vbr
-			v.m.Unlock()
+			v.mp.Store(vbr.VbrId, &vbr)
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"vbrLens": len(v.vbrMap),
+		"vbrLens": v.op.mapLens(v.mp),
 		"iden":    v.op.req.Iden,
 	}).Warnln("async loop success, get all vbr instance")
 }
@@ -123,6 +115,14 @@ func (v *Vbr) Collector() {
 	)
 }
 
+func (v *Vbr) loadVbr(id string) *vpc.VirtualBorderRouterType {
+	if vbr, ok := v.mp.Load(id); ok {
+		return vbr.(*vpc.VirtualBorderRouterType)
+	} else {
+		return nil
+	}
+}
+
 func (v *Vbr) push(transfer *transferData) {
 	for _, point := range transfer.points {
 		p, ok := point["instanceId"]
@@ -130,9 +130,8 @@ func (v *Vbr) push(transfer *transferData) {
 			continue
 		}
 
-		instanceID := p.(string)
-		vbr, ok := v.vbrMap[instanceID]
-		if !ok {
+		vbr := v.loadVbr(p.(string))
+		if vbr == nil {
 			continue
 		}
 
@@ -148,7 +147,7 @@ func (v *Vbr) push(transfer *transferData) {
 			"iden":             v.op.req.Iden,
 			"namespace":        v.namespace,
 			"unit_name":        transfer.unit,
-			"instance_id":      instanceID,
+			"instance_id":      vbr.VbrId,
 			"status":           vbr.Status,
 			"type":             vbr.Type,
 			"peer_gateway_ip":  vbr.PeerGatewayIp,

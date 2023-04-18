@@ -14,8 +14,6 @@ import (
 
 type Redis struct {
 	meta
-
-	redisMap map[string]*r_kvstore.KVStoreInstanceInDescribeInstances
 }
 
 func init() {
@@ -81,10 +79,6 @@ func (r *Redis) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if r.redisMap == nil {
-		r.redisMap = make(map[string]*r_kvstore.KVStoreInstanceInDescribeInstances)
-	}
-
 	r.op.async(r.op.getRegions(), func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -109,24 +103,19 @@ func (r *Redis) AsyncMeta(ctx context.Context) {
 		for i := range container {
 			redis := container[i]
 
-			r.m.Lock()
-			r.redisMap[redis.InstanceId] = &redis
-			r.m.Unlock()
+			r.mp.Store(redis.InstanceId, &redis)
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"redisLens": len(r.redisMap),
+		"redisLens": r.op.mapLens(r.mp),
 		"iden":      r.op.req.Iden,
 	}).Warnln("async loop success, get all redis instance")
 }
 
-func (r *Redis) getRedis(id string) *r_kvstore.KVStoreInstanceInDescribeInstances {
-	r.m.RLock()
-	defer r.m.RUnlock()
-
-	if redis, ok := r.redisMap[id]; ok {
-		return redis
+func (r *Redis) loadRedis(id string) *r_kvstore.KVStoreInstanceInDescribeInstances {
+	if redis, ok := r.mp.Load(id); ok {
+		return redis.(*r_kvstore.KVStoreInstanceInDescribeInstances)
 	}
 	return nil
 }
@@ -139,7 +128,7 @@ func (r *Redis) push(transfer *transferData) {
 		}
 
 		instanceID := p.(string)
-		redis := r.getRedis(instanceID)
+		redis := r.loadRedis(instanceID)
 		if redis == nil {
 			continue
 		}

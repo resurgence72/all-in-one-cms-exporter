@@ -2,7 +2,6 @@ package ali
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"watcher4metrics/pkg/common"
@@ -14,8 +13,6 @@ import (
 
 type Alb struct {
 	meta
-
-	albMap map[string]*alb.LoadBalancer
 }
 
 func init() {
@@ -80,10 +77,6 @@ func (a *Alb) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	if a.albMap == nil {
-		a.albMap = make(map[string]*alb.LoadBalancer)
-	}
-
 	a.op.async(a.op.getRegions(), func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
@@ -106,29 +99,33 @@ func (a *Alb) AsyncMeta(ctx context.Context) {
 
 		for i := range container {
 			alb := container[i]
-			a.m.Lock()
-			a.albMap[alb.LoadBalancerId] = &alb
-			a.m.Unlock()
+			a.mp.Store(alb.LoadBalancerId, &alb)
 		}
 	})
 
 	logrus.WithFields(logrus.Fields{
-		"albLens": len(a.albMap),
+		"albLens": a.op.mapLens(a.mp),
 		"iden":    a.op.req.Iden,
 	}).Warnln("async loop success, get all alb instance")
 }
 
+func (a *Alb) loadALB(id string) *alb.LoadBalancer {
+	if ab, ok := a.mp.Load(id); !ok {
+		return ab.(*alb.LoadBalancer)
+	} else {
+		return nil
+	}
+}
+
 func (a *Alb) push(transfer *transferData) {
 	for _, point := range transfer.points {
-		p, ok := point["loadBalancerId"]
+		plbID, ok := point["loadBalancerId"]
 		if !ok {
 			continue
 		}
 
-		instanceID := p.(string)
-		alb, ok := a.albMap[instanceID]
-		if !ok {
-			fmt.Println("跳过了", instanceID)
+		alb := a.loadALB(plbID.(string))
+		if alb == nil {
 			continue
 		}
 
@@ -144,7 +141,7 @@ func (a *Alb) push(transfer *transferData) {
 			"iden":          a.op.req.Iden,
 			"namespace":     a.namespace,
 			"unit_name":     transfer.unit,
-			"instance_id":   instanceID,
+			"instance_id":   alb.LoadBalancerId,
 			"instance_name": alb.LoadBalancerName,
 			"status":        alb.LoadBalancerStatus,
 		}
