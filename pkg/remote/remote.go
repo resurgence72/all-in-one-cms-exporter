@@ -101,10 +101,10 @@ func NewRemoteWritesClient(ctx context.Context) {
 		wg.Add(1)
 
 		go func(shard int) {
-			defer func(){
+			defer func() {
 				wg.Done()
 				report.autoCommit.Stop()
-			}
+			}()
 			logrus.Warnf("remote write client shard %d is start", shard)
 
 			for {
@@ -114,6 +114,7 @@ func NewRemoteWritesClient(ctx context.Context) {
 					if report.batchContainers[shard] != nil && len(report.batchContainers[shard]) > 0 {
 						report.report(shard)
 					}
+
 					return
 				case nPoint := <-common.SeriesCh(shard):
 					// batch send

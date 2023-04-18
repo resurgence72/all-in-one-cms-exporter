@@ -46,6 +46,7 @@ require (
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.0.0
 	github.com/alibabacloud-go/tea v1.1.19
 	github.com/panjf2000/ants/v2 v2.7.2
+	github.com/spaolacci/murmur3 v1.1.0
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cbs v1.0.602
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/clb v1.0.606
 	go.uber.org/ratelimit v0.2.0
@@ -98,7 +99,6 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/tjfoc/gmsm v1.3.2 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
