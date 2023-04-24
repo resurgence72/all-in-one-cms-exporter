@@ -93,7 +93,9 @@ func (o *operator) getMetrics(
 
 func (o *operator) getRangeTime() (int64, int64) {
 	now := time.Now().UTC()
-	return now.Add(time.Minute * -4).Unix(), now.Add(time.Minute * -3).Unix()
+	end := now.Add(time.Minute * -4)
+	start := end.Add(time.Second * -time.Duration(o.req.Dur))
+	return start.Unix(), end.Unix()
 }
 
 func (o *operator) listTimeSeries(
