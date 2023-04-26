@@ -2,12 +2,12 @@ package google
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"math"
+	"sort"
 	"strings"
 	"sync"
-	"errors"
-	"sort"
-	"math"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/duration"

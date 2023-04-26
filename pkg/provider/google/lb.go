@@ -67,7 +67,7 @@ func (l *Lb) push(transfer *transferData) {
 		for _, point := range points {
 			ts := point.Interval.EndTime.GetSeconds()
 			value := l.op.getPointValue(series.GetValueType(), point)
-			
+
 			switch v := value.(type) {
 			case quantileContainer:
 				for i, quantile := range v.qs {
@@ -89,17 +89,17 @@ func (l *Lb) push(transfer *transferData) {
 					}
 
 					if pid, ok := resourceLabels["project_id"]; ok {
-						n9e.TagsMap["project_id"] = pid
+						series.TagsMap["project_id"] = pid
 
 						if pname, ok := l.op.projects.Load(pid); ok {
-							n9e.TagsMap["project_mark"] = pname.(string)
+							series.TagsMap["project_mark"] = pname.(string)
 						}
 					}
 					if ccode, ok := metricLabels["response_code"]; ok {
-						n9e.TagsMap["response_code"] = ccode
+						series.TagsMap["response_code"] = ccode
 					}
 					if cc, ok := metricLabels["response_code_class"]; ok {
-						n9e.TagsMap["response_code_class"] = cc
+						series.TagsMap["response_code_class"] = cc
 					}
 
 					series.TagsMap["quantile"] = quantileIdx[i]
