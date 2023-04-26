@@ -69,8 +69,8 @@ func (l *Lb) push(transfer *transferData) {
 			value := l.op.getPointValue(series.GetValueType(), point)
 			
 			switch v := value.(type) {
-			case quantileSet:
-				for i, quantile := range v {
+			case quantileContainer:
+				for i, quantile := range v.qs {
 					series := &common.MetricValue{
 						Metric:       common.BuildMetric("lb", metricName),
 						Endpoint:     ep,
