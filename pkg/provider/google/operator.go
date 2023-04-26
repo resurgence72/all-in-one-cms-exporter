@@ -62,7 +62,7 @@ func (o *operator) getMetrics(
 
 	req := &monitoringpb.ListMetricDescriptorsRequest{
 		Name:   fmt.Sprintf("projects/%s", p),
-		Filter: fmt.Sprintf(`metric.type=starts_with("%s/")`, metricPrefix),
+		Filter: fmt.Sprintf(`metric.type=starts_with("%s")`, metricPrefix),
 	}
 
 	ctx, _ := context.WithTimeout(context.TODO(), 30*time.Second)
@@ -151,7 +151,8 @@ func (o *operator) listTimeSeries(
 					}
 				}
 
-				ctx, _ := context.WithTimeout(context.TODO(), 30*time.Second)
+				ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+				defer cancel()
 				it := cli.ListTimeSeries(ctx, req)
 
 				var points []*monitoringpb.TimeSeries
