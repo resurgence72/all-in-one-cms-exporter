@@ -44,5 +44,6 @@ type GoogleReq struct {
 
 func (g *GoogleReq) Decode() *GoogleReq {
 	g.GSA = common.DecodeBase64(g.GSA)
+	//g.Dur = 60
 	return g
 }
