@@ -49,11 +49,14 @@ func (o *operator) getPointValue(valueType metricpb.MetricDescriptor_ValueType, 
 		if err != nil {
 			return point.GetValue().GetDistributionValue().Mean
 		}
-		return append(bucketQuantile(quantileSet{
+		if quantile := bucketQuantile([]float64{
 			.50,
 			.90,
 			.99,
-		}, bks), point.GetValue().GetDistributionValue().Mean)
+		}, bks); !quantile.isNan {
+			return append(quantile.qs, point.GetValue().GetDistributionValue().Mean)
+		}
+		return point.GetValue().GetDistributionValue().Mean
 	case metricpb.MetricDescriptor_STRING:
 		return 0
 	default:
@@ -61,7 +64,10 @@ func (o *operator) getPointValue(valueType metricpb.MetricDescriptor_ValueType, 
 	}
 }
 
-type quantileSet []float64
+type quantileContainer struct {
+	qs    []float64
+	isNan bool
+}
 
 func (o *operator) getMetrics(
 	cli *monitoring.MetricClient,
@@ -288,47 +294,38 @@ func (b buckets) Len() int           { return len(b) }
 func (b buckets) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 func (b buckets) Less(i, j int) bool { return b[i].upperBound < b[j].upperBound }
 
-func bucketQuantile(qs quantileSet, buckets buckets) quantileSet {
-	res := make(quantileSet, 0, len(qs))
-
-	nan := func() []float64 {
-		for i := 0; i < cap(res); i++ {
-			res = append(res, math.NaN())
-		}
-		return res
+func bucketQuantile(qs []float64, buckets buckets) quantileContainer {
+	quantile := quantileContainer{
+		qs:    make([]float64, 0, len(qs)),
+		isNan: true,
 	}
+
 	for _, q := range qs {
 		if math.IsNaN(q) {
-			return nan()
+			return quantile
 		}
 		if q < 0 {
-			for i := 0; i < cap(res); i++ {
-				res = append(res, math.Inf(-1))
-			}
-			return res
+			return quantile
 		}
 		if q > 1 {
-			for i := 0; i < cap(res); i++ {
-				res = append(res, math.Inf(+1))
-			}
-			return res
+			return quantile
 		}
 	}
 
 	sort.Sort(buckets)
 	if !math.IsInf(buckets[len(buckets)-1].upperBound, +1) {
-		return nan()
+		return quantile
 	}
 
 	buckets = coalesceBuckets(buckets)
 	ensureMonotonic(buckets)
 
 	if len(buckets) < 2 {
-		return nan()
+		return quantile
 	}
 	observations := buckets[len(buckets)-1].count
 	if observations == 0 {
-		return nan()
+		return quantile
 	}
 
 	for _, q := range qs {
@@ -336,11 +333,11 @@ func bucketQuantile(qs quantileSet, buckets buckets) quantileSet {
 		b := sort.Search(len(buckets)-1, func(i int) bool { return buckets[i].count >= rank })
 
 		if b == len(buckets)-1 {
-			res = append(res, buckets[len(buckets)-2].upperBound)
+			quantile.qs = append(quantile.qs, buckets[len(buckets)-2].upperBound)
 			continue
 		}
 		if b == 0 && buckets[0].upperBound <= 0 {
-			res = append(res, buckets[0].upperBound)
+			quantile.qs = append(quantile.qs, buckets[0].upperBound)
 			continue
 			//return buckets[0].upperBound
 		}
@@ -354,10 +351,11 @@ func bucketQuantile(qs quantileSet, buckets buckets) quantileSet {
 			count -= buckets[b-1].count
 			rank -= buckets[b-1].count
 		}
-		res = append(res, bucketStart+(bucketEnd-bucketStart)*(rank/count))
+		quantile.qs = append(quantile.qs, bucketStart+(bucketEnd-bucketStart)*(rank/count))
 		//return bucketStart + (bucketEnd-bucketStart)*(rank/count)
 	}
-	return res
+	quantile.isNan = false
+	return quantile
 }
 
 func coalesceBuckets(buckets buckets) buckets {
