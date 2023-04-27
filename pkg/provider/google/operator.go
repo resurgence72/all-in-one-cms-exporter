@@ -54,7 +54,8 @@ func (o *operator) getPointValue(valueType metricpb.MetricDescriptor_ValueType, 
 			.90,
 			.99,
 		}, bks); !quantile.isNan {
-			return append(quantile.qs, point.GetValue().GetDistributionValue().Mean)
+			quantile.qs = append(quantile.qs, point.GetValue().GetDistributionValue().Mean)
+			return quantile
 		}
 		return point.GetValue().GetDistributionValue().Mean
 	case metricpb.MetricDescriptor_STRING:
