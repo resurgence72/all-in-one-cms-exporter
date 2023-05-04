@@ -72,7 +72,7 @@ type quantileContainer struct {
 
 func (o *operator) getMetrics(
 	cli *monitoring.MetricClient,
-	metricPrefix string,
+	metricsPrefix ...string,
 ) ([]*metricpb.MetricDescriptor, error) {
 	var p string
 	// 遍历一次即可，拿到任意一个project
@@ -81,34 +81,39 @@ func (o *operator) getMetrics(
 		return false
 	})
 
-	req := &monitoringpb.ListMetricDescriptorsRequest{
-		Name:   fmt.Sprintf("projects/%s", p),
-		Filter: fmt.Sprintf(`metric.type=starts_with("%s")`, metricPrefix),
-	}
-
-	ctx, _ := context.WithTimeout(context.TODO(), 30*time.Second)
-	descriptors := cli.ListMetricDescriptors(ctx, req)
+	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
+	defer cancel()
 
 	var metrics []*metricpb.MetricDescriptor
-	for {
-		descriptor, err := descriptors.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			logrus.Errorln("could not ListMetricDescriptors", err)
-			return nil, err
+	for _, pre := range metricsPrefix {
+		req := &monitoringpb.ListMetricDescriptorsRequest{
+			Name:   fmt.Sprintf("projects/%s", p),
+			Filter: fmt.Sprintf(`metric.type=starts_with("%s")`, pre),
 		}
 
-		switch *descriptor.LaunchStage.Enum() {
-		// TODO 只考虑GA的metrics
-		case api.LaunchStage_GA:
-			metrics = append(metrics, descriptor)
-		case api.LaunchStage_BETA:
-		case api.LaunchStage_ALPHA:
-		default:
+		descriptors := cli.ListMetricDescriptors(ctx, req)
+
+		for {
+			descriptor, err := descriptors.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				logrus.Errorln("could not ListMetricDescriptors", err)
+				return nil, err
+			}
+
+			switch *descriptor.LaunchStage.Enum() {
+			// TODO 只考虑GA的metrics
+			case api.LaunchStage_GA:
+				metrics = append(metrics, descriptor)
+			case api.LaunchStage_BETA:
+			case api.LaunchStage_ALPHA:
+			default:
+			}
 		}
 	}
+
 	return metrics, nil
 }
 
@@ -166,7 +171,7 @@ func (o *operator) listTimeSeries(
 						CrossSeriesReducer: monitoringpb.Aggregation_REDUCE_SUM,
 						GroupByFields:      groupBy,
 					}
-					
+
 					// 将counter类型转换为类似 promql rate(xxx)
 					if *metric.MetricKind.Enum() == metricpb.MetricDescriptor_CUMULATIVE {
 						req.Aggregation.PerSeriesAligner = monitoringpb.Aggregation_ALIGN_RATE
