@@ -166,9 +166,14 @@ func (o *operator) listTimeSeries(
 						CrossSeriesReducer: monitoringpb.Aggregation_REDUCE_SUM,
 						GroupByFields:      groupBy,
 					}
-
+					
+					// 将counter类型转换为类似 promql rate(xxx)
 					if *metric.MetricKind.Enum() == metricpb.MetricDescriptor_CUMULATIVE {
 						req.Aggregation.PerSeriesAligner = monitoringpb.Aggregation_ALIGN_RATE
+					}
+					// 如果 valueType 类型为 bool,则不支持Aggregation_ALIGN_SUM
+					if *metric.GetValueType().Enum() == metricpb.MetricDescriptor_BOOL {
+						req.Aggregation.PerSeriesAligner = monitoringpb.Aggregation_ALIGN_NONE
 					}
 				}
 
