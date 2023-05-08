@@ -370,3 +370,17 @@ func (o *operator) mapLens(m sync.Map) int {
 	})
 	return i
 }
+
+func (o *operator) buildSeries(
+	ep string,
+	metricPre string,
+	metric string,
+	point Point,
+) *common.MetricValue {
+	obj := common.GetMetricValueObj()
+	obj.Timestamp = int64(point["timestamp"].(float64)) / 1e3
+	obj.ValueUntyped = point.Value()
+	obj.Endpoint = ep
+	obj.Metric = common.BuildMetric(metricPre, metric)
+	return obj
+}

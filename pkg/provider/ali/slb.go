@@ -72,13 +72,7 @@ func (s *Slb) push(transfer *transferData) {
 			continue
 		}
 
-		series := &common.MetricValue{
-			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
-			Metric:       common.BuildMetric("slb", transfer.metric),
-			ValueUntyped: point.Value(),
-			Endpoint:     slb.Address,
-		}
-
+		series := s.op.buildSeries(slb.Address, "slb", transfer.metric, point)
 		series.TagsMap = map[string]string{
 			"provider":    ProviderName,
 			"iden":        s.op.req.Iden,

@@ -136,6 +136,10 @@ func (e *Ecs) push(transfer *transferData) {
 		var (
 			ips = common.SliceStringPool.Get().([]string)[:0]
 		)
+		defer func() {
+			common.SliceStringPool.Put(ips)
+		}()
+
 		for i := range ip.PublicIpAddress.IpAddress {
 			if len(ip.PublicIpAddress.IpAddress[i]) > 0 {
 				ips = append(ips, ip.PublicIpAddress.IpAddress[i])
@@ -147,14 +151,6 @@ func (e *Ecs) push(transfer *transferData) {
 		}
 		sort.Strings(ips)
 		pubIP := strings.Join(ips, ",")
-		common.SliceStringPool.Put(ips)
-
-		series := &common.MetricValue{
-			Timestamp:    int64(point["timestamp"].(float64)) / 1e3,
-			Metric:       common.BuildMetric("ecs", transfer.metric),
-			ValueUntyped: point.Value(),
-			Endpoint:     pubIP,
-		}
 
 		var priIP string
 		switch ip.InstanceNetworkType {
@@ -164,6 +160,7 @@ func (e *Ecs) push(transfer *transferData) {
 			priIP = strings.Join(ip.VpcAttributes.PrivateIpAddress.IpAddress, ",")
 		}
 
+		series := e.op.buildSeries(pubIP, "ecs", transfer.metric, point)
 		series.TagsMap = map[string]string{
 			"region":                 ip.RegionId,
 			"instance_name":          ip.InstanceName,

@@ -96,7 +96,6 @@ func NewRemoteWritesClient(ctx context.Context) {
 	}
 
 	var wg sync.WaitGroup
-
 	for shard := 0; shard < report.shard; shard++ {
 		wg.Add(1)
 
@@ -139,15 +138,17 @@ func NewRemoteWritesClient(ctx context.Context) {
 	wg.Wait()
 }
 
-func (r *remoteMgr) buildSeries(tmp []*common.MetricValue, rlbs []*relabel.Config) []prompb.TimeSeries {
+func (r *remoteMgr) buildSeries(wg *sync.WaitGroup, shard int, rlbs []*relabel.Config) []prompb.TimeSeries {
+	defer wg.Done()
+
 	series := make([]prompb.TimeSeries, 0, r.batchSize)
-	for _, mv := range tmp {
+	for _, s := range r.batchContainers[shard] {
 		metric.CMSMetricsTotalCounter.WithLabelValues(
-			mv.TagsMap["provider"],
-			mv.TagsMap["namespace"],
+			s.TagsMap["provider"],
+			s.TagsMap["namespace"],
 		).Inc()
 
-		ts := mv.Convert(rlbs)
+		ts := s.Convert(rlbs)
 		if len(ts.Labels) == 0 {
 			continue
 		}
@@ -180,12 +181,21 @@ func (r *remoteMgr) send(rc remote, series []prompb.TimeSeries) error {
 }
 
 func (r *remoteMgr) report(shard int) {
-	// 重置batchContainer
-	r.batchContainers[shard] = r.batchContainers[shard][:0]
+	var wg sync.WaitGroup
+	defer func() {
+		wg.Wait()
+
+		for i := range r.batchContainers[shard] {
+			common.PutMetricValue(r.batchContainers[shard][i])
+		}
+		// 重置batchContainer
+		r.batchContainers[shard] = r.batchContainers[shard][:0]
+	}()
 
 	for _, rc := range r.rs {
+		wg.Add(1)
 		go func(rc remote) {
-			if err := r.send(rc, r.buildSeries(r.batchContainers[shard], rc.relabels)); err != nil {
+			if err := r.send(rc, r.buildSeries(&wg, shard, rc.relabels)); err != nil {
 				metric.CMSRemoteWriteFailedCounter.Inc()
 			} else {
 				metric.CMSRemoteWriteSuccessCounter.Inc()
