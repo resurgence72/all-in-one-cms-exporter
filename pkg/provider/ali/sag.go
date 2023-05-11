@@ -129,7 +129,7 @@ func (s *SAG) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	s.op.async(s.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+	s.op.async(s.op.getRegions, func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
 			pageNum   = 1

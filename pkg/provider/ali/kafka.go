@@ -74,7 +74,7 @@ func (k *Kafka) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	k.op.async(k.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+	k.op.async(k.op.getRegions, func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
 			pageNum   = 1

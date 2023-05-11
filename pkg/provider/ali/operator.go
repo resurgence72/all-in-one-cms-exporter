@@ -10,6 +10,7 @@ import (
 
 	"github.com/alibabacloud-go/tea/tea"
 	"github.com/panjf2000/ants/v2"
+	"golang.org/x/sync/singleflight"
 
 	"watcher4metrics/pkg/common"
 	"watcher4metrics/pkg/provider/ali/parser"
@@ -29,6 +30,8 @@ import (
 
 type operator struct {
 	req *AliReq
+
+	sf singleflight.Group
 }
 
 // 获取namespace全量metrics
@@ -96,6 +99,13 @@ func (o *operator) getMetrics(
 		}
 	}
 	return metrics, nil
+}
+
+func (o *operator) regions() []string {
+	v, _, _ := o.sf.Do("aliCMSRegions", func() (any, error) {
+		return o.getRegions(), nil
+	})
+	return v.([]string)
 }
 
 // 获取全量region
@@ -352,9 +362,9 @@ func (o *operator) commonRequest(
 	return resp.BaseResponse.GetHttpContentBytes(), nil
 }
 
-func (o *operator) async(regions []string, f antFunc) {
+func (o *operator) async(rf func() []string, f antFunc) {
 	var wg sync.WaitGroup
-	for _, region := range regions {
+	for _, region := range rf() {
 		wg.Add(1)
 		ants.Submit(warpFunc(region, &wg, f))
 	}

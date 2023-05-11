@@ -79,7 +79,7 @@ func (r *Redis) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	r.op.async(r.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+	r.op.async(r.op.getRegions, func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
 			pageNum   = 1

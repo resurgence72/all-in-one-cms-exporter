@@ -79,7 +79,7 @@ func (p *PolarDB) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	p.op.async(p.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+	p.op.async(p.op.getRegions, func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
 			pageNum   = 1

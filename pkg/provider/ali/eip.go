@@ -145,7 +145,7 @@ func (e *Eip) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	e.op.async(e.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+	e.op.async(e.op.getRegions, func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
 			pageNum   = 1

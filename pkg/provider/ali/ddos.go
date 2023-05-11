@@ -159,7 +159,7 @@ func (d *DDos) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	d.op.async([]string{"cn-hangzhou", "ap-southeast-1"}, func(region string, wg *sync.WaitGroup) {
+	d.op.async(func() []string { return []string{"cn-hangzhou", "ap-southeast-1"} }, func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
 			pageNum   = 1

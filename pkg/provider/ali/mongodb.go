@@ -50,7 +50,7 @@ func (m *MongoDB) Collector() {
 }
 
 func (m *MongoDB) AsyncMeta(ctx context.Context) {
-	m.op.async(m.op.getRegions(), m.asyncByRegion)
+	m.op.async(m.op.getRegions, m.asyncByRegion)
 	logrus.WithFields(logrus.Fields{
 		"mongoLens": m.op.mapLens(m.mp),
 		"iden":      m.op.req.Iden,

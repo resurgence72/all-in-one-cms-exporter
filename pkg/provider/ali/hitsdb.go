@@ -78,7 +78,7 @@ func (h *HiTSDB) AsyncMeta(ctx context.Context) {
 		}
 	)
 
-	h.op.async(h.op.getRegions(), func(region string, wg *sync.WaitGroup) {
+	h.op.async(h.op.getRegions, func(region string, wg *sync.WaitGroup) {
 		defer wg.Done()
 		var (
 			pageNum   = 1
