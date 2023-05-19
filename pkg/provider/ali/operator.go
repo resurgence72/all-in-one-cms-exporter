@@ -356,7 +356,7 @@ func (o *operator) commonRequest(
 	}
 
 	resp, err := retry(client, request, 5)
-	if err != nil || !resp.IsSuccess() {
+	if err != nil || (resp != nil && !resp.IsSuccess()) {
 		return nil, err
 	}
 	return resp.BaseResponse.GetHttpContentBytes(), nil
