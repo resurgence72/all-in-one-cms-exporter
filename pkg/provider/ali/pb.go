@@ -72,6 +72,7 @@ func (p Point) Value() any {
 		"Maximum",
 		"Minimum",
 		"deviceNum",
+		"avg_rtt",
 	} {
 		if v, ok := p[key]; ok {
 			return v
