@@ -28,8 +28,7 @@ func (r *Redis) GetMetrics() error {
 	metrics, err := r.op.getMetrics(
 		r.client,
 		r.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err

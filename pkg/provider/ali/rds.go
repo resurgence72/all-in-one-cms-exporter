@@ -27,8 +27,9 @@ func (r *Rds) GetMetrics() error {
 	metrics, err := r.op.getMetrics(
 		r.client,
 		r.namespace,
-		map[string]string{"productCategory": "rds"},
-		nil,
+		newMetricsBuilder(withSubCategory("rds")),
+		//map[string]string{"productCategory": "rds"},
+		//nil,
 	)
 	if err != nil {
 		return err

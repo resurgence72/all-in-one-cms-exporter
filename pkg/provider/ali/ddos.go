@@ -33,8 +33,7 @@ func (d *DDos) GetMetrics() error {
 	metrics, err := d.op.getMetrics(
 		d.client,
 		d.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err

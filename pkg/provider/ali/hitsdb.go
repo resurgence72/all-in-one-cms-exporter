@@ -27,8 +27,7 @@ func (h *HiTSDB) GetMetrics() error {
 	metrics, err := h.op.getMetrics(
 		h.client,
 		h.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err

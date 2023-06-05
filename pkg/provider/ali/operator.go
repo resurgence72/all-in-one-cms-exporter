@@ -34,14 +34,46 @@ type operator struct {
 	sf singleflight.Group
 }
 
+type metricsBuilder struct {
+	subCategory []string
+	labels      map[string]string
+	filter      []string
+}
+type metricsBuilderOption func(*metricsBuilder)
+
+// 多个产品公用一个ns,这时需要指定labels(metricCategory) 做子类区分
+func withSubCategory(sc ...string) metricsBuilderOption {
+	return func(builder *metricsBuilder) {
+		builder.subCategory = sc
+	}
+}
+func withLabels(ls map[string]string) metricsBuilderOption {
+	return func(builder *metricsBuilder) {
+		builder.labels = ls
+	}
+}
+
+func withFilter(f ...string) metricsBuilderOption {
+	return func(builder *metricsBuilder) {
+		builder.filter = f
+	}
+}
+
+func newMetricsBuilder(opts ...metricsBuilderOption) metricsBuilder {
+	mb := metricsBuilder{}
+	for _, opt := range opts {
+		opt(&mb)
+	}
+	return mb
+}
+
 // 获取namespace全量metrics
 func (o *operator) getMetrics(
 	cli *cms.Client,
 	ns string,
-	labels map[string]string, // 多个产品公用一个ns,这时需要指定labels(metricCategory) 做子类区分
-	filter []string,
+	mb metricsBuilder,
 ) ([]*cms.Resource, error) {
-	var retry = func(req *cms.DescribeMetricMetaListRequest, times int) (resp *cms.DescribeMetricMetaListResponse, err error) {
+	retry := func(req *cms.DescribeMetricMetaListRequest, times int) (resp *cms.DescribeMetricMetaListResponse, err error) {
 		for i := 0; i < times; i++ {
 			resp, err = cli.DescribeMetricMetaList(req)
 			if err == nil {
@@ -57,47 +89,63 @@ func (o *operator) getMetrics(
 	request.Namespace = ns
 	request.PageSize = requests.NewInteger(1000)
 
-	if len(labels) > 0 {
-		var lbs []map[string]string
-		for k, v := range labels {
+	var lbs []map[string]string
+	if len(mb.labels) > 0 {
+		for k, v := range mb.labels {
 			lbs = append(lbs, map[string]string{"name": k, "value": v})
 		}
+	}
 
+	isFilter := mb.filter != nil
+	fm := make(map[string]struct{}, len(mb.filter))
+	for _, f := range mb.filter {
+		fm[f] = struct{}{}
+	}
+
+	metrics := make([]*cms.Resource, 0)
+	addMetric := func(req *cms.DescribeMetricMetaListRequest) {
+		resp, err := retry(req, 5)
+		if err != nil {
+			return
+		}
+
+		for i := range resp.Resources.Resource {
+			r := &resp.Resources.Resource[i]
+
+			if isFilter {
+				if _, ok := fm[r.MetricName]; !ok {
+					continue
+				}
+			}
+
+			// 判断当前指标的 Dur 是否在 Periods 允许的范围内
+			for _, period := range strings.Split(r.Periods, ",") {
+				if strings.EqualFold(period, strconv.Itoa(o.req.Dur)) {
+					metrics = append(metrics, r)
+					break
+				}
+			}
+		}
+	}
+	if len(mb.subCategory) > 0 {
+		for _, cate := range mb.subCategory {
+			temp := make([]map[string]string, len(lbs))
+			copy(temp, lbs)
+			bs, err := json.Marshal(append(temp, map[string]string{"name": "productCategory", "value": cate}))
+			if err == nil {
+				request.Labels = string(bs)
+			}
+			addMetric(request)
+		}
+		return metrics, nil
+	} else {
 		bs, err := json.Marshal(lbs)
 		if err == nil {
 			request.Labels = string(bs)
 		}
+		addMetric(request)
 	}
 
-	resp, err := retry(request, 5)
-	if err != nil {
-		return nil, err
-	}
-
-	isFilter := filter != nil
-	fm := make(map[string]struct{}, len(filter))
-	for _, f := range filter {
-		fm[f] = struct{}{}
-	}
-
-	metrics := make([]*cms.Resource, 0, len(resp.Resources.Resource))
-	for i := range resp.Resources.Resource {
-		r := &resp.Resources.Resource[i]
-
-		if isFilter {
-			if _, ok := fm[r.MetricName]; !ok {
-				continue
-			}
-		}
-
-		// 判断当前指标的 Dur 是否在 Periods 允许的范围内
-		for _, period := range strings.Split(r.Periods, ",") {
-			if strings.EqualFold(period, strconv.Itoa(o.req.Dur)) {
-				metrics = append(metrics, r)
-				break
-			}
-		}
-	}
 	return metrics, nil
 }
 

@@ -28,8 +28,7 @@ func (p *PolarDB) GetMetrics() error {
 	metrics, err := p.op.getMetrics(
 		p.client,
 		p.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err

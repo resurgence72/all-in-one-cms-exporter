@@ -31,8 +31,7 @@ func (s *Slb) GetMetrics() error {
 	metrics, err := s.op.getMetrics(
 		s.client,
 		s.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err

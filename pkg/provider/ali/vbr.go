@@ -94,8 +94,7 @@ func (v *Vbr) GetMetrics() error {
 	metrics, err := v.op.getMetrics(
 		v.client,
 		v.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err

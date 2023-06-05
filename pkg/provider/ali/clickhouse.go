@@ -22,8 +22,7 @@ func (c *ClickHouse) GetMetrics() error {
 	metrics, err := c.op.getMetrics(
 		c.client,
 		c.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err

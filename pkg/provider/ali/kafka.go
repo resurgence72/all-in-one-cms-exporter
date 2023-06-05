@@ -24,8 +24,7 @@ func (k *Kafka) GetMetrics() error {
 	metrics, err := k.op.getMetrics(
 		k.client,
 		k.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err

@@ -27,8 +27,7 @@ func (w *Waf) GetMetrics() error {
 	metrics, err := w.op.getMetrics(
 		w.client,
 		w.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err

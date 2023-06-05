@@ -24,8 +24,7 @@ func (m *MongoDB) GetMetrics() error {
 	metrics, err := m.op.getMetrics(
 		m.client,
 		m.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err

@@ -32,8 +32,7 @@ func (e *Eip) GetMetrics() error {
 	metrics, err := e.op.getMetrics(
 		e.client,
 		e.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err

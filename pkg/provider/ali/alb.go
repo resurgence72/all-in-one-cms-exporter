@@ -27,8 +27,7 @@ func (a *Alb) GetMetrics() error {
 	metrics, err := a.op.getMetrics(
 		a.client,
 		a.namespace,
-		nil,
-		nil,
+		newMetricsBuilder(),
 	)
 	if err != nil {
 		return err
