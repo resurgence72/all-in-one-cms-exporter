@@ -44,7 +44,7 @@ func (i *InterConnect) push(transfer *transferData) {
 	for _, series := range transfer.points {
 		metricName := i.op.buildMetric(series.Metric.Type)
 		points := series.GetPoints()
-		if points == nil {
+		if len(points) == 0 {
 			return
 		}
 
