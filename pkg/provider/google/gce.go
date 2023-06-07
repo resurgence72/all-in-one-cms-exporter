@@ -46,28 +46,16 @@ func (e *Gce) Collector() {
 }
 
 func (e *Gce) push(transfer *transferData) {
-	transfer.m.Lock()
-	defer transfer.m.Unlock()
-
 	for _, series := range transfer.points {
-		metricName := e.op.buildMetric(series.Metric.Type)
-
-		points := series.GetPoints()
-		if points == nil {
-			return
+		po, err := e.op.newPointOperator(series)
+		if err != nil {
+			continue
 		}
 
-		point := points[len(points)-1]
-		ts := point.Interval.EndTime.GetSeconds()
-		value := e.op.getPointValue(series.GetValueType(), point)
-
-		metricLabels := series.Metric.Labels
-		resourceLabels := series.Resource.Labels
-
 		series := &common.MetricValue{
-			Metric:       common.BuildMetric("gce", metricName),
-			Timestamp:    ts,
-			ValueUntyped: value,
+			Metric:       common.BuildMetric("gce", po.metricName),
+			Timestamp:    po.ts,
+			ValueUntyped: po.value,
 		}
 
 		series.TagsMap = map[string]string{
@@ -80,12 +68,12 @@ func (e *Gce) push(transfer *transferData) {
 			"iden":      e.op.req.Iden,
 			"namespace": e.namespace,
 		}
-		if in, ok := metricLabels["instance_name"]; ok {
+		if in, ok := po.metricLabels["instance_name"]; ok {
 			series.TagsMap["instance_name"] = in
 			series.Endpoint = in
 		}
 
-		if ii, ok := resourceLabels["instance_id"]; ok {
+		if ii, ok := po.resourceLabels["instance_id"]; ok {
 			series.TagsMap["instance_id"] = ii
 			ii, err := strconv.ParseInt(ii, 10, 64)
 			if err == nil {
@@ -97,7 +85,7 @@ func (e *Gce) push(transfer *transferData) {
 			}
 		}
 
-		if pid, ok := resourceLabels["project_id"]; ok {
+		if pid, ok := po.resourceLabels["project_id"]; ok {
 			series.TagsMap["project_id"] = pid
 
 			if pn, ok := e.op.projects.Load(pid); ok {
@@ -105,7 +93,7 @@ func (e *Gce) push(transfer *transferData) {
 			}
 		}
 
-		if region, ok := resourceLabels["zone"]; ok {
+		if region, ok := po.resourceLabels["zone"]; ok {
 			series.TagsMap["region"] = region
 		}
 

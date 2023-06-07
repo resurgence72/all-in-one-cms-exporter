@@ -45,36 +45,25 @@ func (l *Lb) Collector() {
 }
 
 func (l *Lb) push(transfer *transferData) {
-	transfer.m.Lock()
-	defer transfer.m.Unlock()
-
 	for _, series := range transfer.points {
-		metricName := l.op.buildMetric(series.Metric.Type)
-
-		points := series.GetPoints()
-		if len(points) == 0 {
-			return
+		po, err := l.op.newPointOperator(series)
+		if err != nil {
+			continue
 		}
 
-		point := points[len(points)-1]
-		ts := point.Interval.EndTime.GetSeconds()
-		value := l.op.getPointValue(series.GetValueType(), point)
-		
-		metricLabels := series.Metric.Labels
-		resourceLabels := series.Resource.Labels
-		ep, ok := resourceLabels["url_map_name"]
+		ep, ok := po.resourceLabels["url_map_name"]
 		if !ok {
 			return
 		}
 
-		quantileIdx := []string{"p50", "p90", "p99", "mean"}
-		switch v := value.(type) {
+		switch v := po.value.(type) {
 		case quantileContainer:
+			quantileIdx := []string{"p50", "p90", "p99", "mean"}
 			for i, quantile := range v.qs {
 				series := &common.MetricValue{
-					Metric:       common.BuildMetric("lb", metricName),
+					Metric:       common.BuildMetric("lb", po.metricName),
 					Endpoint:     ep,
-					Timestamp:    ts,
+					Timestamp:    po.ts,
 					ValueUntyped: quantile,
 					TagsMap: map[string]string{
 						"metric_kind":  transfer.metric.MetricKind.String(),
@@ -88,17 +77,17 @@ func (l *Lb) push(transfer *transferData) {
 					},
 				}
 
-				if pid, ok := resourceLabels["project_id"]; ok {
+				if pid, ok := po.resourceLabels["project_id"]; ok {
 					series.TagsMap["project_id"] = pid
 
 					if pname, ok := l.op.projects.Load(pid); ok {
 						series.TagsMap["project_mark"] = pname.(string)
 					}
 				}
-				if ccode, ok := metricLabels["response_code"]; ok {
+				if ccode, ok := po.metricLabels["response_code"]; ok {
 					series.TagsMap["response_code"] = ccode
 				}
-				if cc, ok := metricLabels["response_code_class"]; ok {
+				if cc, ok := po.metricLabels["response_code_class"]; ok {
 					series.TagsMap["response_code_class"] = cc
 				}
 
@@ -111,10 +100,10 @@ func (l *Lb) push(transfer *transferData) {
 		}
 
 		series := &common.MetricValue{
-			Metric:       common.BuildMetric("lb", metricName),
+			Metric:       common.BuildMetric("lb", po.metricName),
 			Endpoint:     ep,
-			Timestamp:    ts,
-			ValueUntyped: value,
+			Timestamp:    po.ts,
+			ValueUntyped: po.value,
 		}
 
 		series.TagsMap = map[string]string{
@@ -128,7 +117,7 @@ func (l *Lb) push(transfer *transferData) {
 			"namespace": l.namespace,
 		}
 
-		if pid, ok := resourceLabels["project_id"]; ok {
+		if pid, ok := po.resourceLabels["project_id"]; ok {
 			series.TagsMap["project_id"] = pid
 
 			if pname, ok := l.op.projects.Load(pid); ok {
@@ -136,11 +125,11 @@ func (l *Lb) push(transfer *transferData) {
 			}
 		}
 
-		if ccode, ok := metricLabels["response_code"]; ok {
+		if ccode, ok := po.metricLabels["response_code"]; ok {
 			series.TagsMap["response_code"] = ccode
 		}
 
-		if cc, ok := metricLabels["response_code_class"]; ok {
+		if cc, ok := po.metricLabels["response_code_class"]; ok {
 			series.TagsMap["response_code_class"] = cc
 		}
 

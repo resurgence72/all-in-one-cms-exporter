@@ -241,6 +241,30 @@ func (o *operator) getZones() []string {
 	}
 }
 
+type pointOperator struct {
+	metricName     string
+	ts             int64
+	value          any
+	metricLabels   map[string]string
+	resourceLabels map[string]string
+}
+
+func (o *operator) newPointOperator(series *monitoringpb.TimeSeries) (*pointOperator, error) {
+	points := series.GetPoints()
+	if len(points) == 0 {
+		return nil, errors.New("no point error")
+	}
+
+	point := points[len(points)-1]
+	return &pointOperator{
+		metricName:     o.buildMetric(series.Metric.Type),
+		ts:             point.Interval.EndTime.GetSeconds(),
+		value:          o.getPointValue(series.GetValueType(), point),
+		metricLabels:   series.Metric.Labels,
+		resourceLabels: series.Resource.Labels,
+	}, nil
+}
+
 func generateHistogramBuckets(dist *distribution.Distribution) (buckets, error) {
 	opts := dist.BucketOptions.Options
 

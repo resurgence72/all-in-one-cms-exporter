@@ -38,27 +38,17 @@ func (i *InterConnect) Collector() {
 }
 
 func (i *InterConnect) push(transfer *transferData) {
-	transfer.m.Lock()
-	defer transfer.m.Unlock()
-
 	for _, series := range transfer.points {
-		metricName := i.op.buildMetric(series.Metric.Type)
-		points := series.GetPoints()
-		if len(points) == 0 {
-			return
+		po, err := i.op.newPointOperator(series)
+		if err != nil {
+			continue
 		}
 
-		point := points[len(points)-1]
-		ts := point.Interval.EndTime.GetSeconds()
-		value := i.op.getPointValue(series.GetValueType(), point)
-
-		resourceLabels := series.Resource.Labels
-
 		series := &common.MetricValue{
-			Metric:       common.BuildMetric("interconnect", metricName),
-			Endpoint:     resourceLabels["attachment"],
-			Timestamp:    ts,
-			ValueUntyped: value,
+			Metric:       common.BuildMetric("interconnect", po.metricName),
+			Endpoint:     po.resourceLabels["attachment"],
+			Timestamp:    po.ts,
+			ValueUntyped: po.value,
 		}
 		series.TagsMap = map[string]string{
 			"metric_kind":  transfer.metric.MetricKind.String(),
@@ -71,7 +61,7 @@ func (i *InterConnect) push(transfer *transferData) {
 			"namespace": i.namespace,
 		}
 
-		for k, v := range resourceLabels {
+		for k, v := range po.resourceLabels {
 			series.TagsMap[k] = v
 		}
 
