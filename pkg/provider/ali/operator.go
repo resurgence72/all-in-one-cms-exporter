@@ -91,9 +91,12 @@ func (o *operator) getMetrics(
 
 	var lbs []map[string]string
 	if len(mb.labels) > 0 {
-		for k, v := range mb.labels {
-			lbs = append(lbs, map[string]string{"name": k, "value": v})
-		}
+		mb.labels["minAlertPeriod"] = strconv.Itoa(o.req.Dur)	
+	} else {
+		mb.labels = map[string]string{"minAlertPeriod": strconv.Itoa(o.req.Dur)}
+	}
+	for k, v := range mb.labels {
+		lbs = append(lbs, map[string]string{"name": k, "value": v})
 	}
 
 	isFilter := mb.filter != nil
