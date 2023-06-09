@@ -320,14 +320,18 @@ func (o *operator) buildInstances(
 	for i := 0; i < is; i++ {
 		var dimensions []*monitor.Dimension
 		for j := 0; j < ds; j++ {
-			dimensions = append(dimensions, &monitor.Dimension{
-				Name:  com.StringPtr(dNameContainers[j]),
-				Value: com.StringPtr(dValuesContainers[j][i]),
-			})
+			// 如果value不为空，再 append 到 dimensions 中
+			if len(dValuesContainers[j][i]) > 0 {
+				dimensions = append(dimensions, &monitor.Dimension{
+					Name:  com.StringPtr(dNameContainers[j]),
+					Value: com.StringPtr(dValuesContainers[j][i]),
+				})
+			}
 		}
-		instances = append(instances, &monitor.Instance{Dimensions: dimensions})
+		if len(dimensions) > 0 {
+			instances = append(instances, &monitor.Instance{Dimensions: dimensions})
+		}
 	}
-
 	return instances
 }
 
