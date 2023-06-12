@@ -51,7 +51,7 @@ func (g *Google) getCli() *monitoring.MetricClient {
 		return nil
 	}
 
-	_ = cc.Projects.List().Pages(ctx, func(page *cloudresourcemanager.ListProjectsResponse) error {
+	_ = cc.Projects.List().Filter("lifecycleState:ACTIVE").Pages(ctx, func(page *cloudresourcemanager.ListProjectsResponse) error {
 		for _, p := range page.Projects {
 			g.op.projects.Store(p.ProjectId, p.Name)
 		}
