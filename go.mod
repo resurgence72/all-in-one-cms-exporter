@@ -1,6 +1,6 @@
 module watcher4metrics
 
-go 1.19
+go 1.20
 
 require (
 	cloud.google.com/go/monitoring v1.8.0
@@ -50,6 +50,7 @@ require (
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cbs v1.0.602
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/clb v1.0.606
 	go.uber.org/ratelimit v0.2.0
+	golang.org/x/sync v0.1.0
 )
 
 require (
