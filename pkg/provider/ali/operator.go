@@ -163,6 +163,17 @@ func (o *operator) regions() []string {
 func (o *operator) getRegions() []string {
 	ep := config.Get().Provider.Ali.Endpoint
 
+	retry := func(cli *vpc.Client, req *vpc.DescribeRegionsRequest, times int) (resp *vpc.DescribeRegionsResponse, err error) {
+		for i := 0; i < times; i++ {
+			resp, err = cli.DescribeRegions(req)
+			if err == nil {
+				return resp, nil
+			}
+			time.Sleep(time.Duration((i+1)*200) * time.Millisecond)
+		}
+		return nil, err
+	}
+
 	defaultRegions := []string{ep}
 	credential := credentials.NewAccessKeyCredential(
 		o.req.Ak,
@@ -173,10 +184,13 @@ func (o *operator) getRegions() []string {
 		logrus.Errorln("NewClientWithOptions failed ", err)
 		return defaultRegions
 	}
+	// client设置 connect/read timeout
+	client.SetConnectTimeout(time.Duration(15) * time.Second)
+	client.SetReadTimeout(time.Duration(15) * time.Second)
 
 	request := vpc.CreateDescribeRegionsRequest()
 	request.Scheme = "https"
-	response, err := client.DescribeRegions(request)
+	response, err := retry(client, request, 5)
 	if err != nil {
 		logrus.Errorln("DescribeRegions failed ", err)
 		return defaultRegions
