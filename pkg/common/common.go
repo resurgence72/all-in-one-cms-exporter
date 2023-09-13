@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/cespare/xxhash/v2"
+
 	"watcher4metrics/pkg/config"
 	"watcher4metrics/pkg/metric"
 	"watcher4metrics/pkg/relabel"
@@ -14,7 +16,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/prompb"
-	"github.com/spaolacci/murmur3"
 )
 
 const (
@@ -79,10 +80,10 @@ func (m *MetricValue) hashLabel() uint64 {
 		buf.WriteByte('_')
 		buf.WriteString(v)
 	}
-	return murmur3.Sum64(buf.Bytes())
+	return xxhash.Sum64(buf.Bytes())
 }
 
-func (m *MetricValue) relabel(rlbs []*relabel.Config) labels.Labels {
+func (m *MetricValue) relabel(rlbs []*relabel.Config) (labels.Labels, bool) {
 	var lbs labels.Labels
 
 	// __name__
@@ -109,8 +110,8 @@ func (m *MetricValue) Convert(rlbs []*relabel.Config) prompb.TimeSeries {
 	}
 
 	// relabel
-	lbs := m.relabel(rlbs)
-	if len(lbs) == 0 {
+	lbs, keep := m.relabel(rlbs)
+	if !keep || len(lbs) == 0 {
 		return prompb.TimeSeries{}
 	}
 
@@ -176,9 +177,7 @@ func BuildMetric(mType, metric string) string {
 	buf.WriteString(strings.ToLower(mType))
 	buf.WriteString("_")
 	buf.WriteString(strings.ToLower(metric))
-
-	m := buf.String()
-	return m
+	return buf.String()
 }
 
 const (
