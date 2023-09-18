@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/cespare/xxhash/v2"
+	"github.com/grafana/regexp"
 
 	"watcher4metrics/pkg/config"
 	"watcher4metrics/pkg/metric"
@@ -83,6 +84,8 @@ func (m *MetricValue) hashLabel() uint64 {
 	return xxhash.Sum64(buf.Bytes())
 }
 
+var labelNameRE = regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]*$")
+
 func (m *MetricValue) relabel(rlbs []*relabel.Config) (labels.Labels, bool) {
 	var lbs labels.Labels
 
@@ -93,10 +96,12 @@ func (m *MetricValue) relabel(rlbs []*relabel.Config) (labels.Labels, bool) {
 	lbs = append(lbs, labels.Label{Name: "ident", Value: m.Endpoint})
 
 	for k, v := range m.TagsMap {
-		lbs = append(lbs, labels.Label{
-			Name:  k,
-			Value: v,
-		})
+		if labelNameRE.MatchString(k) {
+			lbs = append(lbs, labels.Label{
+				Name:  k,
+				Value: v,
+			})
+		}
 	}
 
 	return relabel.Process(lbs, rlbs...)
