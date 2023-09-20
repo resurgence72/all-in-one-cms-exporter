@@ -91,7 +91,7 @@ func (o *operator) getMetrics(
 
 	var lbs []map[string]string
 	if len(mb.labels) > 0 {
-		mb.labels["minAlertPeriod"] = strconv.Itoa(o.req.Dur)	
+		mb.labels["minAlertPeriod"] = strconv.Itoa(o.req.Dur)
 	} else {
 		mb.labels = map[string]string{"minAlertPeriod": strconv.Itoa(o.req.Dur)}
 	}
@@ -228,8 +228,10 @@ func (o *operator) pull(
 			}
 			return nil, err
 		}
-		endTime = time.Now().Format("2006-01-02 15:04:05")
 	)
+
+	now := time.Now()
+	endTime := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), 0, 0, now.Location()).Format("2006-01-02 15:04:05")
 	for _, metric := range metrics {
 		aliyunLimiter.Acquire()
 
