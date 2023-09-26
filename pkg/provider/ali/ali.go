@@ -31,6 +31,7 @@ const (
 	ACS_HITSDB              common.MetricsType = "acs_hitsdb"
 	ACS_SLS_DASHBOARD       common.MetricsType = "acs_sls_dashboard"
 	ACS_MONGODB             common.MetricsType = "acs_mongodb"
+	ACS_K8S                 common.MetricsType = "acs_k8s"
 
 	ProviderName = common.AlibabaCloudProvider
 )
