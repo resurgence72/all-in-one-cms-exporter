@@ -160,26 +160,25 @@ func (o *operator) listTimeSeries(
 							Seconds: endTime,
 						},
 					},
+					Aggregation: &monitoringpb.Aggregation{
+						AlignmentPeriod: &duration.Duration{Seconds: int64(o.req.Dur)},
+						// 将60s内的所有数据求和，针对的是单一series
+						PerSeriesAligner: monitoringpb.Aggregation_ALIGN_SUM,
+					},
+				}
+
+				if metric.GetMetricKind().String() == "CUMULATIVE" {
+					// 将counter类型转换为类似 promql rate(xxx)
+					req.Aggregation.PerSeriesAligner = monitoringpb.Aggregation_ALIGN_RATE
+				} else if metric.GetMetricKind().String() == "GAUGE" && metric.GetValueType().String() == "BOOL" {
+					// 如果 valueType 类型为 bool,则不支持Aggregation_ALIGN_SUM
+					req.Aggregation.PerSeriesAligner = monitoringpb.Aggregation_ALIGN_NONE
 				}
 
 				if len(groupBy) > 0 {
-					req.Aggregation = &monitoringpb.Aggregation{
-						AlignmentPeriod: &duration.Duration{
-							Seconds: int64(time.Duration(o.req.Dur) * time.Second),
-						},
-						PerSeriesAligner:   monitoringpb.Aggregation_ALIGN_SUM,
-						CrossSeriesReducer: monitoringpb.Aggregation_REDUCE_SUM,
-						GroupByFields:      groupBy,
-					}
-
-					// 将counter类型转换为类似 promql rate(xxx)
-					if *metric.MetricKind.Enum() == metricpb.MetricDescriptor_CUMULATIVE {
-						req.Aggregation.PerSeriesAligner = monitoringpb.Aggregation_ALIGN_RATE
-					}
-					// 如果 valueType 类型为 bool,则不支持Aggregation_ALIGN_SUM
-					if *metric.GetValueType().Enum() == metricpb.MetricDescriptor_BOOL {
-						req.Aggregation.PerSeriesAligner = monitoringpb.Aggregation_ALIGN_NONE
-					}
+					// 将60s内的所有series求和，针对的是多个series
+					req.Aggregation.CrossSeriesReducer = monitoringpb.Aggregation_REDUCE_SUM
+					req.Aggregation.GroupByFields = groupBy
 				}
 
 				ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
